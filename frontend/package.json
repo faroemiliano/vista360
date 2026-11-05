@@ -10,18 +10,26 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demo:media": "node scripts/demo-media-server.mjs",
+    "test:e2e": "playwright test",
+    "generate:api": "../backend/.venv/bin/python ../backend/scripts/export_openapi.py > .openapi.json && openapi-typescript .openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "pannellum": "2.5.7",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@tailwindcss/vite": "4.3.3",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
-    "typescript": "7.0.2",
+    "openapi-typescript": "7.13.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
     "vite": "8.3.4"
   }
 }

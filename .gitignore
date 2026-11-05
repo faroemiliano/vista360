@@ -12,3 +12,9 @@ __pycache__/
 .ruff_cache/
 .data/
 *.log
+test-results/
+playwright-report/
+.openapi.json
+# Fotografías locales de prueba; los fixtures sintéticos PNG sí se versionan.
+/frontend/public/panoramas/*.jpg
+/frontend/public/panoramas/*.jpeg

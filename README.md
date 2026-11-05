@@ -1,6 +1,23 @@
-# Vista360
+# Vision360
 
-Base de desarrollo de la **Fase 1** de [PLAN.md](PLAN.md). Frontend React + TypeScript + Vite, backend FastAPI, SQLAlchemy, Alembic y PostgreSQL local. La única ruta de aplicación implementada es `GET /health`; no hay entidades ni funcionalidades de negocio. El frontend muestra una pantalla inicial estática.
+Demo de prueba en Render: frontend y API bajo un mismo HTTPS, worker junto a la
+API para una única instancia gratuita, PostgreSQL por 30 días y fotos en storage
+externo. Configuración en `render.yaml` y [pasos del demo](docs/DEMO_RENDER.md).
+No se despliega ni se transfieren datos locales automáticamente.
+
+El visor permite **Mirar con el celular** en dispositivos compatibles: giro e inclinación del teléfono, permiso explícito, centrado y retorno al control táctil. Para probarlo en un teléfono desde un enlace remoto se necesita HTTPS. Ver [visor móvil y validaciones](docs/VISOR_MOVIL.md).
+
+Cada cuenta dispone de un **estudio propio** para operar su negocio. Dentro registra sus clientes (organizaciones o particulares), trabajos y recorridos. El nombre se cambia con Editar estudio en la cabecera. Los accesos compartidos conservan permisos por cliente y no abren toda la cartera de otro estudio. Ver [estudios independientes, migración y alcance SaaS](docs/ESTUDIOS.md).
+
+Las fichas de clientes se abren con **Ver ficha** desde Organizaciones, Particulares o Clientes. Guardan nombre, email, teléfono, localidad, dirección y notas internas; las organizaciones también tienen razón social y responsable. Sólo el nombre es obligatorio. Propietarios y administradores pueden editar y vaciar datos opcionales; sólo propietarios eliminan la ficha de las listas, conservando los trabajos y enlaces. La información es interna y no se incorpora al recorrido público. Requiere la migración aditiva `0011_client_details`: ejecutar `.venv/bin/alembic upgrade head` desde `backend` al actualizar una instalación existente.
+
+Evolución comercial sobre el repositorio Vista360 existente: landing en [/inicio](http://localhost:5174/inicio), panel en [/studio](http://localhost:5174/studio), solicitudes de digitalización y organizaciones con clientes, propiedades y recorridos compartidos según rol. La raíz `/` y `/studio` abren Trabajos. Ver [auditoría, fases, endpoints y alcance de esta entrega](docs/EVOLUCION.md). No hay pagos ni marketplace activos.
+
+El panel tiene historial de navegación: **Atrás/Adelante**, direcciones por sección y detalle de trabajo, recarga conservando el paso y aviso ante cambios sin guardar. Ver [navegación y UX](docs/UX.md).
+
+El panel `/studio` ahora comienza en **Trabajos**: solicitud o carga manual → cliente y propiedad → coordinación de visita → editor → publicación → registro de entrega. Ver [guía de operación y cambios](docs/TRABAJOS.md). El sidebar contiene Trabajos, Organizaciones, Particulares y Clientes. Organizaciones agrupa los recorridos de cada inmobiliaria o empresa; Particulares, los de cada persona contratante. Clientes es una cartera unificada de esas mismas fichas, sin alta independiente. Configuración y sus accesos anteriores están retirados temporalmente; los datos se conservan. Ver el [flujo guiado de seis pasos](docs/UX.md).
+
+Proyecto incremental según [PLAN.md](PLAN.md): base de Fase 1, visor de Fase 2, identidad/administración de Fase 3, ingestión de Fase 4, editor de Fase 5 y publicación de Fase 6. React + TypeScript + Vite, FastAPI, SQLAlchemy, Alembic y PostgreSQL. Se pueden registrar usuarios y administrar recorridos en borrador y ambientes. La interfaz guiada usa Tailwind CSS; ver [docs/UI.md](docs/UI.md). Ver [Fase 2](docs/FASE2.md), [Fase 3](docs/FASE3.md), [Fase 4](docs/FASE4.md), [Fase 5](docs/FASE5.md) y [Fase 6](docs/FASE6.md).
 
 ## Requisitos
 
@@ -23,17 +40,17 @@ cp frontend/.env.example frontend/.env
 
 Si esos archivos ya existen, conservarlos; no sobrescribir credenciales de una base inicializada. Los `.env.example` contienen valores de ejemplo sin secretos reales. Los `.env` locales y artefactos están excluidos de Git.
 
-Reemplazar `replace-with-local-password` en `.env` y en `backend/.env` por la misma contraseña local. Podés generar una con `python3 -c 'import secrets; print(secrets.token_hex(24))'`. Una contraseña hexadecimal evita caracteres que necesiten codificarse en la URL; para otras contraseñas, aplicar percent-encoding en `DATABASE_URL`.
+Reemplazar `replace-with-local-password` en `.env` y en `backend/.env` por la misma contraseña local. Podés generar una con `python3 -c 'import secrets; print(secrets.token_hex(24))'`. Una contraseña hexadecimal evita caracteres que necesiten codificarse en la URL; para otras contraseñas, aplicar percent-encoding en `DATABASE_URL`. Generar además un secreto independiente con `python3 -c 'import secrets; print(secrets.token_hex(32))'` y usarlo como `CSRF_SECRET` en backend/.env. El backend rechaza el placeholder del ejemplo.
 
 | Archivo | Variables |
 | --- | --- |
 | `.env` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` para Compose |
-| `backend/.env` | `APP_NAME`, `DATABASE_URL`, `CORS_ORIGINS` como array JSON de orígenes exactos |
-| `frontend/.env` | `VITE_API_BASE_URL`, reservada para la integración futura con API |
+| `backend/.env` | `APP_NAME`, `DATABASE_URL`, `CORS_ORIGINS` como array JSON de orígenes exactos, `CSRF_SECRET`, `APP_ENV`, `COOKIE_SECURE`, `SESSION_TTL_SECONDS`, storage y límites (ver ejemplos) |
+| `frontend/.env` | `VITE_API_BASE_URL` y `VITE_DEMO_MEDIA_BASE_URL` opcional para probar CORS del visor |
 
-El backend carga su `.env` por ruta absoluta, independientemente del directorio desde el cual se importa; las variables del proceso tienen prioridad. `DATABASE_URL` es obligatoria y usa el dialecto `postgresql+psycopg`. La URL y sus credenciales no se imprimen en la configuración. Las variables `VITE_*` son públicas y se incorporan al build: nunca poner secretos allí. La pantalla inicial todavía no realiza peticiones a la API.
+El backend carga su `.env` por ruta absoluta, independientemente del directorio desde el cual se importa; las variables del proceso tienen prioridad. `DATABASE_URL` usa `postgresql+psycopg`. Las variables `VITE_*` son públicas: nunca poner secretos allí. En desarrollo, el cliente alinea automáticamente localhost/127.0.0.1 de la API con el hostname del frontend para conservar cookies SameSite. En producción hay que configurar dominios compatibles. CORS debe incluir el origen exacto del frontend.
 
-Durante la implementación se generaron los tres `.env` locales con una contraseña aleatoria compartida, sin imprimirla. En este workspace no hace falta copiarlos nuevamente.
+Durante la implementación se generaron los tres `.env` locales con una contraseña aleatoria compartida, y se añadió un secreto CSRF independiente, sin imprimirlos. En este workspace no hace falta copiarlos nuevamente.
 
 ## 1. Iniciar PostgreSQL
 
@@ -71,7 +88,7 @@ En este workspace el entorno virtual ya está instalado; para iniciar sólo nece
 
 El healthcheck verifica que el proceso HTTP responde; no consulta PostgreSQL ni garantiza readiness de la base. `python -m app.db.check` ejecuta `SELECT 1` contra la base configurada. Los fallos de conexión hacen que el comando termine con error. SQLAlchemy abre conexiones cuando se necesitan; el arranque HTTP no ejecuta migraciones ni crea tablas automáticamente.
 
-La revisión `0001_base` es intencionalmente vacía. Al aplicarla, Alembic crea únicamente su tabla `alembic_version`. El metadata SQLAlchemy todavía no incluye modelos de negocio. La fábrica de sesiones tiene `pool_pre_ping`, timeout de conexión y cierre de recursos al apagar el backend; cada futuro caso de uso controlará su transacción.
+La revisión `0001_base` es vacía; `0002_identity_tours` crea usuarios, sesiones, recorridos y ambientes. `0003_assets` agrega archivos, tareas durables y referencias de panorámicas de ambientes; `0004_hotspots` crea puntos persistentes de navegación e información; `0005_publications` agrega snapshots y retención de assets para publicación. `0006_business` añade organizaciones, membresías, clientes, propiedades y solicitudes/eventos de Studio. `0007_workflow` vincula los trabajos con sus recorridos y añade visita, notas y entrega. `0008_individuals` permite la categoría Particular ampliando la restricción de tipos de organización, sin reclasificar registros. `0009_deletions` agrega marcas de eliminación a clientes y organizaciones para conservar sus trabajos y recorridos. Son ampliaciones de esquema y no trasladan los recorridos personales. Ejecutar `alembic upgrade head` al actualizar. La fábrica de sesiones tiene `pool_pre_ping`, timeout y cierre de recursos al apagar; cada caso de uso controla su transacción.
 
 Para verificar estado y generación de cambios:
 
@@ -80,7 +97,7 @@ alembic current
 alembic check
 ```
 
-Cuando una fase posterior incorpore modelos, importarlos en `migrations/env.py`, generar una revisión con `alembic revision --autogenerate -m "descripcion"` y revisar el SQL antes de aplicarlo. No generar modelos ahora.
+Cuando una fase posterior incorpore modelos, importarlos en `migrations/env.py`, generar una revisión con `alembic revision --autogenerate -m "descripcion"` y revisar el SQL antes de aplicarlo.
 
 ## 3. Instalar y ejecutar frontend
 
@@ -92,7 +109,7 @@ npm ci
 npm run dev
 ```
 
-Abrir <http://localhost:5174>. El servidor usa puerto fijo y falla si está ocupado, para que la configuración CORS no cambie silenciosamente.
+Abrir <http://localhost:5174/inicio> para la landing comercial y solicitud de digitalización. <http://localhost:5174/studio> y <http://localhost:5174> permiten registro/login y administración de recorridos. El visor técnico está en <http://localhost:5174/visor>. El servidor usa puerto fijo y falla si está ocupado, para que CORS no cambie silenciosamente.
 
 Build con verificación TypeScript y previsualización:
 
@@ -101,9 +118,39 @@ npm run build
 npm run preview
 ```
 
-El build queda en `frontend/dist/` y el preview en <http://localhost:4173>. No hay router, visor 360 ni dependencias de UI adicionales.
+El build queda en `frontend/dist/` y el preview en <http://localhost:4173>. El visor /visor funciona sin backend ni DB; el panel / sí los necesita. Para usar el panel en preview, añadir su origen a CORS_ORIGINS. La interfaz usa Tailwind CSS 4.3.3 mediante su plugin oficial de Vite; no requiere un servidor de estilos separado. Regenerar tipos HTTP con `npm run generate:api` cuando cambie OpenAPI.
+
+## 4. Ejecutar worker de panorámicas
+
+En una tercera terminal, desde la raíz:
+
+```sh
+cd backend
+source .venv/bin/activate
+python -m app.processing.worker
+```
+
+API y worker usan el mismo `backend/.env`, PostgreSQL y directorio de archivos (`backend/.data/assets/` por defecto). Mantener el worker activo para validar cargas y limpiar pendientes. La cola persiste en PostgreSQL al cerrar el proceso; no es necesario Redis.
+
+Abrí un recorrido, agregá un ambiente, seleccioná un JPEG equirectangular completo 2:1 de hasta 50 MiB y pulsá **Subir panorámica**. Al terminar la validación, **Ver panorama** abre su visor privado. La imagen anterior se mantiene durante un reemplazo y si la nueva falla. Los archivos se conservan al cerrar sesión. Para respaldar desarrollo se necesitan tanto la base como el directorio de archivos.
+
+Storage S3/R2 es opcional: `python -m pip install -e '.[s3]' -c requirements.lock`, configurar las variables S3 del ejemplo y un bucket privado con CORS. No se requieren servicios externos para trabajar localmente. Ver los límites y la validación pendiente del proveedor en [FASE4.md](docs/FASE4.md).
+
+## 5. Conectar ambientes y previsualizar
+
+Cargar panorámicas en dos ambientes y pulsar **Conectar Living** (o el nombre elegido). Usar **Ubicar punto**, tocar la imagen, completar etiqueta/destino y **Guardar punto**. Crear otro punto desde Cocina hacia Living para volver. **Guardar vista actual como inicial** conserva la orientación y el zoom. Los puntos de información admiten texto plano.
+
+Al salir del editor, **Previsualizar recorrido** abre el borrador privado desde el ambiente inicial, con conexiones y lista alternativa. Todo persiste al recargar y cerrar sesión. El botón Publicar prepara una versión independiente y habilita `/tour/{slug}` sin login. El enlace local funciona en esta computadora; compartir por Internet requiere despliegue y R2/CDN. Ver [FASE5.md](docs/FASE5.md) para el paso a paso y las confirmaciones de borrado.
+
+## 6. Publicar y compartir
+
+Dentro del recorrido, usar **Publicar recorrido**, revisar advertencias y esperar la versión publicada. **Abrir recorrido público** funciona sin sesión; **Copiar enlace** permite copiar su ruta. Editar el borrador conserva lo publicado hasta pulsar **Publicar cambios**. **Despublicar recorrido** retira el tour público y programa limpieza de imágenes.
+
+Se requiere el worker activo. En local se usan copias separadas bajo `.data/assets/_public`, sólo para pruebas. En S3/R2 configurar un bucket público separado y `PUBLIC_MEDIA_BASE_URL`; las imágenes públicas se sirven por el dominio de medios, sin pasar por la API en producción. Ver [FASE6.md](docs/FASE6.md) para configuración, límites y validación externa pendiente. El slug se conserva desde la primera publicación exitosa.
 
 ## Verificaciones realizadas
+
+La evolución Studio/Platform incorpora pruebas de aislamiento entre organizaciones, revocación, roles, límites compartidos y concurrentes, solicitudes privadas y transiciones auditadas, además del flujo de cartera y colaboración en navegador. Los resultados y comandos están en [EVOLUCION.md](docs/EVOLUCION.md#verificación-y-límites).
 
 Se comprobaron en este entorno:
 
@@ -111,14 +158,14 @@ Se comprobaron en este entorno:
 - Arranque de Uvicorn y respuesta HTTP real del healthcheck.
 - Conexión real de SQLAlchemy/Psycopg al PostgreSQL de Compose.
 - Upgrade, revisión activa, `alembic check`, downgrade y upgrade de la migración base.
-- Esquema público sin tablas de negocio y revisión Alembic `0001_base`.
+- Migración de la Fase 3 y permisos/CRUD sobre PostgreSQL real, incluidos casos concurrentes.
 - Compatibilidad de dependencias Python mediante `pip check`.
 
 Para repetir las verificaciones con backend iniciado, ejecutar `curl --fail http://localhost:8001/health`, `python -m app.db.check` y `alembic check` desde backend, y `npm run build` desde frontend.
 
 ## Detener servicios
 
-Ctrl+C detiene frontend y backend. Desde la raíz, `docker compose stop db` detiene PostgreSQL conservando contenedor y datos; `docker compose down` retira contenedor/red y conserva el volumen. No usar la opción `--volumes` salvo que quieras borrar la base local.
+Ctrl+C detiene frontend, backend y worker en sus respectivas terminales. Desde la raíz, `docker compose stop db` detiene PostgreSQL conservando contenedor y datos; `docker compose down` retira contenedor/red y conserva el volumen. No usar la opción `--volumes` salvo que quieras borrar la base local.
 
 ## Archivos de la Fase 1
 
@@ -165,6 +212,6 @@ También se generaron `.env`, `backend/.env`, `frontend/.env`, `backend/.venv/`,
 - Pydantic Settings para `.env` y validación; Uvicorn sin extras de rendimiento/watchfiles. [Referencia de configuración](https://docs.pydantic.dev/latest/concepts/pydantic_settings/).
 - Migración inicial vacía para verificar Alembic sin anticipar entidades de la Fase 3. [Referencia Alembic](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 - Instalación backend con pip/venv y constraints versionadas, evitando agregar otro gestor. Frontend creado con configuración mínima compatible con Vite, en lugar de conservar demos o herramientas de una plantilla que todavía no se necesitan. [Referencia Vite](https://vite.dev/guide/).
-- CORS habilitado sólo para GET y los orígenes configurados; no se activan credenciales ni métodos de autenticación hasta la fase correspondiente.
+- En Fase 3 se habilitaron credenciales y métodos de mutación, con Origin exacto y challenge CSRF firmado. Producción requiere cookies Secure y orígenes HTTPS.
 
-La Fase 2 requiere aprobación independiente. No se ha instalado Pannellum ni iniciado trabajo del visor.
+El cierre técnico del visor de Fase 2 fue aprobado para continuar, manteniendo pendientes de dispositivos/fotografías reales. La Fase 3 incorpora auth y CRUD, documentados en [docs/FASE3.md](docs/FASE3.md), junto con comandos para pruebas aisladas. La Fase 4 agrega cargas, validación y visor privado de cada panorama; ver [docs/FASE4.md](docs/FASE4.md). La Fase 5 incorpora edición persistente y previsualización privada; ver [docs/FASE5.md](docs/FASE5.md). La Fase 6 incorpora publicación versionada y vista pública; ver [docs/FASE6.md](docs/FASE6.md). La Fase 7 requiere aprobación antes de iniciarse.

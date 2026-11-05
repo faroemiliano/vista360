@@ -5,6 +5,16 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
+from app.modules.auth import models as auth_models
+from app.modules.tours import models as tour_models
+from app.modules.scenes import models as scene_models
+from app.modules.assets import models as asset_models
+from app.modules.hotspots import models as hotspot_models
+from app.modules.publications import models as publication_models
+from app.modules.organizations import models as organization_models
+from app.modules.properties import models as property_models
+from app.modules.studio import models as studio_models
+from app.modules.workspaces import models as workspace_models
 
 config = context.config
 if config.config_file_name is not None:

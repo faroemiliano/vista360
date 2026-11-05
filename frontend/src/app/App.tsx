@@ -1,9 +1,10 @@
+import { Workspace } from './Workspace'
+import { ViewerDemo } from '../viewer/ViewerDemo'
+import { PublicTour } from '../features/tours/PublicTour'
+import { Landing } from '../features/commercial/Landing'
+
 export function App() {
-  return (
-    <main>
-      <p className="brand">Vista360</p>
-      <h1>Recorridos virtuales de tus espacios.</h1>
-      <p>Estamos preparando la plataforma.</p>
-    </main>
-  )
+  if (window.location.pathname === '/inicio') return <Landing />
+  if (window.location.pathname.startsWith('/tour/')) return <PublicTour slug={window.location.pathname.slice(6)} />
+  return window.location.pathname === '/visor' ? <ViewerDemo /> : <Workspace />
 }
