@@ -134,7 +134,7 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
       const frame = (await visitor.locator('.viewer-frame').boundingBox())!
       const viewport = visitor.viewportSize()!
       expect(frame.width).toBeGreaterThan(viewport.width * 0.94)
-      expect(frame.height).toBeGreaterThan(viewport.height * 0.75)
+      expect(frame.height).toBeGreaterThan(viewport.height * (viewport.height < 500 ? 0.55 : 0.7))
       expect(frame.y + frame.height).toBeLessThanOrEqual(viewport.height)
       expect(await visitor.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }

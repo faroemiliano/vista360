@@ -60,6 +60,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
 
   return (
     <section className="viewer-section" aria-label={`Panorama de ${scene.name}`}>
+      <div className="viewer-stage">
       <div className="viewer-frame" data-status={status}>
         <div ref={container} className="panorama" data-testid="panorama" />
         {status === 'loading' && <p className="viewer-message viewer-loading" role="status">Cargando panorama…</p>}
@@ -73,6 +74,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
           </div>
         )}
       </div>
+      <div className="viewer-controls">
       <div className="viewer-toolbar" aria-label="Controles del panorama">
         {motionDevice && <>
           <button disabled={status !== 'ready' || Boolean(motionUnavailable) || motionState.mode === 'waiting'} aria-pressed={motionState.mode === 'active'} onClick={() => {
@@ -110,6 +112,8 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
         </>}
       </div>
       {motionDevice && <p className="viewer-hint" role="status">{motionUnavailable || motionState.message || 'Activá «Mirar con el celular» para explorar moviendo el teléfono.'}</p>}
+      </div>
+      </div>
       <p className="viewer-hint">Arrastrá para mirar alrededor. Usá Acercar y Alejar para ajustar el zoom, o Vista amplia para ver más del ambiente.{onSaveView && ' Para conservar ese encuadre, pulsá Guardar vista actual como inicial.'}</p>
       {picking && <p role="status">Tocá un punto sin arrastrar para obtener sus coordenadas.</p>}
       {experimentalTools && <output data-testid="coordinates" aria-live="polite">
