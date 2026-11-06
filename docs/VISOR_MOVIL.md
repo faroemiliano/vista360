@@ -8,6 +8,8 @@ El visor compartido agrega control opcional mediante los sensores de orientació
    En el recorrido publicado, los controles aparecen arriba de la panorámica,
    dentro de la pantalla. Para bajar al resto de la página, deslizar desde esa
    barra; arrastrar sobre la foto sirve para mirar alrededor.
+   Las conexiones muestran un doble chevrón sobre un aro y el nombre del destino.
+   Se puede tocar tanto el marcador como su etiqueta para cambiar de ambiente.
 2. Esperar a que cargue la panorámica y pulsar **Mirar con el celular**.
 3. Si el navegador pide permiso de movimiento, permitirlo. No se pide acceso a la cámara.
 4. Apuntar el teléfono hacia adelante y moverlo suavemente. La primera lectura conserva el encuadre actual; las siguientes acompañan el giro y la inclinación.

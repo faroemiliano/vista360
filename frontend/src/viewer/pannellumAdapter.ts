@@ -138,11 +138,28 @@ export function createPannellumAdapter(
     return {
       id: hotspot.id, yaw: hotspot.yaw, pitch: hotspot.pitch,
       type: hotspot.type === 'navigation' ? 'scene' : 'info',
-      cssClass: 'tour-hotspot',
+      cssClass: `tour-hotspot tour-hotspot--${hotspot.type}`,
       createTooltipFunc(element) {
         const button = document.createElement('button')
         button.type = 'button'
-        button.textContent = hotspot.type === 'navigation' ? '→' : 'i'
+        if (hotspot.type === 'navigation') {
+          const marker = document.createElement('span')
+          marker.className = 'tour-navigation-marker'
+          marker.setAttribute('aria-hidden', 'true')
+          const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+          icon.setAttribute('viewBox', '0 0 24 24')
+          icon.setAttribute('aria-hidden', 'true')
+          icon.setAttribute('focusable', 'false')
+          const chevrons = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+          chevrons.setAttribute('d', 'm6 13 6-6 6 6 M6 19l6-6 6 6')
+          icon.append(chevrons)
+          marker.append(icon)
+          const label = document.createElement('span')
+          label.className = 'tour-navigation-label'
+          label.setAttribute('aria-hidden', 'true')
+          label.textContent = hotspot.label
+          button.append(marker, label)
+        } else button.textContent = 'i'
         button.setAttribute('aria-label', hotspot.label)
         button.title = hotspot.label
         button.addEventListener('click', (event) => {

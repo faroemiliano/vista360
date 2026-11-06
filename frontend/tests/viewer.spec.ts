@@ -15,10 +15,16 @@ test('carga sólo la escena activa desde otro origen y navega por hotspots', asy
   await ready(page)
   expect(requests.some((url) => url.includes('sala-'))).toBe(false)
   expect(requests.some((url) => url.startsWith('http://127.0.0.1:5175/'))).toBe(true)
+  const navigation = page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true })
+  await expect(navigation.locator('svg')).toHaveCount(1)
+  await expect(navigation.locator('.tour-navigation-label')).toHaveText('Ir a Sala de prueba')
+  const marker = (await navigation.boundingBox())!
+  expect(marker.width).toBeGreaterThanOrEqual(48)
+  expect(marker.height).toBeGreaterThanOrEqual(48)
   await page.screenshot({ path: testInfo.outputPath('visor.png'), fullPage: true })
   await page.getByRole('button', { name: 'Sobre este panorama', exact: true }).click()
   await expect(page.locator('.information')).toContainText('Grilla sintética propia')
-  await page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true }).click()
+  await navigation.locator('.tour-navigation-label').click()
   await ready(page)
   await expect(page.getByRole('heading', { name: 'Sala de prueba', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Volver a Atrio de prueba', exact: true }).click()
@@ -46,7 +52,8 @@ test('clic/tap obtiene grados; arrastre no crea un punto; agrega y quita marcado
   await page.getByRole('button', { name: 'Vista inicial' }).click()
   // El zoom debe cambiar el ángulo correspondiente a un mismo píxel fuera del centro.
   // Las coordenadas son relativas al visor: la barra se desplaza al envolver en móvil.
-  const point = { x: box.width * 0.7, y: box.height * 0.65 }
+  // Medir en una zona vacía: las etiquetas de navegación también reciben toques.
+  const point = { x: box.width * 0.2, y: box.height * 0.85 }
   await panorama.click({ position: point })
   const beforeZoom = Number((await page.getByTestId('coordinates').textContent())!.match(/Yaw (-?[\d.]+)/)![1])
   await page.getByRole('button', { name: 'Acercar', exact: true }).click()
