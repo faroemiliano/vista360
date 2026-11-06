@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { apiResourceUrl, assetsApi, hotspotsApi, scenesApi, toursApi } from '../../api/client'
 import type { HotspotInput, Panorama, SavedHotspot, Scene, Tour } from '../../api/client'
 import { PanoramaViewer } from '../../viewer/PanoramaViewer'
@@ -15,6 +15,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
   const [activeId, setActiveId] = useState(initialSceneId)
   const scene = scenes.find((item) => item.id === activeId)
   const [data, setData] = useState<{ panorama: Panorama; hotspots: SavedHotspot[] } | null>(null)
+  const [panoramaScene, setPanoramaScene] = useState<PanoramaScene | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   useBlockNavigation(Boolean(draft))
   const [version, setVersion] = useState(0)
@@ -34,6 +35,14 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
         .then(([panorama, hotspots]) => {
           if (!active) return
           setData({ panorama, hotspots })
+          setPanoramaScene({
+            id: scene.id, name: scene.name,
+            sources: panorama.sources.map((source) => ({ ...source, url: apiResourceUrl(source.url) })),
+            initialView: { yaw: scene.initial_yaw ?? 0, pitch: scene.initial_pitch ?? 0, hfov: scene.initial_hfov ?? 90 },
+            hotspots: hotspots.map((point) => point.type === 'navigation'
+              ? { id: point.id, type: 'navigation', label: point.label, yaw: point.yaw, pitch: point.pitch, targetSceneId: point.target_scene_id! }
+              : { id: point.id, type: 'info', label: point.label, yaw: point.yaw, pitch: point.pitch, text: point.content!.text }),
+          })
           const back = pendingReturn.current
           if (back?.sceneId === scene.id) {
             const existing = hotspots.find((point) => point.type === 'navigation' && point.target_scene_id === back.target)
@@ -47,15 +56,6 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
     }
     return () => { active = false }
   }, [tour.id, scene, version])
-
-  const panoramaScene = useMemo<PanoramaScene | null>(() => scene && data ? {
-    id: scene.id, name: scene.name,
-    sources: data.panorama.sources.map((source) => ({ ...source, url: apiResourceUrl(source.url) })),
-    initialView: { yaw: scene.initial_yaw ?? 0, pitch: scene.initial_pitch ?? 0, hfov: scene.initial_hfov ?? 90 },
-    hotspots: data.hotspots.map((point) => point.type === 'navigation'
-      ? { id: point.id, type: 'navigation', label: point.label, yaw: point.yaw, pitch: point.pitch, targetSceneId: point.target_scene_id! }
-      : { id: point.id, type: 'info', label: point.label, yaw: point.yaw, pitch: point.pitch, text: point.content!.text }),
-  } : null, [scene, data])
 
   function navigate(id: string) {
     if (busy) return
@@ -126,12 +126,12 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     {!scene?.panorama_asset_id && <p>Este ambiente todavía no tiene una panorámica validada. Cargala desde la lista de ambientes.</p>}
-    {scene?.panorama_asset_id && !data && !error && <p role="status">Cargando ambiente…</p>}
     {error && !data && <button onClick={() => setVersion((value) => value + 1)}>Reintentar ambiente</button>}
-    <div className={preview ? '' : 'grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]'}><div className="min-w-0">
-    {panoramaScene && <PanoramaViewer key={scene!.id} scene={panoramaScene} onNavigate={navigate} experimentalTools={false}
-      onPick={!preview ? pick : undefined}
-      onSaveView={!preview ? (view) => {
+    <div className={preview ? '' : 'grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]'}><div className="relative min-w-0">
+    {scene?.panorama_asset_id && !data && !error && <p className="viewer-switching-message" role="status">Cargando {scene.name}…</p>}
+    {scene?.panorama_asset_id && panoramaScene && <PanoramaViewer scene={panoramaScene} onNavigate={navigate} experimentalTools={false}
+      onPick={!preview && data ? pick : undefined}
+      onSaveView={!preview && data ? (view) => {
         if (draft && !window.confirm('¿Descartar el punto sin guardar y guardar la vista inicial?')) return
         void act(async () => {
         await scenesApi.update(tour.id, scene!.id, { name: scene!.name, initial_yaw: view.yaw,

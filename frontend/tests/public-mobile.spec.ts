@@ -1,5 +1,46 @@
 import { expect, test } from '@playwright/test'
 
+test('cambia de ambiente conservando página, controles y canvas del recorrido público', async ({ page }) => {
+  let publicationRequests = 0
+  await page.route('**/api/v1/public/tours/continuous-tour', (route) => {
+    publicationRequests++
+    return route.fulfill({ json: {
+      schema_version: 1, version: 1, title: 'Visita continua', description: '', start_scene_id: 'living',
+      scenes: [
+        { id: 'living', name: 'Living', initial_view: { yaw: 0, pitch: 0, hfov: 110 },
+          sources: [{ url: 'http://127.0.0.1:5175/panoramas/atrio-2048.png', width: 2048, height: 1024 }],
+          hotspots: [{ id: 'ida', type: 'navigation', label: 'Ir a Cocina', target_scene_id: 'kitchen', content: null, yaw: 0, pitch: -10 }] },
+        { id: 'kitchen', name: 'Cocina', initial_view: { yaw: 0, pitch: 0, hfov: 110 },
+          sources: [{ url: 'http://127.0.0.1:5175/panoramas/sala-2048.png', width: 2048, height: 1024 }],
+          hotspots: [{ id: 'vuelta', type: 'navigation', label: 'Volver a Living', target_scene_id: 'living', content: null, yaw: 0, pitch: -10 }] },
+      ],
+    } })
+  })
+  await page.route('**/panoramas/sala-2048.png', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 450))
+    await route.continue()
+  })
+  await page.goto('/tour/continuous-tour')
+  await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'ready', { timeout: 15_000 })
+  const initialRequests = publicationRequests // StrictMode repite el efecto inicial en desarrollo.
+  await page.locator('.panorama canvas').evaluate((element) => element.setAttribute('data-persistente', 'true'))
+  await page.locator('.viewer-controls').evaluate((element) => element.setAttribute('data-persistente', 'true'))
+  const documentNavigations: string[] = []
+  page.on('framenavigated', (frame) => { if (frame === page.mainFrame()) documentNavigations.push(frame.url()) })
+  for (let round = 0; round < 3; round++) {
+    for (const step of [{ button: 'Ir a Cocina', name: 'Cocina' }, { button: 'Volver a Living', name: 'Living' }]) {
+      await page.getByRole('button', { name: step.button, exact: true }).click()
+      await expect(page.getByRole('heading', { name: step.name, exact: true })).toBeVisible()
+      await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'ready', { timeout: 15_000 })
+      await expect(page.locator('canvas[data-persistente="true"]')).toHaveCount(1)
+      await expect(page.locator('.viewer-controls[data-persistente="true"]')).toHaveCount(1)
+      expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    }
+  }
+  expect(publicationRequests).toBe(initialRequests)
+  expect(documentNavigations).toEqual([])
+})
+
 test('recorrido público muestra controles de movimiento sin desplazar el panorama', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, get: () => 1 })

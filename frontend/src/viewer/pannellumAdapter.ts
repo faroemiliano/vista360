@@ -32,7 +32,9 @@ export function createPannellumAdapter(
   let loading = false
   let leaving = false
   let movementFrame: number | null = null
-  let entrance: Animation | null = null
+  let renderPending = Promise.resolve()
+  let finishRender: (() => void) | null = null
+  let activeSceneId: string | null = null
   let picking = false
   let pointer: { id: number; x: number; y: number; moved: boolean } | null = null
   const pointers = new Set<number>()
@@ -42,7 +44,6 @@ export function createPannellumAdapter(
   function cancelTransition() {
     if (movementFrame !== null) cancelAnimationFrame(movementFrame)
     movementFrame = null
-    entrance?.cancel(); entrance = null
     leaving = false
     delete container.dataset.transition
     viewer?.stopMovement()
@@ -124,6 +125,8 @@ export function createPannellumAdapter(
   container.addEventListener('pointerleave', pointerCancel, true)
 
   function clearViewer() {
+    finishRender?.(); finishRender = null
+    activeSceneId = null
     if (!viewer) return
     viewer.off('load')
     viewer.off('error')
@@ -190,6 +193,7 @@ export function createPannellumAdapter(
     controller = abort
     const started = performance.now()
     let objectUrl: string | null = null
+    let renderDone: (() => void) | undefined
     try {
       // Sólo la escena activa. Fetch permite cancelar descargas al navegar/desmontar.
       const response = await fetch(source.url, {
@@ -206,44 +210,48 @@ export function createPannellumAdapter(
         || image.naturalWidth !== image.naturalHeight * 2) {
         throw new Error('La panorámica debe ser completa, 2:1 y tener las dimensiones declaradas.')
       }
-      // Mantener la imagen anterior durante la descarga, sin duplicar contextos WebGL.
-      clearViewer()
-      const host = document.createElement('div')
-      host.className = 'panorama-host'
-      container.appendChild(host)
-      // Imagen ya decodificada: evita el XHR interno no cancelable de Pannellum.
-      // dynamicUpdate se apaga al cargar: no hay un bucle permanente de video.
-      viewer = window.pannellum.viewer(host, {
-        autoLoad: false, showControls: false, escapeHTML: true,
-        default: { firstScene: scene.id },
-        scenes: {
-          [scene.id]: {
-            type: 'equirectangular', panorama: image, dynamic: true, dynamicUpdate: true,
-            yaw: scene.initialView.yaw, pitch: scene.initialView.pitch,
-            // Apertura amplia por defecto; se conserva la dirección inicial guardada.
-            hfov: 110, minHfov: 50, maxHfov: 110,
-            mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: 0,
-            hotSpots: scene.hotspots.map(hotspotConfig),
-          },
-        },
-      })
+      // Serializar el cambio nativo: Pannellum ignora loadScene si aún está cargando.
+      await renderPending
+      if (destroyed || current !== generation) return
+      const previousSceneId = activeSceneId
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const config = {
+        type: 'equirectangular', panorama: image, dynamic: true, dynamicUpdate: true,
+        yaw: scene.initialView.yaw, pitch: scene.initialView.pitch,
+        // Apertura amplia por defecto; se conserva la dirección inicial guardada.
+        hfov: 110, minHfov: 50, maxHfov: 110,
+        mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: reducedMotion ? 0 : 180,
+        hotSpots: scene.hotspots.map(hotspotConfig),
+      }
+      renderPending = new Promise<void>((resolve) => { renderDone = resolve; finishRender = resolve })
+      // Reutilizar el mismo visor, canvas y contexto WebGL. Sólo cambia la escena.
+      if (!viewer) {
+        const host = document.createElement('div')
+        host.className = 'panorama-host'
+        container.appendChild(host)
+        viewer = window.pannellum.viewer(host, {
+          autoLoad: false, showControls: false, escapeHTML: true,
+          default: { firstScene: scene.id }, scenes: { [scene.id]: config },
+        })
+      } else {
+        viewer.addScene(scene.id, config)
+        viewer.getConfig().sceneFadeDuration = reducedMotion ? 0 : 180
+      }
+      viewer.off('load'); viewer.off('error')
       viewer.on('load', () => {
         viewer?.setUpdate(false)
+        activeSceneId = scene.id
+        if (previousSceneId && previousSceneId !== scene.id) viewer?.removeScene(previousSceneId)
+        renderDone?.(); finishRender = null
         if (destroyed || current !== generation) return
         loading = false
-        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          entrance?.cancel()
-          entrance = host.animate([
-            { opacity: 0, transform: 'scale(1.04)' },
-            { opacity: 1, transform: 'scale(1)' },
-          ], { duration: 280, easing: 'ease-out' })
-        }
         callbacks.onReady(scene.id, {
           source, maxTextureSize, decodedBytes: source.width * source.height * 4,
           transferBytes: blob.size, loadMilliseconds: performance.now() - started,
         })
       })
       viewer.on('error', () => {
+        clearViewer()
         if (!destroyed && current === generation) {
           loading = false
           callbacks.onError('No se pudo renderizar la panorámica. Probá con la resolución menor.')
@@ -251,6 +259,7 @@ export function createPannellumAdapter(
       })
       viewer.loadScene(scene.id)
     } catch (error) {
+      renderDone?.()
       if (!destroyed && current === generation && !abort.signal.aborted) {
         loading = false
         clearViewer()

@@ -141,6 +141,7 @@
 .panorama { touch-action: none; }
 .viewer-message { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 1rem; color: #edf3ff; background: #0b1423; margin: 0; }
 .viewer-loading { background: #070b1460; pointer-events: none; }
+.viewer-switching-message { position: absolute; bottom: .75rem; left: .75rem; z-index: 2; max-width: calc(100% - 1.5rem); margin: 0; padding: .4rem .7rem; border: 1px solid #7ceaff35; border-radius: .65rem; color: #edf3ff; background: #091321dc; pointer-events: none; }
 .viewer-frame[data-status="loading"] .panorama, .panorama[data-transition="departing"] { pointer-events: none; }
 .viewer-toolbar { margin-block: .75rem; }
 .viewer-toolbar button { font-size: .75rem; }

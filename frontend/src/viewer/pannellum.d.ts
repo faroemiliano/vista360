@@ -14,6 +14,9 @@ interface PannellumViewer {
   on: (name: string, callback: () => void) => PannellumViewer
   off: (name: string, callback?: () => void) => PannellumViewer
   loadScene: (sceneId: string) => PannellumViewer
+  addScene: (sceneId: string, config: Record<string, unknown>) => PannellumViewer
+  removeScene: (sceneId: string) => boolean
+  getConfig: () => Record<string, unknown>
   setUpdate: (enabled: boolean) => PannellumViewer
   isLoaded: () => boolean
   mouseEventToCoords: (event: MouseEvent) => [number, number]

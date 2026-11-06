@@ -240,7 +240,8 @@ test('avanza hacia el hotspot y conserva la imagen durante una descarga lenta', 
   await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'loading')
   await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(1)
   await ready(page)
-  await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(0)
+  await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(1)
+  await expect(page.locator('.panorama canvas')).toHaveCount(1)
   await expect(page.getByTestId('panorama')).not.toHaveAttribute('data-transition', 'departing')
 })
 
