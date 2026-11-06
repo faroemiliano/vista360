@@ -13,7 +13,7 @@ import { StudioIdentity } from '../features/business/StudioIdentity'
 import { defaultRoute, NavigationGuardContext, useStudioNavigation } from './navigation'
 import type { StudioRoute } from './navigation'
 
-type View = 'organizations' | 'jobs' | 'clients'
+type View = 'organizations' | 'jobs' | 'clients' | 'requests'
 
 export function Workspace() {
   const [session, setSession] = useState<SessionState | null>(null)
@@ -22,7 +22,7 @@ export function Workspace() {
   const navigation = useStudioNavigation()
   const { route } = navigation
   const view = route.view
-  const [staff, setStaff] = useState(false)
+  const [staff, setStaff] = useState<boolean | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeOrganizationId, setActiveOrganizationId] = useState('')
   const [studioState, setStudioState] = useState<{ userId: string; rows: BusinessWorkspace[]; selectedId: string } | null>(null)
@@ -94,7 +94,7 @@ export function Workspace() {
   }, [studioState, session?.user?.id, route.studioId])
   useEffect(() => {
     let active = true
-    setStaff(false)
+    setStaff(null)
     if (session?.user) businessApi.access().then((access) => { if (active) setStaff(access.platform_admin) }).catch(() => { if (active) setStaff(false) })
     return () => { active = false }
   }, [session?.user?.id])
@@ -115,6 +115,7 @@ export function Workspace() {
         {session?.user && <>
           <button {...navigationProps('organizations')} onClick={() => openOrganizations()}><Icon name="globe" />Organizaciones</button>
           <button {...navigationProps('individuals')} onClick={() => openOrganizations('individuals')}><Icon name="camera" />Particulares</button>
+          {staff && <button {...navigationProps('requests')} onClick={() => openPanel('requests')}><Icon name="image" />Solicitudes web</button>}
           <button aria-label="Gestionar clientes" {...navigationProps('clients')} onClick={() => openPanel('clients')}><Icon name="link" />Clientes</button>
         </>}
             </nav>
@@ -138,13 +139,13 @@ export function Workspace() {
         {session?.user && activeStudio && <nav aria-label="Historial de navegación" className="mb-6 flex flex-wrap items-center gap-2">
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canBack} onClick={navigation.back}><Icon name="arrow" className="size-4 rotate-180" />Atrás</button>
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>Adelante<Icon name="arrow" className="size-4" /></button>
-          <span className="ml-auto text-xs text-muted">{view === 'jobs' ? route.jobId ? 'Trabajos / Detalle' : route.creating ? 'Trabajos / Nuevo trabajo' : 'Trabajos' : view === 'clients' ? 'Clientes' : `${route.group === 'individuals' ? 'Particulares' : 'Organizaciones'}${route.organizationId ? ' / Recorridos' : ''}`}</span>
+          <span className="ml-auto text-xs text-muted">{view === 'requests' ? 'Solicitudes web' : view === 'jobs' ? route.jobId ? 'Trabajos / Detalle' : route.creating ? 'Trabajos / Nuevo trabajo' : 'Trabajos' : view === 'clients' ? 'Clientes' : `${route.group === 'individuals' ? 'Particulares' : 'Organizaciones'}${route.organizationId ? ' / Recorridos' : ''}`}</span>
         </nav>}
         {error && <p role="alert">{error}</p>}
         {!session && !error && <p role="status">Cargando sesión…</p>}
         {!session && error && <button onClick={() => { setError(''); refreshSession() }}>Reintentar conexión</button>}
         {session && (session.user ? activeStudio ? <div key={`${session.user.id}-${activeStudio.id}`}>
-          {view === 'clients' ? <ClientsPanel workspaceId={activeStudio.id} query={route.query} kind={route.kind} onFilterChange={(query, kind) => navigation.navigate({ ...route, query, kind }, { replace: true, keepScroll: true })} key={session.user.id} onOpen={openClient} onJobs={clientJobs} onRemoved={(id) => { if (activeOrganizationId === id) setActiveOrganizationId('') }} onExpired={refreshSession} /> : view === 'jobs' ? <JobsPanel workspaceId={activeStudio.id} key={session.user.id} initialCreate={route.creating} staff={staff} initialJobId={route.jobId} initialStep={route.step} initialFilter={route.status} initialOffset={route.offset} initialOrganizationId={route.organizationId} onOrganizationChange={setActiveOrganizationId} onRouteChange={(changes, replace = false) => navigation.navigate({ ...route, ...changes }, { replace, force: replace, keepScroll: replace })} onExpired={refreshSession} onNavigate={navigateOrganization} />
+          {view === 'requests' && !staff ? <p role={staff === null ? 'status' : 'alert'}>{staff === null ? 'Verificando acceso…' : 'Las solicitudes web están reservadas a la administración de Vision360.'}</p> : view === 'clients' ? <ClientsPanel workspaceId={activeStudio.id} query={route.query} kind={route.kind} onFilterChange={(query, kind) => navigation.navigate({ ...route, query, kind }, { replace: true, keepScroll: true })} key={session.user.id} onOpen={openClient} onJobs={clientJobs} onRemoved={(id) => { if (activeOrganizationId === id) setActiveOrganizationId('') }} onExpired={refreshSession} /> : view === 'jobs' || view === 'requests' ? <JobsPanel workspaceId={activeStudio.id} key={`${session.user.id}-${view}`} initialCreate={route.creating} staff={staff === true} mode={view === 'requests' ? 'requests' : 'work'} initialRequestId={route.requestId} onOpenWork={(job) => goRoute({ view: 'jobs', jobId: job.id, organizationId: job.organization_id || '', step: 'visit' })} initialJobId={route.jobId} initialStep={route.step} initialFilter={route.status} initialOffset={route.offset} initialOrganizationId={route.organizationId} onOrganizationChange={setActiveOrganizationId} onRouteChange={(changes, replace = false) => navigation.navigate({ ...route, ...changes }, { replace, force: replace, keepScroll: replace })} onExpired={refreshSession} onNavigate={navigateOrganization} />
               : <OrganizationsPanel workspaceId={activeStudio.id} canCreateClients={activeStudio.is_owner} key={`${session.user.id}-${route.group}-${route.organizationId}-${route.tab}`} group={route.tab === 'tours' ? route.group : 'all'} onNewWork={newWork} initialOrganizationId={route.organizationId} initialTab={route.tab} initialTourId={route.tourId} autoSelect={false} onOpenOrganization={(id) => navigation.navigate({ ...route, organizationId: id, tourId: '' })} onDirectory={() => navigation.navigate({ ...route, organizationId: '', tourId: '', tab: 'tours' })} onTourChange={(id) => navigation.navigate({ ...route, tourId: id })} onOrganizationChange={setActiveOrganizationId} onSectionChange={(tab) => navigation.navigate({ ...route, tourId: '', tab: tab === 'properties' || tab === 'members' ? tab : 'tours' })} onExpired={refreshSession} />}
         </div> : studioError ? <div role="alert"><p>{studioError}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>Reintentar estudio</button></div> : <p role="status">Abriendo tu estudio…</p> : <AuthForm onSession={handleSession} />)}
       </main>

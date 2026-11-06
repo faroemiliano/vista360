@@ -215,3 +215,5 @@ También se generaron `.env`, `backend/.env`, `frontend/.env`, `backend/.venv/`,
 - En Fase 3 se habilitaron credenciales y métodos de mutación, con Origin exacto y challenge CSRF firmado. Producción requiere cookies Secure y orígenes HTTPS.
 
 El cierre técnico del visor de Fase 2 fue aprobado para continuar, manteniendo pendientes de dispositivos/fotografías reales. La Fase 3 incorpora auth y CRUD, documentados en [docs/FASE3.md](docs/FASE3.md), junto con comandos para pruebas aisladas. La Fase 4 agrega cargas, validación y visor privado de cada panorama; ver [docs/FASE4.md](docs/FASE4.md). La Fase 5 incorpora edición persistente y previsualización privada; ver [docs/FASE5.md](docs/FASE5.md). La Fase 6 incorpora publicación versionada y vista pública; ver [docs/FASE6.md](docs/FASE6.md). La Fase 7 requiere aprobación antes de iniciarse.
+
+Consultas del sitio: [bandeja privada y configuración de avisos por email](docs/SOLICITUDES_WEB.md).

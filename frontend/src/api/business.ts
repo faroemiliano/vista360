@@ -38,6 +38,7 @@ export const businessApi = {
     return request<components['schemas']['ServiceReceipt']>('/service-requests', 'POST', data)
   },
   jobs: (offset: number) => request<ServiceJob[]>(`/admin/service-requests?offset=${offset}&limit=50`),
+  serviceRequest: (id: string) => request<ServiceJob>(`/admin/service-requests/${id}`),
   transition: (id: string, data: components['schemas']['TransitionInput']) => request<ServiceJob>(`/admin/service-requests/${id}/status`, 'PUT', data),
   events: (id: string) => request<components['schemas']['EventResponse'][]>(`/admin/service-requests/${id}/events`),
   workList: (org: string, offset = 0, status = '') => request<WorkJob[]>(`/organizations/${org}/jobs?offset=${offset}${status ? `&status=${encodeURIComponent(status)}` : ''}`),

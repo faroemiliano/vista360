@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.modules.auth.models import User
 from app.modules.auth.security import current_user, require_csrf
 from app.modules.organizations.service import is_staff
-from app.modules.studio import service, work_service
+from app.modules.studio import service, work_service, notifications
 from app.modules.organizations.service import organization_access
 from app.modules.studio.models import ServiceEvent, ServiceRequest
 from app.modules.studio.schemas import (AssignWorkInput, DeliveryInput, EventResponse, ServiceInput,
@@ -29,7 +29,16 @@ def submit(data: ServiceInput, request: Request, db: Session = Depends(get_db)):
 @router.get("/admin/service-requests", response_model=list[ServiceResponse])
 def list_requests(limit: int = 50, offset: int = 0, db: Session = Depends(get_db), user: User = Depends(administrator)):
     if not 1 <= limit <= 100 or offset < 0: raise HTTPException(422, "Paginación inválida")
-    return list(db.scalars(select(ServiceRequest).where(ServiceRequest.origin == 'web').order_by(ServiceRequest.created_at.desc()).limit(limit).offset(offset)))
+    items = list(db.scalars(select(ServiceRequest).where(ServiceRequest.origin == 'web').order_by(ServiceRequest.created_at.desc()).limit(limit).offset(offset)))
+    return notifications.responses(db, items)
+
+
+@router.get('/admin/service-requests/{request_id}', response_model=ServiceResponse)
+def request_details(request_id: UUID, db: Session = Depends(get_db), user: User = Depends(administrator)):
+    item = db.get(ServiceRequest, request_id)
+    if not item or item.origin != 'web':
+        raise HTTPException(404, 'Solicitud no encontrada')
+    return notifications.responses(db, [item])[0]
 
 
 @router.put("/admin/service-requests/{request_id}/status", response_model=ServiceResponse, dependencies=[Depends(require_csrf)])

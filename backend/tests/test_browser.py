@@ -14,14 +14,18 @@ def test_frontend_and_real_api(database):
     from sqlalchemy.orm import Session
     from app.modules.auth.models import User
     from app.modules.auth.service import password_hasher
+    from app.modules.workspaces.service import ensure_owned_workspace
     admin_id = uuid4()
     with Session(database[0]) as db:
-        db.add(User(id=admin_id, email_normalized='browser-admin@example.com', password_hash=password_hasher.hash('Test-password-123!')))
+        user = User(id=admin_id, email_normalized='browser-admin@example.com', password_hash=password_hasher.hash('Test-password-123!'))
+        db.add(user)
+        db.flush()
+        ensure_owned_workspace(db, user)
         db.commit()
     environment = os.environ.copy()
     environment.update({
         "DATABASE_URL": database[1], "CSRF_SECRET": get_settings().csrf_secret.get_secret_value(),
-        "APP_ENV": "test", "COOKIE_SECURE": "false", "TEST_API": "1",
+        "APP_ENV": "test", "COOKIE_SECURE": "false", "TEST_API": "1", "RESEND_API_KEY": "",
         "PLATFORM_ADMIN_USER_IDS": json.dumps([str(admin_id)]),
         "TEST_ADMIN_EMAIL": "browser-admin@example.com",
     })

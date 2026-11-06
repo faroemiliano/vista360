@@ -18,6 +18,9 @@ def submit(db, data, request):
     item = ServiceRequest(**payload, submission_id=data.submission_id, fingerprint=digest)
     db.add(item)
     try:
+        db.flush()
+        from app.modules.assets.models import ProcessingJob
+        db.add(ProcessingJob(kind='notify_service', details={'request_id': str(item.id)}))
         db.commit()
     except IntegrityError:
         db.rollback()

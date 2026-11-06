@@ -27,7 +27,11 @@ logger = logging.getLogger("vista360.worker")
 
 def claim(factory) -> dict | None:
     with factory() as db:
-        job = db.scalar(select(ProcessingJob).where(or_(
+        from app.modules.studio.notifications import configured
+        query = select(ProcessingJob)
+        if not configured():
+            query = query.where(ProcessingJob.kind != 'notify_service')
+        job = db.scalar(query.where(or_(
             (ProcessingJob.status == "queued") & (ProcessingJob.available_at <= now()),
             (ProcessingJob.status == "running") & (ProcessingJob.lease_expires_at <= now()),
         )).order_by(ProcessingJob.kind, ProcessingJob.available_at).with_for_update(skip_locked=True).limit(1))
@@ -167,7 +171,10 @@ def run_once(factory) -> bool:
     try:
         if ticket["attempts"] > 3:
             fail(factory, ticket, "storage_error"); return True
-        if ticket["kind"] == "delete_file":
+        if ticket["kind"] == "notify_service":
+            from app.modules.studio.notifications import run
+            run(factory, ticket)
+        elif ticket["kind"] == "delete_file":
             storage = get_public_storage(ticket["details"]["backend"]) if ticket["details"].get("public") else get_storage(ticket["details"]["backend"])
             storage.delete(ticket["details"]["key"])
             with factory() as db:

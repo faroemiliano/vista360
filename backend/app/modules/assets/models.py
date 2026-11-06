@@ -44,7 +44,7 @@ class ProcessingJob(Base):
     __tablename__ = "processing_jobs"
     __table_args__ = (
         CheckConstraint("status IN ('queued','running','succeeded','failed','cancelled')", name="status_valid"),
-        CheckConstraint("kind IN ('validate_panorama','delete_file','publish_tour')", name="kind_valid"),
+        CheckConstraint("kind IN ('validate_panorama','delete_file','publish_tour','notify_service')", name="kind_valid"),
         CheckConstraint("attempts >= 0", name="attempts_nonnegative"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

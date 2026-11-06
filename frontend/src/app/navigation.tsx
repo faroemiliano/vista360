@@ -4,24 +4,24 @@ import { workSteps } from '../components/WorkSteps'
 import type { WorkStep } from '../components/WorkSteps'
 
 export type StudioRoute = {
-  view: 'jobs' | 'organizations' | 'clients'; group: 'companies' | 'individuals';
+  view: 'jobs' | 'organizations' | 'clients' | 'requests'; requestId: string; group: 'companies' | 'individuals';
   studioId: string; organizationId: string; jobId: string; step: WorkStep;
   creating: boolean; tab: 'tours' | 'properties' | 'members'; tourId: string;
   query: string; kind: string; status: string; offset: number;
 }
 export const defaultRoute: StudioRoute = {
-  view: 'jobs', group: 'companies', studioId: '', organizationId: '', jobId: '', step: 'visit',
+  view: 'jobs', requestId: '', group: 'companies', studioId: '', organizationId: '', jobId: '', step: 'visit',
   creating: false, tab: 'tours', tourId: '', query: '', kind: 'all', status: '', offset: 0,
 }
 const uuid = (value: string | null) => value && /^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i.test(value) ? value : ''
 function readRoute(): StudioRoute {
   const url = new URL(window.location.href)
   const parts = url.pathname.split('/').filter(Boolean)
-  const view = parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
+  const view = parts[1] === 'solicitudes' ? 'requests' : parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
   const step = url.searchParams.get('paso')
   const tab = url.searchParams.get('vista')
   const offset = Number(url.searchParams.get('pagina') || 0)
-  return { ...defaultRoute, view, group: parts[1] === 'particulares' ? 'individuals' : 'companies',
+  return { ...defaultRoute, view, requestId: view === 'requests' ? uuid(url.searchParams.get('solicitud')) : '', group: parts[1] === 'particulares' ? 'individuals' : 'companies',
     studioId: uuid(url.searchParams.get('estudio')), organizationId: uuid(url.searchParams.get('cliente')),
     jobId: view === 'jobs' ? uuid(parts[2] || null) : '',
     step: workSteps.some(([id]) => id === step) ? step as WorkStep : 'visit',
@@ -33,11 +33,13 @@ function readRoute(): StudioRoute {
   }
 }
 export function routeUrl(route: StudioRoute) {
-  const section = route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
+  const section = route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
   const query = new URLSearchParams()
   if (route.studioId) query.set('estudio', route.studioId)
   if (route.organizationId) query.set('cliente', route.organizationId)
-  if (route.view === 'jobs') {
+  if (route.view === 'requests') {
+    if (route.requestId) query.set('solicitud', route.requestId)
+  } else if (route.view === 'jobs') {
     if (route.jobId) query.set('paso', route.step)
     else if (route.creating) query.set('nuevo', '1')
     if (route.status) query.set('estado', route.status)

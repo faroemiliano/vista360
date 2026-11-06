@@ -4,7 +4,7 @@ from typing import Literal
 from urllib.parse import urlsplit
 from uuid import UUID
 
-from pydantic import SecretStr, Field, field_validator, model_validator
+from pydantic import EmailStr, SecretStr, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     upload_ttl_seconds: int = Field(default=600, ge=30, le=3600)
     worker_lease_seconds: int = Field(default=300, ge=180, le=3600)
     image_processing_timeout_seconds: int = Field(default=120, ge=1, le=180)
+    resend_api_key: SecretStr | None = None
+    service_notification_to: EmailStr | None = None
+    service_notification_from: EmailStr | None = None
+    public_app_url: str | None = None
     platform_admin_user_ids: list[UUID] = []
     organization_tour_limit: int = Field(default=10, ge=1, le=100000)
     organization_member_limit: int = Field(default=10, ge=1, le=10000)
@@ -68,6 +72,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def production_settings(self):
+        if self.public_app_url:
+            app_url = urlsplit(self.public_app_url)
+            if (app_url.scheme not in ('http', 'https') or not app_url.netloc or app_url.path not in ('', '/')
+                or app_url.query or app_url.fragment or app_url.username
+                or (self.app_env == 'production' and app_url.scheme != 'https')):
+                raise ValueError('PUBLIC_APP_URL requiere el origen público, HTTPS en producción, sin credenciales ni ruta')
         if self.public_media_base_url:
             media = urlsplit(self.public_media_base_url)
             if media.scheme != "https" or not media.netloc or media.query or media.fragment or media.username:

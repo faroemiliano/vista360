@@ -681,6 +681,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/service-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Request Details */
+        get: operations["request_details_api_v1_admin_service_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/service-requests/{request_id}/status": {
         parameters: {
             query?: never;
@@ -1562,6 +1579,8 @@ export interface components {
         };
         /** ServiceResponse */
         ServiceResponse: {
+            /** Notification Status */
+            notification_status?: ("pending" | "accepted" | "failed" | "not_configured") | null;
             /**
              * Id
              * Format: uuid
@@ -1812,6 +1831,8 @@ export interface components {
         };
         /** WorkResponse */
         WorkResponse: {
+            /** Notification Status */
+            notification_status?: ("pending" | "accepted" | "failed" | "not_configured") | null;
             /**
              * Id
              * Format: uuid
@@ -3579,6 +3600,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_details_api_v1_admin_service_requests__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceResponse"];
                 };
             };
             /** @description Validation Error */
