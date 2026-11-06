@@ -17,7 +17,7 @@ export function Landing() {
     <a href="#contenido" className="sr-only focus:not-sr-only focus:block focus:p-4">Ir al contenido</a>
     <header className="commercial-header">
       <nav aria-label="Navegación comercial" className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-5 sm:gap-6 sm:px-8">
-        <a href="/inicio" className="mr-auto flex items-center gap-3 text-xl font-bold tracking-tight text-ink"><BrandMark />Vision360</a>
+        <a href="/inicio" className="home-brand mr-auto flex items-center gap-3 text-xl font-bold tracking-tight text-ink"><BrandMark dynamic />Vision360</a>
         <a href="#como-funciona" className="text-sm text-muted">Cómo funciona</a>
         <a href="#solicitud" className="text-sm text-muted">Contacto</a>
         <a href="/studio" className="btn-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold">Ingresar al estudio<Icon name="arrow" className="size-4" /></a>
@@ -51,6 +51,6 @@ export function Landing() {
         <ServiceForm />
       </section>
     </main>
-    <footer className="border-t border-line/60 px-5 py-8"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><a href="/inicio" className="flex items-center gap-3 text-sm font-semibold"><BrandMark className="size-8" />Vision360</a><span className="text-xs text-muted">Espacios reales, experiencias virtuales.</span><a href="/studio" className="text-xs text-accent">Ingresar al estudio →</a></div></footer>
+    <footer className="border-t border-line/60 px-5 py-8"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><a href="/inicio" className="home-brand flex items-center gap-3 text-sm font-semibold"><BrandMark dynamic className="size-8" />Vision360</a><span className="text-xs text-muted">Espacios reales, experiencias virtuales.</span><a href="/studio" className="text-xs text-accent">Ingresar al estudio →</a></div></footer>
   </div>
 }
