@@ -225,47 +225,70 @@ test('CORS denegado falla y permite reintentar', async ({ page }) => {
   await ready(page)
 })
 
-test('avanza hacia el hotspot y conserva la imagen durante una descarga lenta', async ({ page }) => {
+test('espera la foto sin acercamiento y cambia conservando el mismo visor', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
+  let releaseDownload!: () => void
+  const downloadGate = new Promise<void>((resolve) => { releaseDownload = resolve })
+  await page.addInitScript(() => {
+    let pannellum: typeof window.pannellum
+    Object.defineProperty(window, 'pannellum', { configurable: true, get: () => pannellum, set(value: typeof window.pannellum) {
+      const factory = value.viewer
+      value.viewer = (...args: Parameters<typeof factory>) => {
+        const viewer = factory(...args)
+        Object.assign(window, { __currentView: () => [viewer.getYaw(), viewer.getPitch(), viewer.getHfov()] })
+        return viewer
+      }
+      pannellum = value
+    } })
+  })
+  const view = () => page.evaluate(() => (window as unknown as { __currentView: () => number[] }).__currentView())
   await page.route('**/panoramas/sala-*', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 650))
+    await downloadGate
     await route.continue().catch(() => {})
   })
   await page.goto('/visor')
   await ready(page)
+  const initialView = await view()
   await page.locator('.panorama canvas').evaluate((canvas) => { canvas.setAttribute('data-previous', 'true') })
   await page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true }).click()
-  await expect(page.getByTestId('panorama')).toHaveAttribute('data-transition', 'departing')
   await expect(page.getByRole('heading', { name: 'Sala de prueba', exact: true })).toBeVisible()
   await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'loading')
   await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(1)
+  // Aunque la descarga tarde, la vista conserva su dirección y apertura.
+  await page.waitForTimeout(500)
+  expect(await view()).toEqual(initialView)
+  await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'loading')
+  releaseDownload()
   await ready(page)
   await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(1)
   await expect(page.locator('.panorama canvas')).toHaveCount(1)
   await expect(page.getByTestId('panorama')).not.toHaveAttribute('data-transition', 'departing')
 })
 
-test('una navegación nueva o desmontar cancela el acercamiento pendiente', async ({ page }) => {
+test('una navegación nueva o desmontar cancela el cambio de ambiente pendiente', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.goto('/visor')
   await ready(page)
   await page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true }).click()
-  await expect(page.getByTestId('panorama')).toHaveAttribute('data-transition', 'departing')
   await page.getByRole('button', { name: 'Sala de prueba', exact: true }).click()
   await page.getByRole('button', { name: 'Atrio de prueba', exact: true }).click()
   await ready(page)
   await page.waitForTimeout(350)
   await expect(page.getByRole('heading', { name: 'Atrio de prueba', exact: true })).toBeVisible()
-  // Desmontar dentro del mismo turno: el scroll del runner puede superar los 240 ms.
+  // Desmontar dentro del mismo turno, mientras se prepara el destino.
   await page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true }).evaluate((button) => {
     (button as HTMLButtonElement).click()
     document.querySelector<HTMLButtonElement>('.mount-button')!.click()
   })
   await page.waitForTimeout(350)
   await expect(page.locator('canvas')).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: 'Atrio de prueba', exact: true })).toBeVisible()
+  // El destino ya está seleccionado; desmontar cancela su carga visual.
+  await expect(page.getByRole('heading', { name: 'Sala de prueba', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Montar visor', exact: true }).click()
+  await ready(page)
+  await expect(page.getByRole('button', { name: 'Volver a Atrio de prueba', exact: true })).toBeAttached()
   expect(errors).toEqual([])
 })
 

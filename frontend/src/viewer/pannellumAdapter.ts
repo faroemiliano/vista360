@@ -30,8 +30,6 @@ export function createPannellumAdapter(
   let generation = 0
   let destroyed = false
   let loading = false
-  let leaving = false
-  let movementFrame: number | null = null
   let renderPending = Promise.resolve()
   let finishRender: (() => void) | null = null
   let activeSceneId: string | null = null
@@ -41,51 +39,10 @@ export function createPannellumAdapter(
   const observer = new ResizeObserver(() => viewer?.resize())
   observer.observe(container)
 
-  function cancelTransition() {
-    if (movementFrame !== null) cancelAnimationFrame(movementFrame)
-    movementFrame = null
-    leaving = false
-    delete container.dataset.transition
-    viewer?.stopMovement()
-  }
-
   function navigateThrough(hotspot: Hotspot & { type: 'navigation' }) {
-    if (destroyed || loading || leaving || !viewer?.isLoaded()) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      callbacks.onNavigate(hotspot.targetSceneId)
-      return
-    }
-    const currentViewer = viewer
-    currentViewer.stopMovement()
-    const currentGeneration = generation
-    const start = { yaw: currentViewer.getYaw(), pitch: currentViewer.getPitch(), hfov: currentViewer.getHfov() }
-    const yawDelta = normalizeYaw(hotspot.yaw - start.yaw)
-    const targetHfov = Math.max(50, start.hfov * .84)
-    let started: number | null = null
-    leaving = true
-    container.dataset.transition = 'departing'
-    const step = (time: number) => {
-      if (destroyed || generation !== currentGeneration) return
-      started ??= time
-      const progress = Math.min(1, (time - started) / 240)
-      const ease = 1 - (1 - progress) ** 3
-      currentViewer.lookAt(start.pitch + (hotspot.pitch - start.pitch) * ease,
-        normalizeYaw(start.yaw + yawDelta * ease), start.hfov + (targetHfov - start.hfov) * ease, false)
-      if (progress < 1) movementFrame = requestAnimationFrame(step)
-      else {
-        callbacks.onNavigate(hotspot.targetSceneId)
-        if (destroyed || generation !== currentGeneration) return
-        // Si el editor cancela la navegación por cambios sin guardar, restaurar la vista.
-        movementFrame = requestAnimationFrame(() => {
-          movementFrame = null
-          if (!destroyed && generation === currentGeneration) {
-            currentViewer.lookAt(start.pitch, start.yaw, start.hfov, false)
-            leaving = false; delete container.dataset.transition
-          }
-        })
-      }
-    }
-    movementFrame = requestAnimationFrame(step)
+    if (destroyed || loading || !viewer?.isLoaded()) return
+    // Preparar el destino sin mover la cámara: el fundido empieza con la foto decodificada.
+    callbacks.onNavigate(hotspot.targetSceneId)
   }
 
   function coordinatesAt(event: MouseEvent): Coordinates | null {
@@ -167,7 +124,7 @@ export function createPannellumAdapter(
         button.title = hotspot.label
         button.addEventListener('click', (event) => {
           event.stopPropagation()
-          if (destroyed || loading || leaving) return
+          if (destroyed || loading) return
           if (hotspot.type === 'navigation') navigateThrough(hotspot)
           else callbacks.onInfo(hotspot.label, hotspot.text)
         })
@@ -179,7 +136,7 @@ export function createPannellumAdapter(
   async function loadScene(scene: PanoramaScene) {
     if (destroyed) return
     const current = ++generation
-    cancelTransition()
+    viewer?.stopMovement()
     controller?.abort()
     loading = true
     callbacks.onLoading(scene.id)
@@ -220,7 +177,7 @@ export function createPannellumAdapter(
         yaw: scene.initialView.yaw, pitch: scene.initialView.pitch,
         // Apertura amplia por defecto; se conserva la dirección inicial guardada.
         hfov: 110, minHfov: 50, maxHfov: 110,
-        mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: reducedMotion ? 0 : 180,
+        mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: reducedMotion ? 0 : 320,
         hotSpots: scene.hotspots.map(hotspotConfig),
       }
       renderPending = new Promise<void>((resolve) => { renderDone = resolve; finishRender = resolve })
@@ -235,7 +192,7 @@ export function createPannellumAdapter(
         })
       } else {
         viewer.addScene(scene.id, config)
-        viewer.getConfig().sceneFadeDuration = reducedMotion ? 0 : 180
+        viewer.getConfig().sceneFadeDuration = reducedMotion ? 0 : 320
       }
       viewer.off('load'); viewer.off('error')
       viewer.on('load', () => {
@@ -295,7 +252,6 @@ export function createPannellumAdapter(
     destroy: () => {
       if (destroyed) return
       destroyed = true
-      cancelTransition()
       generation++
       controller?.abort()
       observer.disconnect()

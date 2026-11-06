@@ -36,7 +36,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
     motion.current = createMotionControl({
       getView: () => adapter.current?.getView() || null,
       setView: (view) => adapter.current?.setView(view),
-      canUpdate: () => Boolean(adapter.current?.getView()) && !container.current?.dataset.transition,
+      canUpdate: () => Boolean(adapter.current?.getView()),
       onState: setMotionState,
     })
     try {
