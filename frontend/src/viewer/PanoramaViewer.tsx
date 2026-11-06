@@ -19,7 +19,9 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
   const [motionState, setMotionState] = useState<MotionState>({ mode: 'off', message: '' })
   const [motionDevice] = useState(() => navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
   const [motionUnavailable] = useState(motionAvailability)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [loadStatus, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [readySceneId, setReadySceneId] = useState<string | null>(null)
+  const status = loadStatus === 'ready' && readySceneId !== scene.id ? 'loading' : loadStatus
   const [hasPanorama, setHasPanorama] = useState(false)
   const [error, setError] = useState('')
   const [diagnostics, setDiagnostics] = useState<ViewerDiagnostics | null>(null)
@@ -42,7 +44,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
     try {
       adapter.current = createPannellumAdapter(container.current!, {
         onLoading: () => { motion.current?.pause(); setStatus('loading'); setInformation(null); setCoordinates(null); setPicking(false) },
-        onReady: (_id, result) => { motion.current?.resume(); setHasPanorama(true); setStatus('ready'); setDiagnostics(result) },
+        onReady: (id, result) => { motion.current?.resume(); setHasPanorama(true); setReadySceneId(id); setStatus('ready'); setDiagnostics(result) },
         onNavigate: (id) => navigate.current(id),
         onInfo: (label, text) => setInformation({ label, text }),
         onCoordinates: (point) => { setCoordinates(point); pick.current?.(point) },

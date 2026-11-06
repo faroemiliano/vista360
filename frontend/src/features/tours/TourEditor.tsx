@@ -58,9 +58,10 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
   }, [tour.id, scene, version])
 
   function navigate(id: string) {
-    if (busy) return
-    if (draft && !window.confirm('¿Descartar los cambios del punto sin guardar?')) return
+    if (busy) return false
+    if (draft && !window.confirm('¿Descartar los cambios del punto sin guardar?')) return false
     setActiveId(id); setDraft(null); setMessage(''); setReturnOffer(null)
+    return true
   }
   async function act(action: () => Promise<void>, success: string) {
     if (busy) return

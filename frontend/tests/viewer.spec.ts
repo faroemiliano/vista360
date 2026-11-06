@@ -225,11 +225,27 @@ test('CORS denegado falla y permite reintentar', async ({ page }) => {
   await ready(page)
 })
 
-test('espera la foto sin acercamiento y cambia conservando el mismo visor', async ({ page }) => {
+test('prepara la foto y coordina acercamiento y fundido en la misma animación', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   let releaseDownload!: () => void
   const downloadGate = new Promise<void>((resolve) => { releaseDownload = resolve })
   await page.addInitScript(() => {
+    const walks: { frames: PropertyIndexedKeyframes | Keyframe[] | null; duration: number; origin: string; midpoint?: { opacity: number; scale: number } }[] = []
+    Object.assign(window, { __walks: walks })
+    const animate = Element.prototype.animate
+    Element.prototype.animate = function (frames, options) {
+      const animation = animate.call(this, frames, options)
+      if (this.classList.contains('pnlm-fade-img')) {
+        const duration = Number(typeof options === 'number' ? options : options?.duration)
+        const record: (typeof walks)[number] = { frames, duration, origin: (this as HTMLElement).style.transformOrigin }
+        walks.push(record)
+        window.setTimeout(() => {
+          const style = getComputedStyle(this)
+          record.midpoint = { opacity: Number(style.opacity), scale: new DOMMatrixReadOnly(style.transform).a }
+        }, duration / 2)
+      }
+      return animation
+    }
     let pannellum: typeof window.pannellum
     Object.defineProperty(window, 'pannellum', { configurable: true, get: () => pannellum, set(value: typeof window.pannellum) {
       const factory = value.viewer
@@ -258,11 +274,21 @@ test('espera la foto sin acercamiento y cambia conservando el mismo visor', asyn
   await page.waitForTimeout(500)
   expect(await view()).toEqual(initialView)
   await expect(page.locator('.viewer-frame')).toHaveAttribute('data-status', 'loading')
+  expect(await page.evaluate(() => (window as unknown as { __walks: unknown[] }).__walks)).toEqual([])
   releaseDownload()
   await ready(page)
+  const walks = await page.evaluate(() => (window as unknown as { __walks: { frames: Keyframe[]; duration: number; origin: string; midpoint: { opacity: number; scale: number } }[] }).__walks)
+  expect(walks).toHaveLength(1)
+  expect(walks[0].frames).toEqual([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.22)', opacity: 0 }])
+  expect(walks[0].duration).toBe(420)
+  expect(walks[0].origin).not.toBe('')
+  expect(walks[0].midpoint.opacity).toBeGreaterThan(0)
+  expect(walks[0].midpoint.opacity).toBeLessThan(1)
+  expect(walks[0].midpoint.scale).toBeGreaterThan(1)
+  expect(walks[0].midpoint.scale).toBeLessThan(1.22)
   await expect(page.locator('canvas[data-previous="true"]')).toHaveCount(1)
   await expect(page.locator('.panorama canvas')).toHaveCount(1)
-  await expect(page.getByTestId('panorama')).not.toHaveAttribute('data-transition', 'departing')
+  await expect(page.getByTestId('panorama')).not.toHaveAttribute('data-transition', 'walking')
 })
 
 test('una navegación nueva o desmontar cancela el cambio de ambiente pendiente', async ({ page }) => {
@@ -289,6 +315,31 @@ test('una navegación nueva o desmontar cancela el cambio de ambiente pendiente'
   await page.getByRole('button', { name: 'Montar visor', exact: true }).click()
   await ready(page)
   await expect(page.getByRole('button', { name: 'Volver a Atrio de prueba', exact: true })).toBeAttached()
+  expect(errors).toEqual([])
+})
+
+test('desmontar durante el avance cancela la animación y permite volver a montar', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/visor')
+  await ready(page)
+  await page.getByTestId('panorama').evaluate((panorama) => {
+    const observer = new MutationObserver(() => {
+      if (panorama.dataset.transition !== 'walking') return
+      Object.assign(window, { __walkStarted: true })
+      observer.disconnect()
+      document.querySelector<HTMLButtonElement>('.mount-button')!.click()
+    })
+    observer.observe(panorama, { attributes: true, attributeFilter: ['data-transition'] })
+  })
+  await page.getByRole('button', { name: 'Ir a Sala de prueba', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Montar visor', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => (window as unknown as { __walkStarted: boolean }).__walkStarted)).toBe(true)
+  await expect(page.locator('.panorama canvas')).toHaveCount(0)
+  await page.waitForTimeout(500)
+  await page.getByRole('button', { name: 'Montar visor', exact: true }).click()
+  await ready(page)
   expect(errors).toEqual([])
 })
 

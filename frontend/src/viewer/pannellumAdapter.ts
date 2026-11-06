@@ -33,16 +33,34 @@ export function createPannellumAdapter(
   let renderPending = Promise.resolve()
   let finishRender: (() => void) | null = null
   let activeSceneId: string | null = null
+  let walk: { target: string; origin: string | null; x: number; y: number } | null = null
+  let walkAnimation: Animation | null = null
+  let fadeTimer: number | null = null
   let picking = false
   let pointer: { id: number; x: number; y: number; moved: boolean } | null = null
   const pointers = new Set<number>()
   const observer = new ResizeObserver(() => viewer?.resize())
   observer.observe(container)
 
-  function navigateThrough(hotspot: Hotspot & { type: 'navigation' }) {
+  function navigateThrough(hotspot: Hotspot & { type: 'navigation' }, button: HTMLElement) {
     if (destroyed || loading || !viewer?.isLoaded()) return
-    // Preparar el destino sin mover la cámara: el fundido empieza con la foto decodificada.
-    callbacks.onNavigate(hotspot.targetSceneId)
+    const frame = container.getBoundingClientRect()
+    const marker = button.getBoundingClientRect()
+    walk = {
+      target: hotspot.targetSceneId, origin: activeSceneId,
+      x: Math.max(0, Math.min(100, (marker.left + marker.width / 2 - frame.left) / frame.width * 100)),
+      y: Math.max(0, Math.min(100, (marker.top + marker.height / 2 - frame.top) / frame.height * 100)),
+    }
+    // El editor puede rechazar la navegación si hay cambios sin guardar.
+    if (callbacks.onNavigate(hotspot.targetSceneId) === false) walk = null
+  }
+
+  function clearFade() {
+    if (fadeTimer !== null) window.clearTimeout(fadeTimer)
+    fadeTimer = null
+    walkAnimation?.cancel()
+    walkAnimation = null
+    delete container.dataset.transition
   }
 
   function coordinatesAt(event: MouseEvent): Coordinates | null {
@@ -82,6 +100,8 @@ export function createPannellumAdapter(
   container.addEventListener('pointerleave', pointerCancel, true)
 
   function clearViewer() {
+    clearFade()
+    walk = null
     finishRender?.(); finishRender = null
     activeSceneId = null
     if (!viewer) return
@@ -125,7 +145,7 @@ export function createPannellumAdapter(
         button.addEventListener('click', (event) => {
           event.stopPropagation()
           if (destroyed || loading) return
-          if (hotspot.type === 'navigation') navigateThrough(hotspot)
+          if (hotspot.type === 'navigation') navigateThrough(hotspot, button)
           else callbacks.onInfo(hotspot.label, hotspot.text)
         })
         element.replaceChildren(button)
@@ -136,6 +156,8 @@ export function createPannellumAdapter(
   async function loadScene(scene: PanoramaScene) {
     if (destroyed) return
     const current = ++generation
+    const departure = walk?.target === scene.id && walk.origin === activeSceneId ? walk : null
+    walk = null
     viewer?.stopMovement()
     controller?.abort()
     loading = true
@@ -172,12 +194,13 @@ export function createPannellumAdapter(
       if (destroyed || current !== generation) return
       const previousSceneId = activeSceneId
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const fadeDuration = reducedMotion || !viewer ? 0 : 420
       const config = {
         type: 'equirectangular', panorama: image, dynamic: true, dynamicUpdate: true,
         yaw: scene.initialView.yaw, pitch: scene.initialView.pitch,
         // Apertura amplia por defecto; se conserva la dirección inicial guardada.
         hfov: 110, minHfov: 50, maxHfov: 110,
-        mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: reducedMotion ? 0 : 320,
+        mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: fadeDuration,
         hotSpots: scene.hotspots.map(hotspotConfig),
       }
       renderPending = new Promise<void>((resolve) => { renderDone = resolve; finishRender = resolve })
@@ -192,20 +215,37 @@ export function createPannellumAdapter(
         })
       } else {
         viewer.addScene(scene.id, config)
-        viewer.getConfig().sceneFadeDuration = reducedMotion ? 0 : 320
+        viewer.getConfig().sceneFadeDuration = fadeDuration
       }
       viewer.off('load'); viewer.off('error')
       viewer.on('load', () => {
         viewer?.setUpdate(false)
         activeSceneId = scene.id
         if (previousSceneId && previousSceneId !== scene.id) viewer?.removeScene(previousSceneId)
-        renderDone?.(); finishRender = null
-        if (destroyed || current !== generation) return
-        loading = false
-        callbacks.onReady(scene.id, {
-          source, maxTextureSize, decodedBytes: source.width * source.height * 4,
-          transferBytes: blob.size, loadMilliseconds: performance.now() - started,
-        })
+        const fade = container.querySelector<HTMLElement>('.pnlm-fade-img')
+        if (current === generation && departure && fade && fadeDuration) {
+          container.dataset.transition = 'walking'
+          // Animar la captura que Pannellum conserva encima del nuevo panorama.
+          // Acercamiento y opacidad comparten una sola línea de tiempo, sin pausa intermedia.
+          fade.style.transformOrigin = `${departure.x}% ${departure.y}%`
+          walkAnimation = fade.animate([
+            { transform: 'scale(1)', opacity: 1 },
+            { transform: 'scale(1.22)', opacity: 0 },
+          ], { duration: fadeDuration, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'both' })
+        }
+        const complete = () => {
+          clearFade()
+          renderDone?.(); finishRender = null
+          if (destroyed || current !== generation) return
+          loading = false
+          callbacks.onReady(scene.id, {
+            source, maxTextureSize, decodedBytes: source.width * source.height * 4,
+            transferBytes: blob.size, loadMilliseconds: performance.now() - started,
+          })
+        }
+        // No admitir otra transición ni reanudar sensores durante el fundido.
+        if (fade && fadeDuration) fadeTimer = window.setTimeout(complete, fadeDuration)
+        else complete()
       })
       viewer.on('error', () => {
         clearViewer()

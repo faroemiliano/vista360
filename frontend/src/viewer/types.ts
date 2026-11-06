@@ -34,7 +34,7 @@ export interface ViewerDiagnostics {
 export interface ViewerCallbacks {
   onLoading: (sceneId: string) => void
   onReady: (sceneId: string, diagnostics: ViewerDiagnostics) => void
-  onNavigate: (sceneId: string) => void
+  onNavigate: (sceneId: string) => boolean | void
   onInfo: (label: string, text: string) => void
   onCoordinates: (coordinates: Coordinates) => void
   onManualInteraction?: () => void
