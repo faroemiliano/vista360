@@ -114,11 +114,17 @@
 .capture-optics { display: block; width: 100%; margin-top: -1rem; }
 /* Órbitas continuas e inclinación suave, sin dependencias de animación. */
 @keyframes vision-orbit { to { transform: rotate(360deg); } }
-.capture-optics { transform: perspective(850px) rotateX(var(--orbit-x, 0deg)) rotateY(var(--orbit-y, 0deg)); transition: transform .2s ease-out; }
+.capture-globe { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.capture-globe[data-dragging="true"] { cursor: grabbing; }
+.capture-globe:focus-visible { outline: 2px solid #7ceaff; outline-offset: -5px; border-radius: 1rem; }
+.capture-globe[data-dragging="true"] .capture-orbit { animation-play-state: paused; }
+.capture-instructions { position: relative; margin: -.25rem 1.5rem 1.25rem; text-align: center; color: #aac1d7; font-size: .7rem; }
+.capture-instructions span { color: #8f9fba; }
+@media (pointer: coarse) { .capture-instructions span { display: none; } }
 .capture-orbit { transform-origin: 260px 230px; animation: vision-orbit 22s linear infinite; }
 .capture-orbit-outer { animation-duration: 36s; animation-direction: reverse; }
 .capture-sphere { transform-origin: 260px 230px; transition: transform .6s ease, filter .6s ease; }
-.capture-visual:hover .capture-sphere { transform: scale(1.045); filter: drop-shadow(0 0 12px #7ceaff35); }
+.capture-visual:hover .capture-sphere { filter: drop-shadow(0 0 12px #7ceaff35); }
 .brand-orbit { transform-origin: 24px 24px; animation: vision-orbit 18s linear infinite; }
 .brand-mark-dynamic { transition: transform .6s ease, filter .6s ease; }
 .home-brand:is(:hover, :focus-visible) .brand-mark-dynamic { transform: rotate(18deg) scale(1.12); filter: drop-shadow(0 0 7px #7ceaff65); }
