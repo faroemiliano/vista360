@@ -213,3 +213,39 @@ def test_s3_public_copy_uses_provider_and_immutable_cache():
             'CacheControl': 'public, max-age=31536000, immutable'})
         public.copy_from(private, 'private/approved.jpg', 'publications/test/image.jpg')
         stub.assert_no_pending_responses()
+
+
+def test_public_location_requires_explicit_publication_and_can_be_removed(clients, database):
+    owner, tour, _ = ready(clients, database)
+    path = f"/tours/{tour['id']}"
+    public = f"/public/tours/{tour['slug']}"
+    location = {"label": "Entrada del lugar", "latitude": -34.6037, "longitude": -58.3816}
+    publish(owner, tour); drain(database)
+    anonymous = clients()
+    assert anonymous.get(public).json()['public_location'] is None
+    payload = {"title": tour['title'], "slug": tour['slug'], "public_location": location}
+    result = owner.mutate('PUT', path, payload)
+    assert result.status_code == 200, result.text
+    assert owner.get(path).json()['public_location'] == location
+    assert anonymous.get(public).json()['public_location'] is None
+    stranger = clients(); stranger.register('location-stranger@example.com')
+    assert stranger.mutate('PUT', path, payload).status_code == 404
+    publish(owner, tour); drain(database)
+    assert anonymous.get(public).json()['public_location'] == location
+    assert owner.mutate('PUT', path, {**payload, 'public_location': None}).status_code == 200
+    assert anonymous.get(public).json()['public_location'] == location
+    publish(owner, tour); drain(database)
+    assert anonymous.get(public).json()['public_location'] is None
+
+
+def test_location_rejects_incomplete_out_of_range_and_unknown_fields(clients, database):
+    owner, tour, _ = ready(clients, database)
+    path = f"/tours/{tour['id']}"
+    location = {"label": "Entrada", "latitude": -34.6, "longitude": -58.3}
+    invalid = [{**location, 'latitude': 91}, {**location, 'longitude': -181},
+               {**location, 'label': ' '}, {'label': 'Entrada', 'latitude': 0},
+               {**location, 'url': 'javascript:alert(1)'}]
+    revision = owner.get(path).json()['revision']
+    for value in invalid:
+        assert owner.mutate('PUT', path, {'title': tour['title'], 'slug': tour['slug'], 'public_location': value}).status_code == 422
+    assert owner.get(path).json()['revision'] == revision

@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, ForeignKeyConstraint, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.base import Base
 
@@ -28,6 +29,7 @@ class Tour(Base):
     title: Mapped[str] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(100), unique=True)
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    public_location: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(String(16), default="draft", server_default="draft")
     start_scene_id: Mapped[UUID | None] = mapped_column()
     published_version_id: Mapped[UUID | None] = mapped_column()

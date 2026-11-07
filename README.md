@@ -146,6 +146,8 @@ Al salir del editor, **Previsualizar recorrido** abre el borrador privado desde 
 
 Dentro del recorrido, usar **Publicar recorrido**, revisar advertencias y esperar la versión publicada. **Abrir recorrido público** funciona sin sesión; **Copiar enlace** permite copiar su ruta. Editar el borrador conserva lo publicado hasta pulsar **Publicar cambios**. **Despublicar recorrido** retira el tour público y programa limpieza de imágenes.
 
+Para agregar una ubicación exacta y el botón público **Cómo llegar**, ver [Ubicación de los recorridos](docs/UBICACION_RECORRIDOS.md). La ubicación se configura de forma explícita y se incluye al publicar; no usa las direcciones internas del cliente.
+
 Se requiere el worker activo. En local se usan copias separadas bajo `.data/assets/_public`, sólo para pruebas. En S3/R2 configurar un bucket público separado y `PUBLIC_MEDIA_BASE_URL`; las imágenes públicas se sirven por el dominio de medios, sin pasar por la API en producción. Ver [FASE6.md](docs/FASE6.md) para configuración, límites y validación externa pendiente. El slug se conserva desde la primera publicación exitosa.
 
 ## Verificaciones realizadas

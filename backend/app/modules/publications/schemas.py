@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.modules.hotspots.schemas import HotspotInput
+from app.modules.tours.schemas import PublicLocation
 
 
 class PublicationCheck(BaseModel):
@@ -57,5 +58,6 @@ class PublicTour(BaseModel):
     version: int
     title: str
     description: str
+    public_location: PublicLocation | None = None
     start_scene_id: UUID
     scenes: list[PublicScene]

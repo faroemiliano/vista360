@@ -1364,6 +1364,7 @@ export interface components {
              * @default
              */
             description: string;
+            public_location?: components["schemas"]["PublicLocation"] | null;
             /** Property Id */
             property_id?: string | null;
         };
@@ -1494,6 +1495,15 @@ export interface components {
              */
             id: string;
         };
+        /** PublicLocation */
+        PublicLocation: {
+            /** Label */
+            label: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+        };
         /** PublicScene */
         PublicScene: {
             /**
@@ -1536,6 +1546,7 @@ export interface components {
             title: string;
             /** Description */
             description: string;
+            public_location?: components["schemas"]["PublicLocation"] | null;
             /**
              * Start Scene Id
              * Format: uuid
@@ -1795,6 +1806,7 @@ export interface components {
              * @default
              */
             description: string;
+            public_location?: components["schemas"]["PublicLocation"] | null;
         };
         /** TourResponse */
         TourResponse: {
@@ -1807,6 +1819,7 @@ export interface components {
              * @default
              */
             description: string;
+            public_location?: components["schemas"]["PublicLocation"] | null;
             /**
              * Id
              * Format: uuid

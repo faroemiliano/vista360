@@ -64,7 +64,7 @@ def public_tour(slug: str, request: Request, response: Response, db: Session = D
         scenes.append({"id": scene["id"], "name": scene["name"], "initial_view": scene["initial_view"],
                        "sources": public_sources, "hotspots": scene["hotspots"]})
     return {"schema_version": 1, "version": publication.version, "title": document["title"], "description": document["description"],
-            "start_scene_id": document["start_scene_id"], "scenes": scenes}
+            "public_location": document.get("public_location"), "start_scene_id": document["start_scene_id"], "scenes": scenes}
 
 
 @router.get("/public/media/{publication_id}/{asset_id}")

@@ -104,6 +104,14 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await preview.getByRole('navigation', { name: 'Ambientes del recorrido' }).getByRole('button', { name: 'Cocina', exact: true }).click()
   await expect(preview.locator('.saved-hotspots')).toContainText('Volver a Living')
   await page.getByRole('button', { name: 'Cerrar previsualización', exact: true }).click()
+  await page.locator('#datos summary').click()
+  await page.getByRole('checkbox', { name: 'Mostrar cómo llegar en el recorrido público', exact: true }).check()
+  await page.getByLabel('Nombre o dirección pública', { exact: true }).fill('Entrada principal del lugar')
+  await page.getByLabel('Latitud', { exact: true }).fill('-34.6037')
+  await page.getByLabel('Longitud', { exact: true }).fill('-58.3816')
+  await expect(page.getByRole('link', { name: 'Comprobar destino en Google Maps', exact: true })).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=-34.6037%2C-58.3816&dir_action=navigate')
+  await page.getByRole('button', { name: 'Guardar información', exact: true }).click()
+  await page.locator('#datos summary').click()
   page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Publicar recorrido', exact: true }).click()
   await expect(page.getByText('Versión 1 publicada.', { exact: true })).toBeVisible()
@@ -131,6 +139,15 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
     const visitor = await anonymous.newPage()
     await visitor.goto(publicLink)
     await expect(visitor.getByRole('heading', { name: title, exact: true })).toBeVisible()
+    const directions = visitor.getByRole('link', { name: 'Cómo llegar', exact: true })
+    await expect(directions).toBeVisible()
+    await expect(directions).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=-34.6037%2C-58.3816&dir_action=navigate')
+    await expect(directions).toHaveAttribute('target', '_blank')
+    const destination = new URL((await directions.getAttribute('href'))!)
+    expect(destination.searchParams.has('origin')).toBe(false)
+    expect(await visitor.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+
+
     await expect(visitor.locator('.viewer-frame')).toHaveAttribute('data-status', 'ready')
     const assertImmersiveViewer = async () => {
       const frame = (await visitor.locator('.viewer-frame').boundingBox())!

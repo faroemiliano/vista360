@@ -3,6 +3,7 @@ import { apiResourceUrl, publicationsApi } from '../../api/client'
 import type { PublicTourData } from '../../api/client'
 import { PanoramaViewer } from '../../viewer/PanoramaViewer'
 import type { PanoramaScene } from '../../viewer/types'
+import { directionsUrl } from '../../lib/maps'
 import { BrandMark } from '../../components/BrandMark'
 
 export function PublicTour({ slug }: { slug: string }) {
@@ -29,7 +30,8 @@ export function PublicTour({ slug }: { slug: string }) {
   return <main className="public-tour">
     <header className="public-tour-header">
       <a href="/inicio" aria-label="Vision360 — Inicio" className="flex shrink-0 items-center gap-2 font-bold tracking-tight text-accent"><BrandMark className="size-8" /><span className="hidden sm:inline">Vision360</span></a>
-      {tour ? <div className="min-w-0 text-right"><h1>{tour.title}</h1><h2>{scene?.name}</h2></div> : <span className="eyebrow text-right">Un espacio para explorar</span>}
+      {tour ? <div className="min-w-0 flex-1 text-right"><h1>{tour.title}</h1><h2>{scene?.name}</h2></div> : <span className="eyebrow text-right">Un espacio para explorar</span>}
+      {tour?.public_location && <a className="btn-primary inline-flex min-h-11 shrink-0 items-center rounded-xl px-3 py-2 text-sm font-semibold" href={directionsUrl(tour.public_location)} target="_blank" rel="noopener noreferrer" title={`Cómo llegar a ${tour.public_location.label}`}>Cómo llegar</a>}
     </header>
     {!tour && !error && <p role="status">Cargando recorrido…</p>}
     {error && <><h1>Recorrido no disponible</h1><p role="alert">{error}</p><button onClick={() => setAttempt((value) => value + 1)}>Reintentar recorrido</button></>}
@@ -37,6 +39,7 @@ export function PublicTour({ slug }: { slug: string }) {
       {panorama && <PanoramaViewer scene={panorama} onNavigate={setActiveId} experimentalTools={false} />}
       <nav className="row-actions" aria-label="Ambientes del recorrido">{tour.scenes.map((item) => <button key={item.id}
         aria-current={item.id === activeId ? 'true' : undefined} onClick={() => setActiveId(item.id)}>{item.name}</button>)}</nav>
+      {tour.public_location && <p className="text-sm">Ubicación: {tour.public_location.label}</p>}
       {tour.description && <p>{tour.description}</p>}
       <ul className="saved-hotspots">{scene?.hotspots.map((point) => <li key={point.id}>
         {point.type === 'navigation' ? <button onClick={() => setActiveId(point.target_scene_id!)}>Ir: {point.label}</button>

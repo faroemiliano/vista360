@@ -83,7 +83,7 @@ def prepare(db: Session, user: User, tour_id: UUID, data: PublishInput):
         raise HTTPException(503, "Configurá el bucket público y el dominio de medios antes de publicar") from None
     publication_id = uuid4()
     document = {"schema_version": 1, "title": tour.title, "description": tour.description,
-                "start_scene_id": str(tour.start_scene_id), "scenes": []}
+                "public_location": tour.public_location, "start_scene_id": str(tour.start_scene_id), "scenes": []}
     asset_ids = set()
     for scene in ordered_scenes(db, tour.id):
         main = db.get(Asset, scene.panorama_asset_id)
