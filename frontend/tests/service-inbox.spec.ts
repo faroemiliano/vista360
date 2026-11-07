@@ -47,6 +47,7 @@ test('consulta web se conserva, llega a la bandeja privada y se convierte en tra
   await item.getByRole('button', { name: 'Actualizar estado', exact: true }).click()
   await expect(item.locator('.badge')).toHaveText('PRESUPUESTADO')
   await item.getByRole('button', { name: `Preparar trabajo para ${name}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Cliente existente', exact: true }).click()
   await page.getByRole('combobox', { name: 'Cliente del trabajo', exact: true }).selectOption({ label: `Cliente ${name}` })
   await page.getByLabel('Nombre del trabajo', { exact: true }).fill(`Recorrido ${name}`)
   await page.getByRole('button', { name: 'Guardar y abrir trabajo', exact: true }).click()

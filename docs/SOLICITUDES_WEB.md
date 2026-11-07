@@ -106,9 +106,13 @@ acceso a esta bandeja.
 5. El titular la ve en su bandeja y puede registrar seguimiento, aunque todavía
    no tenga clientes cargados. Una consulta no queda asociada automáticamente a
    un cliente.
-6. Recién al pulsar **Preparar trabajo** aparece la elección del cliente de ese
-   estudio. La elección empieza vacía; si es nuevo, se registra en Organizaciones
-   o Particulares antes de preparar el trabajo. Volver a la bandeja conserva la consulta.
+6. Al pulsar **Preparar trabajo**, elegir **Nuevo cliente** o **Cliente existente**.
+   Para un cliente nuevo se elige Particular o Empresa / organización; nombre,
+   email, teléfono y localidad ya vienen de la consulta. **Guardar cliente y
+   continuar** lo registra en la agenda del mismo estudio y abre la preparación
+   del trabajo sin salir de la página. El cliente queda guardado aunque después
+   se cancele el trabajo. Para uno existente se lo elige de la lista, sin volver
+   a registrarlo. Volver a la bandeja conserva la consulta.
 
 **Desactivar enlace** invalida el enlace compartido y conserva las consultas y
 trabajos. Volver a activarlo genera un enlace nuevo. La página pública expone
