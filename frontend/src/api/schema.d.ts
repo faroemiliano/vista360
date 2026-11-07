@@ -1500,9 +1500,9 @@ export interface components {
             /** Label */
             label: string;
             /** Latitude */
-            latitude: number;
+            latitude?: number | null;
             /** Longitude */
-            longitude: number;
+            longitude?: number | null;
         };
         /** PublicScene */
         PublicScene: {

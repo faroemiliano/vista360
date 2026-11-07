@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Tour, TourInput } from '../../api/client'
 import { useBlockNavigation } from '../../app/navigation'
-import { directionsUrl } from '../../lib/maps'
+import { destinationError, directionsUrl } from '../../lib/maps'
 
 const slugify = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100).replace(/-$/, '')
@@ -17,13 +17,15 @@ export function TourForm({ tour, busy, onSave }: {
   const [locationLabel, setLocationLabel] = useState(tour?.public_location?.label || '')
   const [latitude, setLatitude] = useState(String(tour?.public_location?.latitude ?? ''))
   const [longitude, setLongitude] = useState(String(tour?.public_location?.longitude ?? ''))
-  const location = showLocation ? { label: locationLabel.trim(), latitude: Number(latitude), longitude: Number(longitude) } : null
-  const validLocation = location && location.label && latitude.trim() && longitude.trim()
-    && Number.isFinite(location.latitude) && Math.abs(location.latitude) <= 90
-    && Number.isFinite(location.longitude) && Math.abs(location.longitude) <= 180
+  const location = showLocation ? { label: locationLabel.trim(), latitude: latitude.trim() ? Number(latitude) : null, longitude: longitude.trim() ? Number(longitude) : null } : null
+  const locationError = showLocation ? destinationError(locationLabel.trim()) || (
+    Boolean(latitude.trim()) !== Boolean(longitude.trim()) ? 'Completá ambas coordenadas o dejá las dos vacías.' : '') : ''
+  const validLocation = location && !locationError
+    && (location.latitude === null || (Number.isFinite(location.latitude) && Math.abs(location.latitude) <= 90))
+    && (location.longitude === null || (Number.isFinite(location.longitude) && Math.abs(location.longitude) <= 180))
   const locationDirty = showLocation !== Boolean(tour?.public_location) || (showLocation && (
-    locationLabel.trim() !== (tour?.public_location?.label || '') || !latitude.trim() || !longitude.trim()
-    || Number(latitude) !== tour?.public_location?.latitude || Number(longitude) !== tour?.public_location?.longitude))
+    locationLabel.trim() !== (tour?.public_location?.label || '')
+    || location?.latitude !== (tour?.public_location?.latitude ?? null) || location?.longitude !== (tour?.public_location?.longitude ?? null)))
   useBlockNavigation(locationDirty || title !== (tour?.title || '') || slug !== (tour?.slug || '') || description !== (tour?.description || ''))
   return <form className={`grid gap-x-5 ${tour ? 'lg:grid-cols-2' : ''}`} onSubmit={(event) => { event.preventDefault(); if (showLocation && !validLocation) return; void onSave({ title, slug, description, public_location: location }) }}>
     <label>Título<input placeholder="Ej. Casa con jardín en Palermo" required maxLength={200} value={title} onChange={(event) => {
@@ -36,10 +38,16 @@ export function TourForm({ tour, busy, onSave }: {
       <label className="flex items-center gap-3"><input type="checkbox" checked={showLocation} onChange={event => setShowLocation(event.target.checked)} />Mostrar cómo llegar en el recorrido público</label>
       <p className="field-hint">Es opcional. Estos datos serán públicos al publicar los cambios. La dirección interna del cliente no se utiliza.</p>
       {showLocation && <div className="mt-4 grid gap-x-5 sm:grid-cols-2">
-        <label className="sm:col-span-2">Nombre o dirección pública<input required maxLength={300} value={locationLabel} onChange={event => setLocationLabel(event.target.value)} placeholder="Ej. Entrada principal, Av. Corrientes 1234, Buenos Aires" /></label>
-        <label>Latitud<input required type="number" min={-90} max={90} step="any" value={latitude} onChange={event => setLatitude(event.target.value)} placeholder="Ej. -34.6037" /></label>
-        <label>Longitud<input required type="number" min={-180} max={180} step="any" value={longitude} onChange={event => setLongitude(event.target.value)} placeholder="Ej. -58.3816" /></label>
-        <p className="field-hint sm:col-span-2">En Google Maps, hacé clic derecho sobre la entrada exacta del lugar y copiá las coordenadas: primero latitud y después longitud. En el celular, mantené pulsado el punto para colocar un pin.</p>
+        <label className="sm:col-span-2">Dirección o enlace de Google Maps<input required maxLength={2048} value={locationLabel} onChange={event => setLocationLabel(event.target.value)} placeholder="Ej. Av. Corrientes 1234, Buenos Aires, o https://maps.app.goo.gl/…" /></label>
+        <p className="field-hint sm:col-span-2">Con la dirección alcanza. También podés pegar el enlace de Compartir de Google Maps; se abrirá ese lugar para elegir cómo llegar.</p>
+        <details className="mb-4 rounded-lg border border-line p-3 sm:col-span-2" open={Boolean(tour.public_location?.latitude != null)}><summary className="cursor-pointer text-sm">Precisar con coordenadas (opcional)</summary>
+          <div className="mt-3 grid gap-x-5 sm:grid-cols-2">
+            <label>Latitud<input required={Boolean(longitude.trim())} type="number" min={-90} max={90} step="any" value={latitude} onChange={event => setLatitude(event.target.value)} placeholder="Ej. -34.6037" /></label>
+            <label>Longitud<input required={Boolean(latitude.trim())} type="number" min={-180} max={180} step="any" value={longitude} onChange={event => setLongitude(event.target.value)} placeholder="Ej. -58.3816" /></label>
+            <p className="field-hint sm:col-span-2">En Google Maps, hacé clic derecho sobre la entrada exacta del lugar y copiá las coordenadas: primero latitud y después longitud. En el celular, mantené pulsado el punto para colocar un pin.</p>
+          </div>
+        </details>
+        {locationError && <p role="alert" className="mb-3 text-sm sm:col-span-2">{locationError}</p>}
         {validLocation && <a className="mb-3 text-sm text-accent underline sm:col-span-2" href={directionsUrl(location!)} target="_blank" rel="noopener noreferrer">Comprobar destino en Google Maps</a>}
       </div>}
     </fieldset>}

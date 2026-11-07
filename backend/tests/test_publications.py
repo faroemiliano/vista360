@@ -249,3 +249,22 @@ def test_location_rejects_incomplete_out_of_range_and_unknown_fields(clients, da
     for value in invalid:
         assert owner.mutate('PUT', path, {'title': tour['title'], 'slug': tour['slug'], 'public_location': value}).status_code == 422
     assert owner.get(path).json()['revision'] == revision
+
+
+@pytest.mark.parametrize('label', ['Av. Corrientes 1234, Buenos Aires', 'https://maps.app.goo.gl/demoVision360', 'https://www.google.com/maps/place/Buenos+Aires', 'https://goo.gl/maps/demo', 'https://www.google.com.ar/maps?query=Buenos+Aires'])
+def test_location_accepts_address_or_maps_link_without_coordinates(clients, database, label):
+    owner, tour, _ = ready(clients, database)
+    payload = {'title': tour['title'], 'slug': tour['slug'], 'public_location': {'label': label}}
+    saved = owner.mutate('PUT', f"/tours/{tour['id']}", payload)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()['public_location'] == {'label': label, 'latitude': None, 'longitude': None}
+    publish(owner, tour); drain(database)
+    assert clients().get(f"/public/tours/{tour['slug']}").json()['public_location'] == saved.json()['public_location']
+
+
+@pytest.mark.parametrize('label', ['javascript:alert(1)', 'https://evil.example/maps', 'https://www.google.com.evil.example/maps', '//maps.app.goo.gl/demo', 'https://www.google.com/url?url=https://evil.example', 'https://user:pass@maps.app.goo.gl/demo'])
+def test_location_rejects_unsafe_external_links(label):
+    from pydantic import ValidationError
+    from app.modules.tours.schemas import PublicLocation
+    with pytest.raises(ValidationError):
+        PublicLocation(label=label)

@@ -4,11 +4,12 @@ Cada recorrido puede incluir una ubicación pública opcional. No se copia la di
 
 1. Abrir el trabajo, ir al paso **5 Revisar** y desplegar **Datos del recorrido**.
 2. En **Ubicación para visitantes**, activar **Mostrar cómo llegar en el recorrido público**.
-3. Escribir el nombre o dirección que se mostrará y completar latitud y longitud del acceso exacto. Se aceptan valores negativos y decimales; latitud entre -90 y 90, longitud entre -180 y 180.
-4. Usar **Comprobar destino en Google Maps** antes de guardar.
-5. Pulsar **Guardar información** y luego **Publicar recorrido** o **Publicar cambios**.
+3. En **Dirección o enlace de Google Maps**, escribir la dirección completa (calle, número, localidad) o pegar el enlace de **Compartir** de Maps. No hace falta cargar coordenadas.
+4. Solo si se necesita precisar una entrada o un lugar difícil de encontrar, abrir **Precisar con coordenadas (opcional)** y completar ambas: latitud entre -90 y 90 y longitud entre -180 y 180. Las coordenadas tienen prioridad sobre la dirección o el enlace.
+5. Usar **Comprobar destino en Google Maps** antes de guardar.
+6. Pulsar **Guardar información** y luego **Publicar recorrido** o **Publicar cambios**.
 
-El visitante verá **Cómo llegar** junto al título. Abre Google Maps en una pestaña o aplicación externa, con las coordenadas como destino y sin fijar el origen. Maps puede usar la ubicación actual si está disponible y autorizada, o pedir un punto de partida. La selección de transporte, las alternativas, el tráfico y las indicaciones se gestionan en Google Maps. Vision360 no calcula tiempos ni garantiza una ruta más rápida.
+El visitante verá **Cómo llegar** junto al título. Abre Google Maps en una pestaña o aplicación externa. Con una dirección o coordenadas solicita la ruta sin fijar el origen. Con un enlace compartido abre exactamente ese enlace, donde el visitante puede elegir **Cómo llegar**; los enlaces cortos no se resuelven ni se transforman desde Vision360. Solo se admiten enlaces HTTPS de Google Maps. Maps puede usar la ubicación actual si está disponible y autorizada, o pedir un punto de partida. La selección de transporte, las alternativas, el tráfico y las indicaciones se gestionan en Google Maps. Vision360 no calcula tiempos ni garantiza una ruta más rápida.
 
 La integración utiliza [Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), sin claves, SDK ni servicios de rutas pagos. Vision360 no solicita ni almacena la ubicación del visitante.
 

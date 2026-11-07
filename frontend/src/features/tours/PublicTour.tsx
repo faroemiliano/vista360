@@ -39,7 +39,7 @@ export function PublicTour({ slug }: { slug: string }) {
       {panorama && <PanoramaViewer scene={panorama} onNavigate={setActiveId} experimentalTools={false} />}
       <nav className="row-actions" aria-label="Ambientes del recorrido">{tour.scenes.map((item) => <button key={item.id}
         aria-current={item.id === activeId ? 'true' : undefined} onClick={() => setActiveId(item.id)}>{item.name}</button>)}</nav>
-      {tour.public_location && <p className="text-sm">Ubicación: {tour.public_location.label}</p>}
+      {tour.public_location && <p className="break-words text-sm">Ubicación: {tour.public_location.label.startsWith('https://') ? 'Ubicación compartida en Google Maps' : tour.public_location.label}</p>}
       {tour.description && <p>{tour.description}</p>}
       <ul className="saved-hotspots">{scene?.hotspots.map((point) => <li key={point.id}>
         {point.type === 'navigation' ? <button onClick={() => setActiveId(point.target_scene_id!)}>Ir: {point.label}</button>
