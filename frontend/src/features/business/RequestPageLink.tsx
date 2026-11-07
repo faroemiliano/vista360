@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { businessApi } from '../../api/business'
+import { RequestQr } from './RequestQr'
 import type { BusinessWorkspace } from '../../api/business'
 
 export function RequestPageLink({ workspace, onChanged }: { workspace: BusinessWorkspace; onChanged: (value: BusinessWorkspace) => void }) {
@@ -16,8 +17,9 @@ export function RequestPageLink({ workspace, onChanged }: { workspace: BusinessW
   }
   return <section className="card mb-8 p-5 sm:p-6" aria-label="Mi enlace de solicitudes">
     <p className="eyebrow mb-3 text-accent">Tu puerta de entrada</p><h2 className="text-xl">Recibí consultas para {workspace.name}</h2>
-    <p className="muted my-4">Compartí tu formulario con inmobiliarias y particulares. No necesitan registrarse y las consultas quedan en tu bandeja privada.</p>
+    <p className="muted my-4">Compartí tu QR o el enlace del formulario con inmobiliarias y particulares. No necesitan registrarse y las consultas quedan en tu bandeja privada.</p>
     {link ? <>
+      <RequestQr link={link} studioName={workspace.name} />
       <label className="block text-sm">Mi enlace de solicitudes<input className="mt-2" readOnly value={link} onFocus={(event) => event.currentTarget.select()} /></label>
       <div className="row-actions"><button className="btn-primary" onClick={async () => {
         setError('')

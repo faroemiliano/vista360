@@ -13,6 +13,22 @@ async function register(page: Page, email: string, name: string) {
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
 }
 
+async function decodeQr(page: Page) {
+  await page.addScriptTag({ path: 'node_modules/jsqr/dist/jsQR.js' })
+  const qr = page.getByRole('img', { name: /^Código QR para solicitar fotografías/ })
+  await expect(qr).toBeVisible()
+  await expect.poll(() => qr.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(768)
+  return qr.evaluate(image => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 768
+    const context = canvas.getContext('2d')!
+    context.drawImage(image as HTMLImageElement, 0, 0)
+    const pixels = context.getImageData(0, 0, 768, 768)
+    const decoder = (window as unknown as { jsQR: (data: Uint8ClampedArray, width: number, height: number) => { data: string } | null }).jsQR
+    return decoder(pixels.data, pixels.width, pixels.height)?.data
+  })
+}
+
 test('cada fotógrafo comparte su formulario y conserva sus consultas privadas', async ({ page, browser, baseURL }, testInfo) => {
   test.skip(process.env.TEST_API !== '1', 'Requiere API y PostgreSQL temporal')
   test.setTimeout(90_000)
@@ -35,8 +51,17 @@ test('cada fotógrafo comparte su formulario y conserva sus consultas privadas',
     await page.getByRole('button', { name: 'Activar mi formulario', exact: true }).click()
     const linkA = await page.getByRole('textbox', { name: 'Mi enlace de solicitudes', exact: true }).inputValue()
     expect(linkA).toContain('/solicitar/')
+    expect(await decodeQr(page)).toBe(linkA)
+    const qrImage = await page.getByRole('img', { name: /^Código QR/ }).getAttribute('src')
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('link', { name: 'Descargar QR', exact: true }).click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toMatch(/^vision360-qr-.*\.png$/)
+    expect(await download.failure()).toBeNull()
     await page.reload()
     await expect(page.getByRole('textbox', { name: 'Mi enlace de solicitudes', exact: true })).toHaveValue(linkA)
+    expect(await decodeQr(page)).toBe(linkA)
+    await expect(page.getByRole('img', { name: /^Código QR/ })).toHaveAttribute('src', qrImage!)
     await page.screenshot({ path: testInfo.outputPath('mi-enlace.png'), fullPage: true })
     const other = await otherContext.newPage()
     await register(other, `sur-${stamp}@example.com`, studioB)
@@ -44,7 +69,9 @@ test('cada fotógrafo comparte su formulario y conserva sus consultas privadas',
     await expect(other.getByRole('combobox', { name: 'Cliente del trabajo', exact: true })).toHaveCount(0)
     await expect(other.getByRole('heading', { name: 'Registrá tu primer cliente', exact: true })).toHaveCount(0)
     await other.getByRole('button', { name: 'Activar mi formulario', exact: true }).click()
-    expect(await other.getByRole('textbox', { name: 'Mi enlace de solicitudes', exact: true }).inputValue()).not.toBe(linkA)
+    const linkB = await other.getByRole('textbox', { name: 'Mi enlace de solicitudes', exact: true }).inputValue()
+    expect(linkB).not.toBe(linkA)
+    expect(await decodeQr(other)).toBe(linkB)
     const visitor = await visitorContext.newPage()
     await visitor.goto(linkA)
     await expect(visitor.getByRole('heading', { name: studioA, exact: true })).toBeVisible()
@@ -92,6 +119,8 @@ test('cada fotógrafo comparte su formulario y conserva sus consultas privadas',
     page.once('dialog', dialog => dialog.accept())
     await page.getByRole('button', { name: 'Desactivar enlace', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Activar mi formulario', exact: true })).toBeVisible()
+    await expect(page.getByRole('img', { name: /^Código QR/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Descargar QR', exact: true })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: lead, exact: true })).toBeVisible()
     await visitor.goto(linkA)
     await expect(visitor.getByRole('alert')).toContainText('formulario no está disponible')

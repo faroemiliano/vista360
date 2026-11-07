@@ -154,3 +154,9 @@ La suite `test_studio_request_pages.py` verifica aislamiento, activación y
 revocación, idempotencia por destino y protección de avisos de prueba. El navegador
 `studio-requests.spec.ts` simula dos fotógrafos y un visitante anónimo, prueba que
 la consulta llega a uno solo y que puede convertirse en trabajo.
+
+## QR de cada estudio
+
+En **Solicitudes web**, al activar el formulario se muestra un código QR propio del estudio junto con su enlace. **Descargar QR** guarda una imagen PNG para imprimir o compartir. Escanearlo abre el formulario público del estudio sin que el visitante necesite registrarse. Las consultas llegan a ese estudio, no a otros fotógrafos.
+
+El QR se genera en el navegador, sin enviar información a servicios externos. Conserva el mismo destino mientras el formulario esté activo. Desactivar el enlace también invalida las copias del QR ya compartidas; al reactivarlo se genera otro enlace y hay que descargar el nuevo QR.
