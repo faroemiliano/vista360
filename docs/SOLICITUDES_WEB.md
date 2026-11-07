@@ -103,8 +103,12 @@ acceso a esta bandeja.
    existentes empiezan con su formulario desactivado.
 3. Copiar o abrir **Mi enlace de solicitudes**, con formato `/solicitar/TOKEN`.
 4. El cliente ve el nombre del estudio y envía la consulta sin registrarse.
-5. El titular la ve en su bandeja, puede registrar seguimiento y preparar un
-   trabajo para uno de los clientes de ese mismo estudio.
+5. El titular la ve en su bandeja y puede registrar seguimiento, aunque todavía
+   no tenga clientes cargados. Una consulta no queda asociada automáticamente a
+   un cliente.
+6. Recién al pulsar **Preparar trabajo** aparece la elección del cliente de ese
+   estudio. La elección empieza vacía; si es nuevo, se registra en Organizaciones
+   o Particulares antes de preparar el trabajo. Volver a la bandeja conserva la consulta.
 
 **Desactivar enlace** invalida el enlace compartido y conserva las consultas y
 trabajos. Volver a activarlo genera un enlace nuevo. La página pública expone
