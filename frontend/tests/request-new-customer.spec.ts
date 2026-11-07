@@ -33,6 +33,7 @@ test('registra al cliente nuevo desde la consulta y sigue con el trabajo sin sal
     await expect(visitor.getByRole('heading', { name: 'Ya registramos tu consulta.', exact: true })).toBeVisible()
   } finally { await publicContext.close() }
   await page.getByRole('button', { name: 'Actualizar bandeja', exact: true }).click()
+  await page.getByRole('heading', { name: contact, exact: true }).click()
   await page.getByRole('button', { name: `Preparar trabajo para ${contact}`, exact: true }).click()
   await page.getByRole('button', { name: 'Nuevo cliente', exact: true }).click()
   const register = page.getByRole('form', { name: 'Registrar cliente desde consulta', exact: true })

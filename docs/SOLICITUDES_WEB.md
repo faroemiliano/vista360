@@ -12,6 +12,8 @@ Vision360** desde **Solicitudes web**. Cada fotógrafo tiene además su bandeja 
 `/studio/solicitudes?solicitud=UUID&origen=vision360`. El enlace exige iniciar sesión con una cuenta
 administradora; no contiene credenciales ni concede permisos.
 
+La bandeja muestra cada solicitud plegada, con el nombre del solicitante y su estado. Al pulsar el nombre o la flecha se despliegan los datos de contacto, el inmueble, el mensaje y las acciones de gestión. Los enlaces a una solicitud concreta la abren desplegada.
+
 La bandeja permite consultar datos y mensaje, cambiar estado, registrar notas y
 preparar un trabajo para un cliente del estudio seleccionado. Al guardar abre el
 trabajo en `/studio/trabajos/UUID`. Una cuenta normal accede a sus propias consultas. La API de administración de
