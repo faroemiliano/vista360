@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from sqlalchemy import exists, select
@@ -37,7 +37,8 @@ def access(db: Session, user: User, workspace_id: UUID) -> Workspace:
 
 
 def response(workspace: Workspace, user: User):
-    return {"id": workspace.id, "name": workspace.name, "is_owner": workspace.owner_id == user.id}
+    return {"id": workspace.id, "name": workspace.name, "is_owner": workspace.owner_id == user.id,
+            "request_token": workspace.request_token if workspace.owner_id == user.id else None}
 
 
 def list_workspaces(db: Session, user: User):
@@ -52,3 +53,25 @@ def rename(db: Session, user: User, workspace_id: UUID, data):
     workspace.name = data.name
     db.commit()
     return response(workspace, user)
+
+
+def owned(db: Session, user: User, workspace_id: UUID, lock=False):
+    query = select(Workspace).where(Workspace.id == workspace_id, Workspace.owner_id == user.id)
+    workspace = db.scalar(query.with_for_update() if lock else query)
+    if workspace is None:
+        raise HTTPException(404, 'Estudio no encontrado')
+    return workspace
+
+
+def request_page(db, user, workspace_id, enabled):
+    workspace = owned(db, user, workspace_id, lock=True)
+    workspace.request_token = (workspace.request_token or uuid4()) if enabled else None
+    db.commit()
+    return response(workspace, user)
+
+
+def public_studio(db, token):
+    workspace = db.scalar(select(Workspace).where(Workspace.request_token == token))
+    if workspace is None:
+        raise HTTPException(404, 'Este formulario no está disponible')
+    return workspace

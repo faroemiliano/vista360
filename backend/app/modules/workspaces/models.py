@@ -13,5 +13,6 @@ class Workspace(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), unique=True)
+    request_token: Mapped[UUID | None] = mapped_column(unique=True)
     name: Mapped[str] = mapped_column(String(160))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

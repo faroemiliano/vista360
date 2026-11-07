@@ -8,6 +8,16 @@ class WorkspaceInput(BaseModel):
     name: str = Field(min_length=1, max_length=160)
 
 
+class RequestPageInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    enabled: bool
+
+
+class PublicStudio(BaseModel):
+    name: str
+
+
 class WorkspaceResponse(WorkspaceInput):
+    request_token: UUID | None = None
     id: UUID
     is_owner: bool

@@ -38,6 +38,7 @@ class ServiceReceipt(BaseModel):
 
 
 class ServiceResponse(BaseModel):
+    workspace_id: UUID | None = None
     notification_status: Literal['pending', 'accepted', 'failed', 'not_configured'] | None = None
     model_config = ConfigDict(from_attributes=True)
     id: UUID

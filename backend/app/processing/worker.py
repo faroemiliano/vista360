@@ -27,10 +27,8 @@ logger = logging.getLogger("vista360.worker")
 
 def claim(factory) -> dict | None:
     with factory() as db:
-        from app.modules.studio.notifications import configured
-        query = select(ProcessingJob)
-        if not configured():
-            query = query.where(ProcessingJob.kind != 'notify_service')
+        from app.modules.studio.notifications import claimable
+        query = select(ProcessingJob).where(claimable())
         job = db.scalar(query.where(or_(
             (ProcessingJob.status == "queued") & (ProcessingJob.available_at <= now()),
             (ProcessingJob.status == "running") & (ProcessingJob.lease_expires_at <= now()),

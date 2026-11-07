@@ -99,10 +99,12 @@ def create(db, user, org_id, data):
 
 def assign(db, user, request_id, data):
     # Mismo orden de bloqueos que todas las escrituras: organización, solicitud, tour.
-    organization_access(db, user, data.organization_id, write=True, lock=True)
+    org, _ = organization_access(db, user, data.organization_id, write=True, lock=True)
     item = db.scalar(select(ServiceRequest).where(ServiceRequest.id == request_id).with_for_update())
     if not item:
         raise HTTPException(404, 'Solicitud no encontrada')
+    if item.workspace_id and org.workspace_id != item.workspace_id:
+        raise HTTPException(404, 'Cliente no encontrado en el estudio de la solicitud')
     attach(db, user, data.organization_id, item, data)
     db.commit()
     return response(db, item)

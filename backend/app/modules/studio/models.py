@@ -18,6 +18,7 @@ class ServiceRequest(Base):
         CheckConstraint("origin IN ('web', 'manual')", name="origin_valid"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    workspace_id: Mapped[UUID | None] = mapped_column(ForeignKey("workspaces.id"), index=True)
     submission_id: Mapped[UUID] = mapped_column(unique=True)
     fingerprint: Mapped[str] = mapped_column(String(64))
     name: Mapped[str] = mapped_column(String(160))

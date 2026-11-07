@@ -6,26 +6,30 @@ from app.modules.studio.models import ServiceEvent, ServiceRequest
 from app.modules.studio.schemas import ServiceReceipt
 
 
-def submit(db, data, request):
+def submit(db, data, request, workspace=None):
     request.app.state.service_throttle.check(request)
     payload = data.model_dump(exclude={'submission_id', 'consent', 'website'}, mode='json')
     digest = hashlib.sha256(data.model_dump_json(exclude={'submission_id', 'consent', 'website'}).encode()).hexdigest()
     previous = db.scalar(select(ServiceRequest).where(ServiceRequest.submission_id == data.submission_id))
     if previous:
-        if previous.fingerprint != digest:
+        if previous.fingerprint != digest or previous.workspace_id != (workspace.id if workspace else None):
             raise HTTPException(409, 'La referencia corresponde a otra solicitud. Volvé a iniciar el formulario')
         return ServiceReceipt(id=previous.id)
-    item = ServiceRequest(**payload, submission_id=data.submission_id, fingerprint=digest)
+    item = ServiceRequest(**payload, workspace_id=workspace.id if workspace else None, submission_id=data.submission_id, fingerprint=digest)
     db.add(item)
     try:
         db.flush()
         from app.modules.assets.models import ProcessingJob
-        db.add(ProcessingJob(kind='notify_service', details={'request_id': str(item.id)}))
+        details = {'request_id': str(item.id)}
+        if workspace:
+            from app.modules.auth.models import User
+            details['recipient'] = db.get(User, workspace.owner_id).email_normalized
+        db.add(ProcessingJob(kind='notify_service', details=details))
         db.commit()
     except IntegrityError:
         db.rollback()
         previous = db.scalar(select(ServiceRequest).where(ServiceRequest.submission_id == data.submission_id))
-        if not previous or previous.fingerprint != digest:
+        if not previous or previous.fingerprint != digest or previous.workspace_id != (workspace.id if workspace else None):
             raise HTTPException(409, 'La solicitud no se pudo registrar con esa referencia') from None
         return ServiceReceipt(id=previous.id)
     return ServiceReceipt(id=item.id)

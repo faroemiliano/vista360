@@ -20,7 +20,7 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await page.getByRole('button', { name: 'Crear organización', exact: true }).click()
   await expect(page.getByRole('heading', { name: `Estudio ${stamp}`, exact: true })).toBeVisible()
   await navigate(page, 'Trabajos')
-  await expect(page.getByRole('navigation', { name: 'Navegación principal', includeHidden: true }).getByRole('button', { includeHidden: true })).toHaveCount(4)
+  await expect(page.getByRole('navigation', { name: 'Navegación principal', includeHidden: true }).getByRole('button', { includeHidden: true })).toHaveCount(5)
   await page.getByRole('button', { name: 'Nuevo trabajo', exact: true }).click()
   await page.getByLabel('Nombre del trabajo', { exact: true }).fill(title)
   await page.getByLabel('Nombre del contacto', { exact: true }).fill('Inmobiliaria de prueba')

@@ -34,7 +34,7 @@ export function WorkForm({ organization, source, onSaved, onCancel, customerName
     setBusy(true); setError('')
     try {
       const links = { title: String(data.get('title')), client_id: clientId || null, property_id: propertyId || null, tour_id: tourId || null }
-      const job = source ? await businessApi.assignWork(source.id, { ...links, organization_id: organization.id })
+      const job = source ? await businessApi.assignWork(source.id, { ...links, organization_id: organization.id }, source.workspace_id || undefined)
         : await businessApi.createWork(organization.id, { ...links, submission_id: submissionId.current, name: String(data.get('name')), email: String(data.get('email')),
           whatsapp: String(data.get('whatsapp')), property_kind: String(data.get('kind')) as components['schemas']['WorkCreate']['property_kind'],
           locality: String(data.get('locality')), area_m2: Number(data.get('area')), rooms: Number(data.get('rooms')), message: String(data.get('message')), consent: true, website: '' })

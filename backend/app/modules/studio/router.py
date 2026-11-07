@@ -21,6 +21,14 @@ def administrator(user: User = Depends(current_user)):
     return user
 
 
+def web_request(db, request_id, workspace_id=None):
+    item = db.scalar(select(ServiceRequest).where(ServiceRequest.id == request_id,
+        ServiceRequest.origin == 'web', ServiceRequest.workspace_id == workspace_id))
+    if not item:
+        raise HTTPException(404, 'Solicitud no encontrada')
+    return item
+
+
 @router.post("/service-requests", response_model=ServiceReceipt, status_code=201, dependencies=[Depends(require_csrf)])
 def submit(data: ServiceInput, request: Request, db: Session = Depends(get_db)):
     return service.submit(db, data, request)
@@ -29,33 +37,32 @@ def submit(data: ServiceInput, request: Request, db: Session = Depends(get_db)):
 @router.get("/admin/service-requests", response_model=list[ServiceResponse])
 def list_requests(limit: int = 50, offset: int = 0, db: Session = Depends(get_db), user: User = Depends(administrator)):
     if not 1 <= limit <= 100 or offset < 0: raise HTTPException(422, "Paginación inválida")
-    items = list(db.scalars(select(ServiceRequest).where(ServiceRequest.origin == 'web').order_by(ServiceRequest.created_at.desc()).limit(limit).offset(offset)))
+    items = list(db.scalars(select(ServiceRequest).where(ServiceRequest.origin == 'web', ServiceRequest.workspace_id.is_(None)).order_by(ServiceRequest.created_at.desc()).limit(limit).offset(offset)))
     return notifications.responses(db, items)
 
 
 @router.get('/admin/service-requests/{request_id}', response_model=ServiceResponse)
 def request_details(request_id: UUID, db: Session = Depends(get_db), user: User = Depends(administrator)):
-    item = db.get(ServiceRequest, request_id)
-    if not item or item.origin != 'web':
-        raise HTTPException(404, 'Solicitud no encontrada')
+    item = web_request(db, request_id)
     return notifications.responses(db, [item])[0]
 
 
 @router.put("/admin/service-requests/{request_id}/status", response_model=ServiceResponse, dependencies=[Depends(require_csrf)])
 def transition(request_id: UUID, data: TransitionInput, db: Session = Depends(get_db), user: User = Depends(administrator)):
+    web_request(db, request_id)
     return service.transition(db, user, request_id, data)
 
 
 @router.get("/admin/service-requests/{request_id}/events", response_model=list[EventResponse])
 def events(request_id: UUID, db: Session = Depends(get_db), user: User = Depends(administrator)):
-    item = db.get(ServiceRequest, request_id)
-    if not item: raise HTTPException(404, "Solicitud no encontrada")
+    item = web_request(db, request_id)
     if item.organization_id: organization_access(db, user, item.organization_id)
     return list(db.scalars(select(ServiceEvent).where(ServiceEvent.request_id == request_id).order_by(ServiceEvent.created_at)))
 
 
 @router.post('/admin/service-requests/{request_id}/work', response_model=WorkResponse, dependencies=[Depends(require_csrf)])
 def assign_work(request_id: UUID, data: AssignWorkInput, db: Session = Depends(get_db), user: User = Depends(administrator)):
+    web_request(db, request_id)
     return work_service.assign(db, user, request_id, data)
 
 
@@ -99,3 +106,53 @@ def job_events(organization_id: UUID, request_id: UUID, db: Session = Depends(ge
 @router.post('/organizations/{organization_id}/jobs/{request_id}/delivery', response_model=WorkResponse, dependencies=[Depends(require_csrf)])
 def delivery(organization_id: UUID, request_id: UUID, data: DeliveryInput, db: Session = Depends(get_db), user: User = Depends(current_user)):
     return work_service.deliver(db, user, organization_id, request_id, data)
+
+
+@router.post('/public/studios/{token}/service-requests', response_model=ServiceReceipt, status_code=201, dependencies=[Depends(require_csrf)])
+def submit_to_studio(token: UUID, data: ServiceInput, request: Request, db: Session = Depends(get_db)):
+    from app.modules.workspaces.service import public_studio
+    return service.submit(db, data, request, workspace=public_studio(db, token))
+
+
+@router.get('/workspaces/{workspace_id}/service-requests', response_model=list[ServiceResponse])
+def studio_requests(workspace_id: UUID, offset: int = 0, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.workspaces.service import owned
+    owned(db, user, workspace_id)
+    if not 1 <= limit <= 100 or offset < 0:
+        raise HTTPException(422, 'Paginación inválida')
+    items = list(db.scalars(select(ServiceRequest).where(ServiceRequest.origin == 'web',
+        ServiceRequest.workspace_id == workspace_id).order_by(ServiceRequest.created_at.desc()).offset(offset).limit(limit)))
+    return notifications.responses(db, items)
+
+
+@router.get('/workspaces/{workspace_id}/service-requests/{request_id}', response_model=ServiceResponse)
+def studio_request(workspace_id: UUID, request_id: UUID, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.workspaces.service import owned
+    owned(db, user, workspace_id)
+    return notifications.responses(db, [web_request(db, request_id, workspace_id)])[0]
+
+
+@router.put('/workspaces/{workspace_id}/service-requests/{request_id}/status', response_model=ServiceResponse, dependencies=[Depends(require_csrf)])
+def studio_transition(workspace_id: UUID, request_id: UUID, data: TransitionInput, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.workspaces.service import owned
+    owned(db, user, workspace_id)
+    web_request(db, request_id, workspace_id)
+    return service.transition(db, user, request_id, data)
+
+
+@router.get('/workspaces/{workspace_id}/service-requests/{request_id}/events', response_model=list[EventResponse])
+def studio_events(workspace_id: UUID, request_id: UUID, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.workspaces.service import owned
+    owned(db, user, workspace_id)
+    item = web_request(db, request_id, workspace_id)
+    if item.organization_id:
+        organization_access(db, user, item.organization_id)
+    return list(db.scalars(select(ServiceEvent).where(ServiceEvent.request_id == request_id).order_by(ServiceEvent.created_at)))
+
+
+@router.post('/workspaces/{workspace_id}/service-requests/{request_id}/work', response_model=WorkResponse, dependencies=[Depends(require_csrf)])
+def studio_assign(workspace_id: UUID, request_id: UUID, data: AssignWorkInput, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.workspaces.service import owned
+    owned(db, user, workspace_id)
+    web_request(db, request_id, workspace_id)
+    return work_service.assign(db, user, request_id, data)

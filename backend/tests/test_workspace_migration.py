@@ -14,7 +14,6 @@ from app.core.config import get_settings
 from app.modules.auth.models import User
 from app.modules.organizations.models import Membership
 from app.modules.scenes.models import Scene
-from app.modules.studio.models import ServiceRequest
 from app.modules.tours.models import Tour
 
 
@@ -51,7 +50,7 @@ def test_upgrade_assigns_legacy_clients_without_changing_history(database, monke
                 tour = Tour(owner_id=u1, organization_id=archived, title='Recorrido histórico', slug='conservar-este-enlace')
                 db.add(tour); db.flush()
                 db.add(Scene(tour_id=tour.id, name='Living', sort_order=0, initial_hfov=110))
-                db.add(ServiceRequest(submission_id=uuid4(), fingerprint='a' * 64, name='Contacto anterior',
+                db.execute(old.tables['service_requests'].insert().values(id=uuid4(), submission_id=uuid4(), fingerprint='a' * 64, name='Contacto anterior',
                     email='contact@example.com', whatsapp='12345678', property_kind='casa', locality='BA',
                     area_m2=85, rooms=3, message='No perder notas', status='CONFIRMADO', origin='manual',
                     organization_id=archived, tour_id=tour.id, operations_notes='Conservar visita'))

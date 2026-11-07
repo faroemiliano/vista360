@@ -11,13 +11,13 @@ import { statusName, statuses } from './workflow'
 import { useNavigationDirty } from '../../app/navigation'
 import type { StudioRoute } from '../../app/navigation'
 
-export function JobsPanel({ workspaceId, staff, onExpired, onNavigate, initialOrganizationId, onOrganizationChange, mode = 'work', initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
+export function JobsPanel({ workspaceId, onExpired, onNavigate, initialOrganizationId, onOrganizationChange, mode = 'work', requestWorkspaceId, initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
   initialJobId?: string; initialStep?: WorkStep; initialFilter?: string; initialOffset?: number;
   onRouteChange?: (changes: Partial<StudioRoute>, replace?: boolean) => boolean;
   workspaceId: string; initialCreate?: boolean;
   staff: boolean; onExpired: () => void; onNavigate: (org: string, tab: string) => void;
   initialOrganizationId?: string; onOrganizationChange?: (id: string) => void; mode?: 'work' | 'requests';
-  initialRequestId?: string; initialWorkJob?: WorkJob | null; onOpenWork?: (job: WorkJob) => void
+  requestWorkspaceId?: string; initialRequestId?: string; initialWorkJob?: WorkJob | null; onOpenWork?: (job: WorkJob) => void
 }) {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [orgId, setOrgId] = useState('')
@@ -121,7 +121,7 @@ export function JobsPanel({ workspaceId, staff, onExpired, onNavigate, initialOr
     {organization?.deleted_at && <div className="my-5 rounded-xl border border-line p-4"><p className="text-sm text-muted">{organization.name} fue eliminada. Sus trabajos y recorridos siguen disponibles; para un trabajo nuevo elegí una organización activa.</p><button className="mt-3" onClick={() => onNavigate(organization.id, 'tours')}>Ver recorridos conservados</button></div>}
     {!organization && !loading && <div className="card p-6"><h3>Registrá tu primer cliente</h3><p className="muted my-4">Tu estudio ya está creado. Agregá la inmobiliaria o empresa que te contrata en Organizaciones, o una persona en Particulares. Después prepará su trabajo y entregale el enlace sin que necesite una cuenta.</p><button onClick={() => onNavigate('', 'tours')}>Crear organización cliente</button></div>}
     {creating && organization && !organization.deleted_at && <WorkForm customerName={initialCreate ? organization.name : undefined} key={`${organization.id}-${source?.id || 'new'}`} organization={organization} source={source} onCancel={() => { if (onRouteChange) { onRouteChange({ creating: false }); return }; setCreating(false); setSource(undefined) }} onSaved={(job) => { setCreating(false); setSource(undefined); if (mode === 'requests' && onOpenWork) onOpenWork(job); else { setSelected(job); setStep('visit'); onRouteChange?.({ jobId: job.id, organizationId: orgId, step: 'visit', creating: false }, true) }; setVersion((value) => value + 1) }} />}
-    {!creating && (mode === 'requests' && staff ? <StudioPanel embedded requestId={initialRequestId} onShowAll={() => onRouteChange?.({ requestId: '' })} onPrepare={(job) => {
+    {!creating && (mode === 'requests' ? <StudioPanel embedded workspaceId={requestWorkspaceId} requestId={initialRequestId} onShowAll={() => onRouteChange?.({ requestId: '' })} onPrepare={(job) => {
       if (!organization || organization.deleted_at || organization.role === 'viewer') { setError('Elegí una organización activa donde tengas permiso para editar.'); return }
       setSource(job); setCreating(true); window.scrollTo({ top: 0, behavior: 'smooth' })
     }} /> : <>
