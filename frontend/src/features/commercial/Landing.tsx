@@ -2,10 +2,9 @@ import { useEffect } from 'react'
 import { BrandMark } from '../../components/BrandMark'
 import { CaptureVisual } from '../../components/CaptureVisual'
 import { Icon } from '../../components/Icon'
-import { ServiceForm } from './ServiceForm'
 
 const steps = [
-  { title: 'Capturá', text: 'Tomá panorámicas completas o solicitá nuestro servicio.', icon: 'camera' as const },
+  { title: 'Capturá', text: 'Tomá panorámicas completas de cada espacio.', icon: 'camera' as const },
   { title: 'Revelá el espacio', text: 'Cargá una foto 360° por ambiente en el estudio.', icon: 'image' as const },
   { title: 'Conectá', text: 'Uní los ambientes y sumá puntos de información.', icon: 'link' as const },
   { title: 'Compartí', text: 'Revisá, publicá y entregá una nueva forma de visitar.', icon: 'globe' as const },
@@ -19,7 +18,6 @@ export function Landing() {
       <nav aria-label="Navegación comercial" className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-5 sm:gap-6 sm:px-8">
         <a href="/inicio" className="home-brand mr-auto flex items-center gap-3 text-xl font-bold tracking-tight text-ink"><BrandMark dynamic />Vision360</a>
         <a href="#como-funciona" className="text-sm text-muted">Cómo funciona</a>
-        <a href="#solicitud" className="text-sm text-muted">Contacto</a>
         <a href="/studio" className="btn-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold">Ingresar al estudio<Icon name="arrow" className="size-4" /></a>
       </nav>
     </header>
@@ -30,8 +28,8 @@ export function Landing() {
           <h1 className="max-w-2xl text-[2.7rem] leading-[1.06] tracking-[-.055em] sm:text-6xl lg:text-[4.2rem]">Transformamos espacios reales en <span className="hero-gradient">experiencias virtuales.</span></h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg">Creá recorridos 360° interactivos, digitalizá propiedades y mostrale cada ambiente a tus clientes desde cualquier dispositivo.</p>
           <div className="my-7 flex flex-wrap gap-3">
-            <a className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold" href="#solicitud">Solicitar recorrido 360°<Icon name="arrow" className="size-4" /></a>
-            <a className="inline-flex items-center rounded-xl border border-line bg-surface-900 px-5 py-3.5 text-sm font-semibold text-ink hover:border-accent/50" href="/studio">Crear mi recorrido</a>
+            <a className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold" href="/studio">Crear mi recorrido<Icon name="arrow" className="size-4" /></a>
+            <a className="inline-flex items-center rounded-xl border border-line bg-surface-900 px-5 py-3.5 text-sm font-semibold text-ink hover:border-accent/50" href="#como-funciona">Ver cómo funciona</a>
           </div>
           <div className="hero-footnote"><Icon name="focus" className="mt-0.5 size-5 shrink-0 text-accent" /><p className="max-w-sm text-xs leading-relaxed text-muted">Cada perspectiva cuenta. Recorridos panorámicos interactivos a partir de fotos 360°; sin reconstrucción 3D.</p></div>
         </div>
@@ -45,10 +43,6 @@ export function Landing() {
       <section className="audience-panel my-10 overflow-hidden rounded-2xl p-6 sm:p-10">
         <div className="flex items-start gap-6"><Icon name="focus" className="hidden size-14 shrink-0 text-violet sm:block" /><div><p className="eyebrow text-violet">Para quienes necesitan mostrar un espacio</p><h2 className="mt-4 max-w-3xl text-3xl sm:text-4xl">Lugares que merecen<br />otra forma de ser vistos.</h2></div></div>
         <ul className="mt-8 flex flex-wrap gap-2">{['Inmobiliarias', 'Fotógrafos', 'Hoteles y alojamientos', 'Arquitectos', 'Constructoras', 'Comercios y locales', 'Empresas'].map((name) => <li key={name} className="rounded-full border border-line bg-canvas/35 px-4 py-2 text-sm text-muted">{name}</li>)}</ul>
-      </section>
-      <section id="solicitud" className="grid scroll-mt-6 items-start gap-10 border-t border-line/60 py-16 lg:grid-cols-[.8fr_1.2fr] lg:py-20">
-        <div><span className="solution-icon mb-6"><Icon name="camera" className="size-6" /></span><p className="eyebrow mb-4 text-accent">Vision360 Studio</p><h2 className="text-3xl sm:text-4xl">Tu espacio puede ser<br /><span className="hero-gradient">la próxima visita.</span></h2><p className="muted mt-5 max-w-md">Contanos qué necesitás digitalizar. Usaremos tus datos para evaluar el trabajo y coordinar el contacto; la fecha y el presupuesto se acuerdan después.</p><p className="mt-5 max-w-md text-xs leading-relaxed text-muted">Si ya tenés fotos panorámicas completas, podés usar el editor. El formulario no inicia una contratación ni un cobro.</p><a href="/studio" className="mt-6 inline-block text-sm font-semibold text-accent underline underline-offset-4">Ya tengo fotos, quiero crear mi recorrido →</a></div>
-        <ServiceForm />
       </section>
     </main>
     <footer className="border-t border-line/60 px-5 py-8"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><a href="/inicio" className="home-brand flex items-center gap-3 text-sm font-semibold"><BrandMark dynamic className="size-8" />Vision360</a><span className="text-xs text-muted">Espacios reales, experiencias virtuales.</span><a href="/studio" className="text-xs text-accent">Ingresar al estudio →</a></div></footer>

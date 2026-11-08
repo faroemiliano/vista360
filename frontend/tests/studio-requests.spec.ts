@@ -40,6 +40,10 @@ test('cada fotógrafo comparte su formulario y conserva sus consultas privadas',
   const otherContext = await browser.newContext({ ...device, baseURL })
   const visitorContext = await browser.newContext({ ...device, baseURL })
   try {
+    await page.goto('/inicio')
+    await expect(page.getByRole('form', { name: 'Solicitar digitalización', exact: true })).toHaveCount(0)
+    await expect(page.locator('a[href="#solicitud"]')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Crear mi recorrido', exact: true })).toHaveAttribute('href', '/studio')
     await register(page, `luz-${stamp}@example.com`, studioA)
     await navigate(page, 'Organizaciones')
     await page.getByLabel('Nombre de la organización', { exact: true }).fill('Inmobiliaria del cliente')

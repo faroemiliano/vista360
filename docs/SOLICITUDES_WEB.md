@@ -1,5 +1,7 @@
 # Consultas web y avisos por email
 
+La página de inicio presenta la plataforma y el acceso al estudio; ya no incluye un formulario general de contratación. Las nuevas consultas se reciben desde el enlace o QR propio de cada estudio. Las consultas globales anteriores se conservan en la bandeja de administración.
+
 El formulario público guarda la consulta y un trabajo de notificación en la misma
 transacción PostgreSQL. El worker existente envía el aviso al operador mediante
 la API HTTPS de Resend. No se envían correos al visitante automáticamente.
@@ -122,7 +124,7 @@ trabajos. Volver a activarlo genera un enlace nuevo. La página pública expone
 solicitudes ni el contenido de su cuenta.
 
 La migración `0013_studio_request_pages` agrega un token público opcional al
-estudio y `workspace_id` a la solicitud. Las consultas anteriores y las del
+estudio y `workspace_id` a la solicitud. Las consultas históricas del anterior
 formulario de `/inicio` conservan `workspace_id=NULL`: siguen siendo consultas
 para Vision360. No se redistribuyen consultas existentes entre fotógrafos.
 El administrador de plataforma puede abrir **Consultas de Vision360** desde su

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { navigate } from './navigationHelpers'
 
-test('consulta web se conserva, llega a la bandeja privada y se convierte en trabajo', async ({ page, browser }, testInfo) => {
+test('consulta histórica de Vision360 se conserva y se convierte en trabajo', async ({ page, browser }, testInfo) => {
   test.skip(process.env.TEST_API !== '1', 'Requiere API y PostgreSQL temporal')
   test.setTimeout(60_000)
   page.setDefaultTimeout(10_000)
@@ -9,20 +9,21 @@ test('consulta web se conserva, llega a la bandeja privada y se convierte en tra
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/inicio')
-  const form = page.getByRole('form', { name: 'Solicitar digitalización', exact: true })
-  await form.getByLabel('Nombre', { exact: true }).fill(name)
-  await form.getByLabel('Email', { exact: true }).fill('visitor@example.com')
-  await form.getByLabel('WhatsApp', { exact: true }).fill('+54 9 11 1234 5678')
-  await form.getByRole('combobox', { name: 'Tipo de propiedad', exact: true }).selectOption('casa')
-  await form.getByLabel('Localidad', { exact: true }).fill('Palermo')
-  await form.getByLabel('Superficie aproximada (m²)', { exact: true }).fill('90')
-  await form.getByLabel('Cantidad de ambientes', { exact: true }).fill('3')
-  await form.getByLabel('Mensaje adicional', { exact: true }).fill('Coordinar para la próxima semana')
-  await form.getByRole('checkbox').check()
-  await form.getByRole('button', { name: 'Enviar solicitud de digitalización', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Ya registramos tu consulta.', exact: true })).toBeVisible()
-  const receipt = await page.locator('[role="status"]').filter({ hasText: 'Tu referencia' }).textContent()
-  const id = receipt!.match(/[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}/i)![0]
+  // La portada ya no recibe consultas globales; crear una consulta histórica como fixture.
+  const receipt = await page.evaluate(async (name) => {
+    const base = 'http://127.0.0.1:8002/api/v1'
+    const session = await fetch(`${base}/auth/session`, { credentials: 'include' }).then(response => response.json())
+    const response = await fetch(`${base}/service-requests`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.csrf_token },
+      body: JSON.stringify({ name, email: 'visitor@example.com', whatsapp: '+54 9 11 1234 5678',
+        property_kind: 'casa', locality: 'Palermo', area_m2: 90, rooms: 3,
+        message: 'Coordinar para la próxima semana', consent: true, website: '', submission_id: crypto.randomUUID() }),
+    })
+    if (!response.ok) throw new Error(`No se pudo preparar la consulta histórica: ${response.status}`)
+    return response.json()
+  }, name)
+  const id = receipt.id
   await page.goto(`/studio/solicitudes?solicitud=${id}`)
   await page.getByLabel('Email', { exact: true }).fill(process.env.TEST_ADMIN_EMAIL!)
   await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
