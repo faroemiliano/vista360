@@ -18,7 +18,7 @@ def catalog():
     settings = get_settings()
     return {
         'legacy': Plan(code='legacy', name='Acceso anterior', published_limit=None, scene_limit=None, storage_limit_bytes=None),
-        'trial': Plan(code='trial', name='Prueba', published_limit=1, scene_limit=10, storage_limit_bytes=settings.subscription_trial_storage_bytes, trial_days=14),
+        'trial': Plan(code='trial', name='Prueba', published_limit=1, scene_limit=6, storage_limit_bytes=settings.subscription_trial_storage_bytes, trial_days=14),
         'professional': Plan(code='professional', name='Profesional', published_limit=10, scene_limit=None, storage_limit_bytes=settings.subscription_professional_storage_bytes),
         'studio': Plan(code='studio', name='Estudio', published_limit=30, scene_limit=None, storage_limit_bytes=settings.subscription_studio_storage_bytes),
     }
@@ -160,7 +160,7 @@ def check_tour(db, tour, operation, reserve=0):
             raise HTTPException(409, 'Este recorrido supera los ambientes permitidos por el plan de prueba')
     elif operation == 'scene' and plan.scene_limit:
         if db.scalar(select(func.count(Scene.id)).where(Scene.tour_id == tour.id)) >= plan.scene_limit:
-            raise HTTPException(409, 'El plan de prueba permite hasta diez ambientes por recorrido')
+            raise HTTPException(409, 'El plan de prueba permite hasta seis ambientes por recorrido')
     elif operation == 'upload':
         if usage(db, workspace).storage_reserved_bytes + reserve > plan.storage_limit_bytes:
             raise HTTPException(413, 'Alcanzaste la reserva de almacenamiento de tu plan. Liberá espacio o solicitá ampliarlo')

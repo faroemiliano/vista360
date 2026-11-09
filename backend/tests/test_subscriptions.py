@@ -129,12 +129,12 @@ def test_scene_and_storage_budgets_apply_to_the_studio_not_the_actor(clients, da
     monkeypatch.setattr(get_settings(), 'subscription_limits_enabled', True)
     owner = clients(); owner.register()
     org = organization(owner); tour = org_tour(owner, org)
-    scenes = [new_scene(owner, tour) for _ in range(10)]
-    assert owner.mutate('POST', f"/tours/{tour['id']}/scenes", {'name': 'Once'}).status_code == 409
+    scenes = [new_scene(owner, tour) for _ in range(6)]
+    assert owner.mutate('POST', f"/tours/{tour['id']}/scenes", {'name': 'Séptimo'}).status_code == 409
     # Un colaborador con otro plan no presta su cuota al estudio del propietario.
     guest = clients(); guest.register('guest@example.com')
     owner.mutate('PUT', f"/organizations/{org['id']}/members", {'email': 'guest@example.com', 'role': 'editor'})
-    assert guest.mutate('POST', f"/tours/{tour['id']}/scenes", {'name': 'Once como editor'}).status_code == 409
+    assert guest.mutate('POST', f"/tours/{tour['id']}/scenes", {'name': 'Séptimo como editor'}).status_code == 409
     monkeypatch.setattr(get_settings(), 'subscription_trial_storage_bytes', 2 * 20 * 1024**2 + 2000)
     first = owner.mutate('POST', f"/tours/{tour['id']}/scenes/{scenes[0]['id']}/uploads", {'size_bytes': 1000, 'mime_type': 'image/jpeg'})
     assert first.status_code == 201
@@ -247,3 +247,24 @@ def test_concurrent_free_activation_is_idempotent(clients, database):
     assert a == b and a['revision'] == 1
     with Session(database[0]) as db:
         assert len(list(db.scalars(select(SubscriptionEvent)))) == 1
+
+
+def test_trial_fits_six_high_resolution_panoramas_and_rejects_seventh_scene(clients, database, monkeypatch):
+    monkeypatch.setattr(get_settings(), 'subscription_limits_enabled', True)
+    owner = clients(); owner.register()
+    tour = new_tour(owner)
+    plan = own_plan(owner).json()['plan']
+    assert plan['published_limit'] == 1 and plan['scene_limit'] == 6
+    assert plan['storage_limit_bytes'] == 1024**3
+    # Incluso seis originales del tamaño máximo admitido caben con sus reservas.
+    assert 6 * (get_settings().max_upload_bytes + 40 * 1024**2) <= plan['storage_limit_bytes']
+    photo = jpeg((4096, 2048))
+    for _ in range(6):
+        scene = new_scene(owner, tour)
+        ingest(owner, tour, scene, photo); drain(database)
+        panorama = owner.get(f"/tours/{tour['id']}/scenes/{scene['id']}/panorama").json()
+        assert panorama['sources'][0]['width'] == 4096
+    assert owner.mutate('POST', f"/tours/{tour['id']}/scenes", {'name': 'Séptimo'}).status_code == 409
+    publish(owner, tour); drain(database)
+    public = clients().get(f"/public/tours/{tour['slug']}")
+    assert public.status_code == 200 and len(public.json()['scenes']) == 6

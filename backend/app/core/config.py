@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     public_app_url: str | None = None
     platform_admin_user_ids: list[UUID] = []
     subscription_limits_enabled: bool = False
-    subscription_trial_storage_bytes: int = Field(default=256 * 1024**2, ge=1)
+    subscription_trial_storage_bytes: int = Field(default=1024**3, ge=1)
     subscription_professional_storage_bytes: int = Field(default=2 * 1024**3, ge=1)
     subscription_studio_storage_bytes: int = Field(default=10 * 1024**3, ge=1)
     organization_tour_limit: int = Field(default=10, ge=1, le=100000)

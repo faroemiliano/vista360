@@ -12,7 +12,7 @@ Catálogo inicial provisional (sin precios):
 
 | Plan | Duración inicial | Publicados simultáneamente | Ambientes por recorrido | Reserva estimada |
 | --- | --- | --- | --- | --- |
-| Prueba | 14 días | 1 | 10 | 256 MiB |
+| Prueba | 14 días | 1 | 6 | 1 GiB |
 | Profesional | Período manual (30 días por defecto) | 10 | Límite técnico existente | 2 GiB |
 | Estudio | Período manual (30 días por defecto) | 30 | Límite técnico existente | 10 GiB |
 
@@ -37,7 +37,7 @@ Al activar `SUBSCRIPTION_LIMITS_ENABLED=true`:
 - Se controla el total del estudio, agrupando todos sus clientes (incluso archivados) y sus recorridos personales antiguos. El plan del editor invitado no presta cuota al estudio dueño.
 - Publicaciones en preparación de recorridos todavía no publicados reservan lugares. Un candado transaccional de PostgreSQL por estudio serializa las reservas entre clientes distintos para no exceder el cupo en solicitudes concurrentes.
 - Republicar un recorrido publicado conserva su lugar; despublicarlo libera cupo. Una reducción de plan por debajo del uso no borra ni despublica lo existente, pero impide sumar publicaciones hasta ajustar el uso o ampliar el plan.
-- La prueba limita el alta de ambientes y rechaza publicar recorridos con más de diez ambientes que hubieran sido preparados antes de activar los límites.
+- La prueba limita el alta de ambientes y rechaza publicar recorridos con más de seis ambientes que hubieran sido preparados antes de activar los límites.
 - Al vencerse un plan se rechazan nuevas reservas de carga, nuevos ambientes y publicaciones con cambios. Se conserva la consulta y edición de datos existentes, el ingreso a la cuenta y los enlaces publicados. Las operaciones aceptadas antes de vencer pueden terminar de procesarse.
 - El almacenamiento se reserva al preparar una carga: tamaño declarado del original más 40 MiB por original para derivados privados y copias públicas. Se cuentan originales no rechazados de borradores, pendientes y versiones retenidas. La reserva se libera cuando la lógica existente elimina/rechaza los originales. Reemplazar una foto puede requerir margen temporal para ambas versiones.
 
@@ -79,3 +79,8 @@ Una cuenta anterior con Acceso anterior que nunca haya tenido una prueba u otro 
 La operación es idempotente: si ya existe una prueba, devuelve su estado y fecha original, incluso si venció. No la reinicia ni la renueva. No reemplaza planes pagos y volver a Acceso anterior no borra el historial que impide repetir la prueba. Los cambios administrativos deliberados siguen disponibles sólo para administración.
 
 Esta modificación no convierte la prueba en un plan gratuito permanente ni cambia el flag de límites comerciales; se mantiene el período previamente definido de 14 días. Los planes pagos siguen siendo de activación manual.
+
+
+La cuota gratuita se ajustó a **un recorrido publicado, hasta seis panorámicas (una por ambiente) y 1 GiB de reserva**, manteniendo los 14 días. Con el límite técnico actual de 50 MiB por original y el margen de 40 MiB por original, seis fotos requieren como máximo 540 MiB de reserva; el GiB deja margen para reemplazos. Los borradores y versiones retenidas también consumen esa cuota. No se reducen las dimensiones ni la calidad de imagen por pertenecer al plan gratuito.
+
+Si Render ya tiene `SUBSCRIPTION_TRIAL_STORAGE_BYTES` definido, actualizarlo a `1073741824` porque las variables de entorno prevalecen sobre el valor predeterminado del código. Este cambio no activa `SUBSCRIPTION_LIMITS_ENABLED`.
