@@ -85,12 +85,18 @@ def resolve_session(request: Request, db: Session) -> AuthSession | None:
     ))
 
 
-def current_user(request: Request, db: Session = Depends(get_db)) -> User:
+def authenticated_user(request: Request, db: Session = Depends(get_db)) -> User:
     session = resolve_session(request, db)
     user = db.get(User, session.user_id) if session else None
     if not user:
         raise HTTPException(401, "Iniciá sesión para continuar")
     request.state.auth_session = session
+    return user
+
+
+def current_user(user: User = Depends(authenticated_user)) -> User:
+    if user.email_verification_required and user.email_verified_at is None:
+        raise HTTPException(403, 'Verificá tu email para acceder al estudio')
     return user
 
 

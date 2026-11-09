@@ -11,10 +11,8 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.modules.auth.models import User
 from app.modules.organizations.models import Membership
 from app.modules.scenes.models import Scene
-from app.modules.tours.models import Tour
 
 
 def test_upgrade_assigns_legacy_clients_without_changing_history(database, monkeypatch):
@@ -37,7 +35,7 @@ def test_upgrade_assigns_legacy_clients_without_changing_history(database, monke
             c1, c2, c3, archived = uuid4(), uuid4(), uuid4(), uuid4()
             earlier = datetime(2026, 1, 1, tzinfo=timezone.utc)
             with Session(engine) as db:
-                db.add_all([User(id=uid, email_normalized=f'{index}@migration.example.com', password_hash='unchanged') for index, uid in enumerate([u1, u2, u3])])
+                db.execute(old.tables['users'].insert(), [{'id': uid, 'email_normalized': f'{index}@migration.example.com', 'password_hash': 'unchanged'} for index, uid in enumerate([u1, u2, u3])])
                 db.flush()
                 db.execute(old.tables['organizations'].insert(), [
                     {'id': cid, 'name': label, 'kind': kind, 'tour_limit': 10, 'member_limit': 5,
@@ -47,13 +45,13 @@ def test_upgrade_assigns_legacy_clients_without_changing_history(database, monke
                 db.add_all([Membership(organization_id=cid, user_id=owner, role='owner', created_at=earlier) for cid, owner in [(c1, u1), (c2, u1), (c3, u2), (archived, u1)]])
                 db.add(Membership(organization_id=c1, user_id=u2, role='owner', created_at=earlier + timedelta(days=1)))
                 db.flush()
-                tour = Tour(owner_id=u1, organization_id=archived, title='Recorrido histórico', slug='conservar-este-enlace')
-                db.add(tour); db.flush()
-                db.add(Scene(tour_id=tour.id, name='Living', sort_order=0, initial_hfov=110))
+                tour_id = uuid4()
+                db.execute(old.tables['tours'].insert().values(id=tour_id, owner_id=u1, organization_id=archived, title='Recorrido histórico', slug='conservar-este-enlace'))
+                db.add(Scene(tour_id=tour_id, name='Living', sort_order=0, initial_hfov=110))
                 db.execute(old.tables['service_requests'].insert().values(id=uuid4(), submission_id=uuid4(), fingerprint='a' * 64, name='Contacto anterior',
                     email='contact@example.com', whatsapp='12345678', property_kind='casa', locality='BA',
                     area_m2=85, rooms=3, message='No perder notas', status='CONFIRMADO', origin='manual',
-                    organization_id=archived, tour_id=tour.id, operations_notes='Conservar visita'))
+                    organization_id=archived, tour_id=tour_id, operations_notes='Conservar visita'))
                 db.commit()
             def snapshot():
                 with engine.connect() as connection:

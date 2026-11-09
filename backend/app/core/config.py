@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     csrf_secret: SecretStr
     cookie_secure: bool = False
+    auth_require_verified_email: bool = False
     session_ttl_seconds: int = Field(default=604800, ge=60, le=2592000)
     storage_backend: Literal["local", "s3"] = "local"
     storage_local_dir: Path = BACKEND_DIR / ".data" / "assets"

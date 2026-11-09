@@ -169,7 +169,10 @@ def run_once(factory) -> bool:
     try:
         if ticket["attempts"] > 3:
             fail(factory, ticket, "storage_error"); return True
-        if ticket["kind"] == "notify_service":
+        if ticket["kind"] == "notify_auth":
+            from app.modules.auth.mail import run
+            run(factory, ticket)
+        elif ticket["kind"] == "notify_service":
             from app.modules.studio.notifications import run
             run(factory, ticket)
         elif ticket["kind"] == "delete_file":

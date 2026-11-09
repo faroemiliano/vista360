@@ -88,7 +88,7 @@ def create_app() -> FastAPI:
 
         @app.get('/{path:path}', include_in_schema=False)
         def frontend_page(path: str):
-            if path in ('', 'inicio', 'studio') or path.startswith(('studio/', 'tour/', 'solicitar/')):
+            if path in ('', 'inicio', 'studio') or path.startswith(('studio/', 'tour/', 'solicitar/', 'cuenta/')):
                 return FileResponse(frontend / 'index.html', headers={'Cache-Control': 'no-cache'})
             raise HTTPException(404, 'Página no encontrada')
 

@@ -3,6 +3,7 @@ import { getSession, logout } from '../api/client'
 import type { SessionState } from '../api/client'
 import { businessApi } from '../api/business'
 import type { BusinessWorkspace, Organization } from '../api/business'
+import { AccountSecurity, VerificationPending } from '../features/auth/AccountSecurity'
 import { AuthForm } from '../features/auth/AuthForm'
 import { Icon } from '../components/Icon'
 import { BrandMark } from '../components/BrandMark'
@@ -20,6 +21,8 @@ export function Workspace() {
   const [session, setSession] = useState<SessionState | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [securityOpen, setSecurityOpen] = useState(false)
+  const verificationPending = Boolean(session?.user?.email_verification_required && !session?.user?.email_verified_at)
   const navigation = useStudioNavigation()
   const { route } = navigation
   const view = route.view
@@ -79,14 +82,14 @@ export function Workspace() {
     let active = true
     const userId = session?.user?.id
     setStudioError('')
-    if (!userId) { setStudioState(null); return }
+    if (!userId || verificationPending) { setStudioState(null); return }
     businessApi.workspaces().then((rows) => {
       if (!active) return
       if (!rows.length) { setStudioError('No se encontró tu estudio. Volvé a iniciar sesión.'); return }
       setStudioState({ userId, rows, selectedId: rows.find((row) => row.is_owner)?.id || rows[0].id })
     }).catch((cause: Error) => { if (active) setStudioError(cause.message) })
     return () => { active = false }
-  }, [session?.user?.id, studioVersion])
+  }, [session?.user?.id, studioVersion, verificationPending])
   useEffect(() => {
     if (!session?.user || studioState?.userId !== session.user.id || !studios.length) return
     const permitted = studios.find((row) => row.id === route.studioId)
@@ -96,14 +99,15 @@ export function Workspace() {
   useEffect(() => {
     let active = true
     setStaff(null)
-    if (session?.user) businessApi.access().then((access) => { if (active) setStaff(access.platform_admin) }).catch(() => { if (active) setStaff(false) })
+    if (session?.user && !verificationPending) businessApi.access().then((access) => { if (active) setStaff(access.platform_admin) }).catch(() => { if (active) setStaff(false) })
     return () => { active = false }
-  }, [session?.user?.id])
+  }, [session?.user?.id, verificationPending])
   useEffect(() => {
     let active = true
     getSession().then((state) => { if (active) setSession(state) }).catch((cause: Error) => { if (active) setError(cause.message) })
     return () => { active = false }
   }, [])
+  if (verificationPending && session?.user) return <main className="py-10"><VerificationPending user={session.user} onSession={handleSession} /></main>
   return <NavigationGuardContext.Provider value={navigation.register}><div className="min-h-screen lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
     <aside className="studio-sidebar flex flex-col bg-canvas px-5 py-5 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-6 lg:py-8">
       <div className="flex items-center justify-between gap-3">
@@ -128,7 +132,7 @@ export function Workspace() {
     <div className="min-w-0">
       <header className="studio-header flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-line/70 bg-surface-900/70 px-5 py-4 sm:px-8 lg:px-10">
         {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} /> : <div><p className="eyebrow">Tu estudio virtual</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">Tu estudio de digitalización</h1></div>}
-        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><span className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent sm:flex">{session.user.email_normalized.slice(0, 2).toUpperCase()}</span><span className="max-w-44 truncate text-xs text-muted">{session.user.email_normalized}</span><button className="btn-quiet" disabled={busy} onClick={async () => {
+        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><span className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent sm:flex">{session.user.email_normalized.slice(0, 2).toUpperCase()}</span><span className="max-w-44 truncate text-xs text-muted">{session.user.email_normalized}</span><button className="btn-quiet" onClick={() => setSecurityOpen(true)}>Seguridad de cuenta</button><button className="btn-quiet" disabled={busy} onClick={async () => {
           if (!navigation.canLeave()) return
           setBusy(true); setError('')
           try { handleSession(await logout()) }
@@ -153,5 +157,6 @@ export function Workspace() {
         </div> : studioError ? <div role="alert"><p>{studioError}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>Reintentar estudio</button></div> : <p role="status">Abriendo tu estudio…</p> : <AuthForm onSession={handleSession} />)}
       </main>
     </div>
+    {securityOpen && session?.user && <AccountSecurity user={session.user} onClose={() => setSecurityOpen(false)} onSession={setSession} />}
   </div></NavigationGuardContext.Provider>
 }

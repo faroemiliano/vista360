@@ -50,6 +50,8 @@ export function getSession(): Promise<SessionState> {
   return sessionRequest
 }
 
+export function updateSession(state: SessionState) { csrf = state.csrf_token }
+
 export async function authenticate(mode: 'login' | 'register', data: Credentials) {
   await getSession()
   const state = await request<SessionState>(`/auth/${mode}`, 'POST', data)

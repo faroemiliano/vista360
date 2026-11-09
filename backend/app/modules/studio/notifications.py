@@ -39,7 +39,7 @@ def configured(recipient=None):
 
 def claimable():
     settings = get_settings()
-    other_jobs = ProcessingJob.kind != 'notify_service'
+    other_jobs = ProcessingJob.kind.not_in(['notify_service', 'notify_auth'])
     if not transport_configured():
         return other_jobs
     recipient = func.coalesce(ProcessingJob.details['recipient'].astext,

@@ -221,7 +221,7 @@ def test_cors_preflight_and_csrf_stability(clients):
 
 def test_auth_throttle(clients):
     client = clients()
-    for _ in range(30):
+    for _ in range(10):
         assert client.mutate("POST", "/auth/login", {"email": "missing@example.com", "password": "Wrong-password-123"}).status_code == 401
     assert client.mutate("POST", "/auth/login", {"email": "missing@example.com", "password": "Wrong-password-123"}).status_code == 429
 
@@ -232,4 +232,4 @@ def test_migration_round_trip(database):
     assert inspect(database[0]).get_table_names() == ["alembic_version"]
     command.upgrade(config, "head")
     command.check(config)
-    assert set(inspect(database[0]).get_table_names()) == {"alembic_version", "users", "auth_sessions", "tours", "scenes", "assets", "processing_jobs", "hotspots", "tour_publications", "publication_assets", "organizations", "organization_memberships", "business_clients", "properties", "service_requests", "service_request_events", "workspaces"}
+    assert set(inspect(database[0]).get_table_names()) == {"alembic_version", "users", "auth_sessions", "tours", "scenes", "assets", "processing_jobs", "hotspots", "tour_publications", "publication_assets", "organizations", "organization_memberships", "business_clients", "properties", "service_requests", "service_request_events", "workspaces", "auth_actions", "auth_rate_buckets"}

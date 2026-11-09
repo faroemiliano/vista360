@@ -97,7 +97,7 @@ def clients(database):
     shutil.rmtree(storage_root)
     storage_root.mkdir()
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE users, auth_sessions, tours, scenes, assets, processing_jobs, hotspots, tour_publications, publication_assets, organizations, organization_memberships, business_clients, properties, service_requests, service_request_events CASCADE"))
+        connection.execute(text("TRUNCATE auth_rate_buckets, users, auth_sessions, tours, scenes, assets, processing_jobs, hotspots, tour_publications, publication_assets, organizations, organization_memberships, business_clients, properties, service_requests, service_request_events CASCADE"))
     with ExitStack() as stack:
         def factory():
             client = stack.enter_context(TestClient(create_app()))
