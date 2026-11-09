@@ -2371,6 +2371,10 @@ export interface components {
             period_start: string;
             /** Period End */
             period_end: string | null;
+            /** Remaining Days */
+            remaining_days: number | null;
+            /** Renewal Reminder */
+            renewal_reminder: boolean;
             /** Revision */
             revision: number;
             /** Limits Enabled */

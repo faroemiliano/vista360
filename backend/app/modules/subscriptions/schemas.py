@@ -28,6 +28,8 @@ class SubscriptionView(BaseModel):
     status: Literal['active', 'cancelled', 'expired']
     period_start: datetime
     period_end: datetime | None
+    remaining_days: int | None
+    renewal_reminder: bool
     revision: int
     limits_enabled: bool
     trial_available: bool

@@ -290,3 +290,24 @@ def test_paid_plan_defaults_to_calendar_month_and_requires_admin(clients, monkey
     assert admin.mutate('PUT', path, {**payload, 'revision': 2, 'duration_months': 13}).status_code == 422
     assert service.add_months(datetime(2026, 12, 31, tzinfo=timezone.utc), 1) == datetime(2027, 1, 31, tzinfo=timezone.utc)
     assert service.add_months(datetime(2027, 1, 31, tzinfo=timezone.utc), 1) == datetime(2027, 2, 28, tzinfo=timezone.utc)
+
+
+def test_remaining_days_and_reminder_seven_day_boundary(clients, database, monkeypatch):
+    from datetime import datetime, timezone
+    owner = clients(); owner.register()
+    workspace_id = UUID(owned(owner)['id'])
+    reference = datetime(2028, 5, 10, 12, tzinfo=timezone.utc)
+    monkeypatch.setattr(service, 'now', lambda: reference)
+    for seconds, days, reminder in ((14 * 86400, 14, False), (7 * 86400 + 1, 8, False),
+        (7 * 86400, 7, True), (6 * 86400, 6, True), (86400, 1, True), (1, 1, True), (0, 0, False), (-1, 0, False)):
+        with Session(database[0]) as db:
+            row = db.get(Subscription, workspace_id)
+            row.plan_code = 'professional'; row.period_start = reference - timedelta(days=30)
+            row.period_end = reference + timedelta(seconds=seconds)
+            db.commit()
+        state = own_plan(owner).json()
+        assert (state['remaining_days'], state['renewal_reminder']) == (days, reminder)
+    with Session(database[0]) as db:
+        row = db.get(Subscription, workspace_id); row.plan_code = 'legacy'; row.period_end = None; db.commit()
+    state = own_plan(owner).json()
+    assert state['remaining_days'] is None and state['renewal_reminder'] is False

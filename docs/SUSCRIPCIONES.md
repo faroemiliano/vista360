@@ -93,3 +93,13 @@ Profesional y Estudio se presentan como **planes mensuales** en inicio, registro
 El pago se realiza fuera del sistema. Después de confirmarlo, el administrador entra en **Usuarios registrados → Gestionar plan**, elige Profesional o Estudio, deja Mensual y 1 mes (o el período acordado), registra una nota y habilita el plan. Los controles de ese estudio pasan a usar la cuota del plan habilitado, siempre sujeto al flag global de límites. Elegirlo en inicio no permite activarse un plan pago por cuenta propia. Renovar requiere una nueva intervención del administrador.
 
 No hay pasarela, cobro, renovación automática, validación de comprobantes ni registro contable de pagos en esta etapa. La nota deja constancia administrativa del acuerdo y de la habilitación. No se modifica retroactivamente el vencimiento de suscripciones existentes ni la prueba gratuita de 14 días.
+
+## Días restantes y recordatorio de vencimiento
+
+Mi plan muestra **Te quedan X días**, o **Te queda 1 día**, además de la fecha de vencimiento. El backend calcula los días con su reloj, redondeando hacia arriba las fracciones de 24 horas: un período aún vigente de menos de 24 horas muestra un día. Un período vencido devuelve cero; Acceso anterior, sin fecha final, no tiene cuenta regresiva.
+
+Durante los últimos siete días (incluido el instante exacto de siete días restantes), aparece un recordatorio en el estudio propio del titular. Muestra días, fecha y accesos a Mi plan y a coordinar la renovación personalmente. También contempla la prueba gratuita y las cancelaciones programadas, sin renovar ni cobrar automáticamente. Al extender el vencimiento más allá de siete días, el aviso deja de aparecer.
+
+La información se consulta al abrir la sección, recuperar foco/visibilidad y cada minuto mientras la página está visible. Cerrar Mi cuenta también actualiza el recordatorio del estudio. No se usan los datos de planes ajenos para avisar a un colaborador invitado. El recordatorio no depende de que se hayan activado los bloqueos comerciales.
+
+Es un aviso dentro de la aplicación: esta etapa no envía emails, WhatsApp ni notificaciones fuera de la página. No requiere migración, cron ni servicios adicionales.

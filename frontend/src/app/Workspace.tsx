@@ -4,6 +4,7 @@ import type { SessionState } from '../api/client'
 import { businessApi } from '../api/business'
 import type { BusinessWorkspace, Organization } from '../api/business'
 import { VerificationPending } from '../features/auth/AccountSecurity'
+import { PlanReminder } from '../features/subscriptions/PlanReminder'
 import { MyAccount } from '../features/auth/MyAccount'
 import { UserAvatar } from '../features/auth/UserAvatar'
 import { AuthForm } from '../features/auth/AuthForm'
@@ -25,6 +26,7 @@ export function Workspace() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [securityOpen, setSecurityOpen] = useState(false)
+  const [accountTab, setAccountTab] = useState<'profile' | 'plan'>('profile')
   const verificationPending = Boolean(session?.user?.email_verification_required && !session?.user?.email_verified_at)
   const navigation = useStudioNavigation()
   const { route } = navigation
@@ -150,7 +152,7 @@ export function Workspace() {
     <div className="min-w-0">
       <header className="studio-header flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-line/70 bg-surface-900/70 px-5 py-4 sm:px-8 lg:px-10">
         {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} /> : <div><p className="eyebrow">Tu estudio virtual</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">Tu estudio de digitalización</h1></div>}
-        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label="Mi cuenta" onClick={() => setSecurityOpen(true)}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">Mi cuenta</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>Cerrar sesión</span></button></div>}
+        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label="Mi cuenta" onClick={() => { setAccountTab('profile'); setSecurityOpen(true) }}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">Mi cuenta</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>Cerrar sesión</span></button></div>}
       </header>
       <main tabIndex={-1} className="max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
         {session?.user && activeStudio && <nav aria-label="Historial de navegación" className="mb-6 flex flex-wrap items-center gap-2">
@@ -158,6 +160,7 @@ export function Workspace() {
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>Adelante<Icon name="arrow" className="size-4" /></button>
           <span className="ml-auto text-xs text-muted">{view === 'accounts' ? 'Administración / Usuarios registrados' : view === 'requests' ? route.requestScope === 'platform' ? 'Consultas de Vision360' : 'Solicitudes web' : view === 'jobs' ? route.jobId ? 'Trabajos / Detalle' : route.creating ? 'Trabajos / Nuevo trabajo' : 'Trabajos' : view === 'clients' ? 'Clientes' : `${route.group === 'individuals' ? 'Particulares' : 'Organizaciones'}${route.organizationId ? ' / Recorridos' : ''}`}</span>
         </nav>}
+        {session?.user && activeStudio?.is_owner && <PlanReminder key={`${session.user.id}-${activeStudio.id}`} workspaceId={activeStudio.id} refreshKey={securityOpen} onOpen={() => { setAccountTab('plan'); setSecurityOpen(true) }} />}
         {error && <p role="alert">{error}</p>}
         {!session && !error && <p role="status">Cargando sesión…</p>}
         {!session && error && <button onClick={() => { setError(''); refreshSession() }}>Reintentar conexión</button>}
@@ -169,6 +172,6 @@ export function Workspace() {
         </div> : studioError ? <div role="alert"><p>{studioError}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>Reintentar estudio</button></div> : <p role="status">Abriendo tu estudio…</p> : <AuthForm onSession={handleSession} selectedPlan={route.selectedPlan} initialMode={route.selectedPlan || new URLSearchParams(window.location.search).get('registro') === '1' ? 'register' : 'login'} />)}
       </main>
     </div>
-    {securityOpen && session?.user && <MyAccount user={session.user} onClose={closeAccount} initialTab={route.selectedPlan ? 'plan' : 'profile'} selectedPlan={route.selectedPlan} onSession={setSession} onLogout={signOut} onUser={user => setSession(current => current ? { ...current, user } : current)} />}
+    {securityOpen && session?.user && <MyAccount user={session.user} onClose={closeAccount} initialTab={route.selectedPlan ? 'plan' : accountTab} selectedPlan={route.selectedPlan} onSession={setSession} onLogout={signOut} onUser={user => setSession(current => current ? { ...current, user } : current)} />}
   </div></NavigationGuardContext.Provider>
 }

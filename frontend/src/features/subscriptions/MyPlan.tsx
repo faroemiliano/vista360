@@ -16,12 +16,17 @@ export function MyPlan({ selectedPlan, onStart }: { selectedPlan?: PublicPlanCod
   useEffect(() => {
     let active = true
     setError(''); setData(null)
-    businessApi.workspaces().then(rows => {
+    const load = () => businessApi.workspaces().then(rows => {
       const own = rows.find(row => row.is_owner)
       if (!own) throw new Error('No se encontró tu estudio propio.')
       return subscriptionApi.own(own.id)
-    }).then(result => { if (active) setData(result) }).catch((cause: Error) => { if (active) setError(cause.message) })
-    return () => { active = false }
+    }).then(result => { if (active) { setData(result); setError('') } }).catch((cause: Error) => { if (active) setError(cause.message) })
+    void load()
+    const refresh = () => { if (document.visibilityState === 'visible') void load() }
+    const interval = window.setInterval(refresh, 60_000)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => { active = false; window.clearInterval(interval); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh) }
   }, [version])
   async function activateTrial() {
     if (!data || busy) return

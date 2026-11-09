@@ -1,4 +1,5 @@
 from calendar import monthrange
+from math import ceil
 from datetime import timedelta
 from fastapi import HTTPException
 from sqlalchemy import exists, func, or_, select
@@ -91,9 +92,12 @@ def start_trial(db, actor, workspace):
 def view(db, workspace):
     row = subscription(db, workspace)
     plans = catalog()
+    current = now()
+    remaining = max(0, ceil((row.period_end - current).total_seconds() / 86400)) if row.period_end else None
     return SubscriptionView(workspace_id=workspace.id, plan=plans[row.plan_code],
-        status='expired' if row.period_end and row.period_end <= now() else row.status,
-        period_start=row.period_start, period_end=row.period_end, revision=row.revision,
+        status='expired' if row.period_end and row.period_end <= current else row.status,
+        period_start=row.period_start, period_end=row.period_end, remaining_days=remaining,
+        renewal_reminder=remaining is not None and 1 <= remaining <= 7, revision=row.revision,
         limits_enabled=get_settings().subscription_limits_enabled, trial_available=trial_available(db, workspace, row), usage=usage(db, workspace),
         catalog=[plans[key] for key in ('trial', 'professional', 'studio')])
 

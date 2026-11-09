@@ -10,6 +10,8 @@ export function PlanSummary({ data }: { data: Subscription }) {
       <p className="text-lg font-semibold">{data.plan.name}{data.plan.billing_interval === 'month' ? ' · Mensual' : ''}</p>
       <p className="mt-2 text-sm text-muted">{data.status === 'expired' ? 'Período finalizado' : data.status === 'cancelled' ? 'Cancelación programada: acceso hasta terminar el período' : 'Activo'}</p>
       <p className="mt-2 text-xs text-muted">{data.period_end ? `${data.status === 'expired' ? 'Finalizó el' : 'Vigente hasta el'} ${planDate(data.period_end)}` : 'Tu acceso actual se conserva'}</p>
+      {data.remaining_days !== null && <p className="mt-3 font-semibold text-accent">{data.remaining_days === 0 ? 'Tu período finalizó' : data.remaining_days === 1 ? 'Te queda 1 día' : `Te quedan ${data.remaining_days} días`}</p>}
+      {data.renewal_reminder && <p className="mt-3 text-sm text-muted">{data.plan.code === 'trial' ? 'Tu prueba gratuita está por terminar. Consultá los planes para continuar.' : 'Tu plan está por vencer. Coordiná la renovación con Vision360; el pago y la habilitación son manuales.'}</p>}
     </div>
     <dl className="my-4 grid gap-3 sm:grid-cols-2">
       <div className="rounded-xl border border-line p-4"><dt className="text-xs text-muted">Recorridos publicados</dt><dd className="mt-2 font-semibold">{data.usage.published}{data.plan.published_limit !== null ? ` de ${data.plan.published_limit}` : ''}</dd>{!!data.usage.preparing && <p className="mt-1 text-xs text-muted">{data.usage.preparing} preparando publicación</p>}</div>
