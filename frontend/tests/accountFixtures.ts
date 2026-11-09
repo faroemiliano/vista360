@@ -18,4 +18,3 @@ with Session(create_engine(url)) as db:
     print(raw_token(action))
 `, email, purpose], { cwd: resolve('../backend'), encoding: 'utf8' }).trim()
 }
-
