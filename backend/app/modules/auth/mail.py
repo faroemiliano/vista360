@@ -12,13 +12,16 @@ from app.modules.studio.notifications import NotificationError, send
 
 def payload(action, user):
     verification = action.purpose == 'verify'
-    path = 'verificar' if verification else 'restablecer'
+    changing_email = action.purpose == 'change_email'
+    path = 'email' if changing_email else 'verificar' if verification else 'restablecer'
     link = f"{get_settings().public_app_url.rstrip('/')}/cuenta/{path}#token={raw_token(action)}"
     title = 'Verificá tu email en Vision360' if verification else 'Restablecé tu contraseña de Vision360'
+    if changing_email:
+        title = 'Confirmá tu nuevo email en Vision360'
     text = f'{title}\n\nAbrí este enlace y confirmá la operación:\n{link}\n\n'
     text += 'El enlace vence en 24 horas.' if verification else 'El enlace vence en 30 minutos.'
     text += '\nSi no solicitaste esto, podés ignorar este mensaje.'
-    return {'from': str(get_settings().service_notification_from), 'to': [user.email_normalized], 'subject': title,
+    return {'from': str(get_settings().service_notification_from), 'to': [action.target_email or user.email_normalized], 'subject': title,
             'text': text, 'html': f'<h1>{title}</h1><p><a href="{escape(link, quote=True)}">Continuar en Vision360</a></p><p>Si no solicitaste esto, ignorá este mensaje.</p>'}
 
 

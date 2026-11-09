@@ -145,3 +145,16 @@ export async function uploadPanorama(tour: string, scene: string, file: File,
   })
   return request<AssetState>(`/assets/${target.asset_id}/complete`, 'POST')
 }
+
+
+export async function uploadAvatar(file: File): Promise<User> {
+  await getSession()
+  const response = await fetch(`${base}/api/v1/auth/avatar`, {
+    method: 'PUT', credentials: 'include', headers: { 'Content-Type': file.type, 'X-CSRF-Token': csrf || '' }, body: file,
+  })
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}))
+    throw new ApiError(response.status, typeof result.detail === 'string' ? result.detail : 'No se pudo guardar la foto.')
+  }
+  return response.json()
+}

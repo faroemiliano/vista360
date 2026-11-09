@@ -221,3 +221,5 @@ El cierre técnico del visor de Fase 2 fue aprobado para continuar, manteniendo 
 Consultas del sitio: [bandeja privada y configuración de avisos por email](docs/SOLICITUDES_WEB.md).
 
 La [seguridad de cuentas](docs/SEGURIDAD_CUENTAS.md) incluye recuperación/cambio de contraseña, verificación de email y límites persistentes. Con el remitente de prueba, mantener `AUTH_REQUIRE_VERIFIED_EMAIL=false` hasta habilitar el envío a todos los usuarios.
+
+El perfil privado se administra desde [Mi cuenta](docs/MI_CUENTA.md): foto, nombre, tipo de cuenta, teléfono, email y contraseña.

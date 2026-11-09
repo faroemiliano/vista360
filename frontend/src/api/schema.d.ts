@@ -174,6 +174,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Profile */
+        put: operations["save_profile_api_v1_auth_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Email Change */
+        post: operations["request_email_change_api_v1_auth_change_email_post"];
+        /** Cancel Email Change */
+        delete: operations["cancel_email_change_api_v1_auth_change_email_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/confirm-email-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Email Change */
+        post: operations["confirm_email_change_api_v1_auth_confirm_email_change_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Avatar */
+        get: operations["read_avatar_api_v1_auth_avatar_get"];
+        /** Upload Avatar */
+        put: operations["upload_avatar_api_v1_auth_avatar_put"];
+        post?: never;
+        /** Delete Avatar */
+        delete: operations["delete_avatar_api_v1_auth_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tours": {
         parameters: {
             query?: never;
@@ -1198,6 +1269,19 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** ChangeEmailInput */
+        ChangeEmailInput: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /**
+             * Current Password
+             * Format: password
+             */
+            current_password: string;
+        };
         /** ChangePasswordInput */
         ChangePasswordInput: {
             /**
@@ -1594,6 +1678,20 @@ export interface components {
              * @constant
              */
             mime_type: "image/jpeg";
+        };
+        /** ProfileInput */
+        ProfileInput: {
+            /** Display Name */
+            display_name: string;
+            /**
+             * Account Kind
+             * @enum {string}
+             */
+            account_kind: "individual" | "company";
+            /** Phone */
+            phone?: string | null;
+            /** Company Name */
+            company_name?: string | null;
         };
         /** PropertyInput */
         PropertyInput: {
@@ -2122,6 +2220,21 @@ export interface components {
             email_verified_at: string | null;
             /** Email Verification Required */
             email_verification_required: boolean;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Account Kind
+             * @enum {string}
+             */
+            account_kind: "individual" | "company";
+            /** Phone */
+            phone: string | null;
+            /** Company Name */
+            company_name: string | null;
+            /** Pending Email */
+            pending_email: string | null;
+            /** Avatar Url */
+            avatar_url: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -2574,6 +2687,185 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmailStatus"];
+                };
+            };
+        };
+    };
+    save_profile_api_v1_auth_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_email_change_api_v1_auth_change_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEmailInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthMessage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_email_change_api_v1_auth_change_email_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    confirm_email_change_api_v1_auth_confirm_email_change_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthMessage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_avatar_api_v1_auth_avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    upload_avatar_api_v1_auth_avatar_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    delete_avatar_api_v1_auth_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
         };

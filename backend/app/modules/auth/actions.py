@@ -23,17 +23,17 @@ def raw_token(action):
     return f'{action.id}.{secret}'
 
 
-def issue(db, user, purpose):
+def issue(db, user, purpose, target_email=None):
     db.scalar(select(User).where(User.id == user.id).with_for_update())
-    recent = db.scalar(select(AuthAction).where(AuthAction.user_id == user.id, AuthAction.purpose == purpose,
+    recent = db.scalar(select(AuthAction).where(AuthAction.user_id == user.id, AuthAction.purpose == purpose, AuthAction.target_email == target_email,
         AuthAction.used_at.is_(None), AuthAction.expires_at > now(), AuthAction.created_at > now() - timedelta(seconds=60)).limit(1))
     if recent:
         return
-    action = AuthAction(id=uuid4(), user_id=user.id, purpose=purpose,
+    action = AuthAction(id=uuid4(), user_id=user.id, purpose=purpose, target_email=target_email,
                         expires_at=now() + timedelta(minutes=30 if purpose == 'reset' else 1440))
     action.token_hash = token_hash(raw_token(action))
     db.add(action); db.flush()
-    db.add(ProcessingJob(kind='notify_auth', details={'action_id': str(action.id), 'recipient': user.email_normalized}))
+    db.add(ProcessingJob(kind='notify_auth', details={'action_id': str(action.id), 'recipient': target_email or user.email_normalized}))
 
 
 def consume(db, token, purpose):
@@ -50,6 +50,8 @@ def consume(db, token, purpose):
     action = db.scalar(select(AuthAction).where(AuthAction.id == action_id).with_for_update().execution_options(populate_existing=True))
     if (not user or not action or action.purpose != purpose or action.used_at is not None
         or action.expires_at <= now() or not hmac.compare_digest(action.token_hash, token_hash(token)) or not hmac.compare_digest(raw_token(action), token)):
+        raise invalid
+    if purpose == 'change_email' and (not action.target_email or action.target_email != user.pending_email):
         raise invalid
     db.execute(update(AuthAction).where(AuthAction.user_id == user.id, AuthAction.purpose == purpose,
         AuthAction.used_at.is_(None)).values(used_at=now()))

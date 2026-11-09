@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getSession, logout, request, updateSession } from '../../api/client'
 import type { SessionState, User } from '../../api/client'
 
@@ -35,14 +35,12 @@ export function VerificationPending({ user, onSession }: { user: User; onSession
   </section>
 }
 
-export function AccountSecurity({ user, onClose, onSession }: { user: User; onClose: () => void; onSession: (state: SessionState) => void }) {
-  const dialog = useRef<HTMLDialogElement>(null)
+export function AccountAccess({ user, onSession, onBusyChange }: { user: User; onSession: (state: SessionState) => void; onBusyChange: (busy: boolean) => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  useEffect(() => { dialog.current?.showModal(); return () => dialog.current?.close() }, [])
-  return <dialog ref={dialog} onCancel={event => { event.preventDefault(); if (!busy) onClose() }} className="m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-y-auto rounded-2xl border border-line bg-surface-900 p-6 text-ink backdrop:bg-black/70" aria-labelledby="seguridad-titulo">
-    <div className="flex items-start justify-between gap-3"><h2 id="seguridad-titulo" className="min-w-0 text-xl sm:text-2xl">Seguridad de tu cuenta</h2><button type="button" className="size-11 shrink-0 !p-2" disabled={busy} onClick={onClose} aria-label="Cerrar seguridad de cuenta"><span aria-hidden="true">×</span></button></div>
+  useEffect(() => { onBusyChange(busy) }, [busy, onBusyChange])
+  return <section aria-label="Seguridad de acceso">
     <p className="muted my-4 break-words text-sm">{user.email_normalized} · {user.email_verified_at ? 'Email verificado' : 'Email sin verificar'}</p>
     {!user.email_verified_at && <button disabled={busy} onClick={async () => {
       setBusy(true); setError('')
@@ -71,5 +69,5 @@ export function AccountSecurity({ user, onClose, onSession }: { user: User; onCl
       </fieldset>
     </form>
     {message && <p role="status" className="mt-4 text-sm">{message}</p>}{error && <p role="alert" className="mt-4 text-sm">{error}</p>}
-  </dialog>
+  </section>
 }

@@ -1,7 +1,9 @@
 from datetime import datetime
 from uuid import UUID
+from typing import Literal
+import re
 
-from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, Field, field_validator
 
 
 class Credentials(BaseModel):
@@ -31,6 +33,12 @@ class UserResponse(BaseModel):
     created_at: datetime
     email_verified_at: datetime | None
     email_verification_required: bool
+    display_name: str
+    account_kind: Literal['individual', 'company']
+    phone: str | None
+    company_name: str | None
+    pending_email: str | None
+    avatar_url: str | None
 
 
 class SessionResponse(BaseModel):
@@ -81,3 +89,26 @@ class AuthMessage(BaseModel):
 
 class EmailStatus(BaseModel):
     general_delivery_available: bool
+
+
+class ProfileInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    display_name: str = Field(min_length=2, max_length=160)
+    account_kind: Literal['individual', 'company']
+    phone: str | None = Field(default=None, max_length=40)
+    company_name: str | None = Field(default=None, max_length=200)
+
+    @field_validator('phone')
+    @classmethod
+    def valid_phone(cls, value):
+        if not value:
+            return None
+        value = re.sub(r'[\s().-]', '', value)
+        if not re.fullmatch(r'\+?[1-9][0-9]{6,14}', value):
+            raise ValueError('Ingresá un teléfono válido con código de área o país')
+        return value
+
+
+class ChangeEmailInput(EmailInput):
+    current_password: SecretStr
+    validate_current = field_validator('current_password')(Credentials.password_length.__func__)

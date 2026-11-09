@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     engine = create_db_engine(get_settings())
     app.state.session_factory = create_session_factory(engine)
     app.state.auth_throttle = AuthThrottle()
+    app.state.avatar_slot = asyncio.Semaphore(1)
     app.state.service_throttle = AuthThrottle(limit=5)
     try:
         yield

@@ -3,7 +3,9 @@ import { getSession, logout } from '../api/client'
 import type { SessionState } from '../api/client'
 import { businessApi } from '../api/business'
 import type { BusinessWorkspace, Organization } from '../api/business'
-import { AccountSecurity, VerificationPending } from '../features/auth/AccountSecurity'
+import { VerificationPending } from '../features/auth/AccountSecurity'
+import { MyAccount } from '../features/auth/MyAccount'
+import { UserAvatar } from '../features/auth/UserAvatar'
 import { AuthForm } from '../features/auth/AuthForm'
 import { Icon } from '../components/Icon'
 import { BrandMark } from '../components/BrandMark'
@@ -66,6 +68,13 @@ export function Workspace() {
     setActiveOrganizationId(''); setMobileMenuOpen(false)
     if (!next.user) navigation.navigate({ ...defaultRoute }, { replace: true, force: true })
     setSession(next)
+  }
+  async function signOut() {
+    if (!navigation.canLeave()) return
+    setBusy(true); setError('')
+    try { handleSession(await logout()); setSecurityOpen(false) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo cerrar sesión') }
+    finally { setBusy(false) }
   }
   function refreshSession() {
     void getSession().then(setSession).catch((cause: Error) => setError(cause.message))
@@ -132,13 +141,7 @@ export function Workspace() {
     <div className="min-w-0">
       <header className="studio-header flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-line/70 bg-surface-900/70 px-5 py-4 sm:px-8 lg:px-10">
         {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} /> : <div><p className="eyebrow">Tu estudio virtual</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">Tu estudio de digitalización</h1></div>}
-        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><span className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent sm:flex">{session.user.email_normalized.slice(0, 2).toUpperCase()}</span><span className="max-w-44 truncate text-xs text-muted">{session.user.email_normalized}</span><button className="btn-quiet" onClick={() => setSecurityOpen(true)}>Seguridad de cuenta</button><button className="btn-quiet" disabled={busy} onClick={async () => {
-          if (!navigation.canLeave()) return
-          setBusy(true); setError('')
-          try { handleSession(await logout()) }
-          catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo cerrar sesión') }
-          finally { setBusy(false) }
-        }}><Icon name="exit" className="size-4" /><span>Cerrar sesión</span></button></div>}
+        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label="Mi cuenta" onClick={() => setSecurityOpen(true)}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">Mi cuenta</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>Cerrar sesión</span></button></div>}
       </header>
       <main tabIndex={-1} className="max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
         {session?.user && activeStudio && <nav aria-label="Historial de navegación" className="mb-6 flex flex-wrap items-center gap-2">
@@ -157,6 +160,6 @@ export function Workspace() {
         </div> : studioError ? <div role="alert"><p>{studioError}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>Reintentar estudio</button></div> : <p role="status">Abriendo tu estudio…</p> : <AuthForm onSession={handleSession} />)}
       </main>
     </div>
-    {securityOpen && session?.user && <AccountSecurity user={session.user} onClose={() => setSecurityOpen(false)} onSession={setSession} />}
+    {securityOpen && session?.user && <MyAccount user={session.user} onClose={() => setSecurityOpen(false)} onSession={setSession} onLogout={signOut} onUser={user => setSession(current => current ? { ...current, user } : current)} />}
   </div></NavigationGuardContext.Provider>
 }
