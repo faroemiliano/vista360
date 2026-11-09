@@ -4,7 +4,7 @@ import { workSteps } from '../components/WorkSteps'
 import type { WorkStep } from '../components/WorkSteps'
 
 export type StudioRoute = {
-  view: 'jobs' | 'organizations' | 'clients' | 'requests'; requestId: string; requestScope: 'studio' | 'platform'; group: 'companies' | 'individuals';
+  view: 'jobs' | 'organizations' | 'clients' | 'requests' | 'accounts'; requestId: string; requestScope: 'studio' | 'platform'; group: 'companies' | 'individuals';
   studioId: string; organizationId: string; jobId: string; step: WorkStep;
   creating: boolean; tab: 'tours' | 'properties' | 'members'; tourId: string;
   query: string; kind: string; status: string; offset: number;
@@ -17,7 +17,7 @@ const uuid = (value: string | null) => value && /^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[
 function readRoute(): StudioRoute {
   const url = new URL(window.location.href)
   const parts = url.pathname.split('/').filter(Boolean)
-  const view = parts[1] === 'solicitudes' ? 'requests' : parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
+  const view = parts[1] === 'usuarios' ? 'accounts' : parts[1] === 'solicitudes' ? 'requests' : parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
   const step = url.searchParams.get('paso')
   const tab = url.searchParams.get('vista')
   const offset = Number(url.searchParams.get('pagina') || 0)
@@ -28,12 +28,12 @@ function readRoute(): StudioRoute {
     creating: view === 'jobs' && url.searchParams.get('nuevo') === '1',
     tab: tab === 'properties' || tab === 'members' ? tab : 'tours',
     tourId: view === 'organizations' ? uuid(url.searchParams.get('recorrido')) : '',
-    query: url.searchParams.get('buscar') || '', kind: ['individual', 'organization'].includes(url.searchParams.get('tipo') || '') ? url.searchParams.get('tipo')! : 'all',
+    query: url.searchParams.get('buscar') || '', kind: ['individual', 'organization', 'company'].includes(url.searchParams.get('tipo') || '') ? url.searchParams.get('tipo')! : 'all',
     status: url.searchParams.get('estado') || '', offset: Number.isSafeInteger(offset) && offset >= 0 ? offset * 50 : 0,
   }
 }
 export function routeUrl(route: StudioRoute) {
-  const section = route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
+  const section = route.view === 'accounts' ? 'usuarios' : route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
   const query = new URLSearchParams()
   if (route.studioId) query.set('estudio', route.studioId)
   if (route.organizationId) query.set('cliente', route.organizationId)
@@ -51,6 +51,7 @@ export function routeUrl(route: StudioRoute) {
   } else {
     if (route.query) query.set('buscar', route.query)
     if (route.kind !== 'all') query.set('tipo', route.kind)
+    if (route.view === 'accounts' && route.offset) query.set('pagina', String(route.offset / 50))
   }
   return `/studio/${section}${route.view === 'jobs' && route.jobId ? `/${route.jobId}` : ''}${query.size ? `?${query}` : ''}`
 }

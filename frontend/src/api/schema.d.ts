@@ -1196,6 +1196,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts */
+        get: operations["accounts_api_v1_admin_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1221,6 +1238,29 @@ export interface components {
         AccessResponse: {
             /** Platform Admin */
             platform_admin: boolean;
+        };
+        /** AccountDirectory */
+        AccountDirectory: {
+            summary: components["schemas"]["AccountSummary"];
+            /** Filtered Total */
+            filtered_total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Items */
+            items: components["schemas"]["RegisteredAccount"][];
+        };
+        /** AccountSummary */
+        AccountSummary: {
+            /** Total */
+            total: number;
+            /** Individuals */
+            individuals: number;
+            /** Companies */
+            companies: number;
+            /** Verified */
+            verified: number;
         };
         /** ActionInput */
         ActionInput: {
@@ -1884,6 +1924,38 @@ export interface components {
              * @default false
              */
             confirm_unreachable: boolean;
+        };
+        /** RegisteredAccount */
+        RegisteredAccount: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+            /** Email */
+            email: string;
+            /** Phone */
+            phone: string | null;
+            /**
+             * Account Kind
+             * @enum {string}
+             */
+            account_kind: "individual" | "company";
+            /** Company Name */
+            company_name: string | null;
+            /** Studio Name */
+            studio_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email Verified */
+            email_verified: boolean;
+            /** Platform Admin */
+            platform_admin: boolean;
         };
         /** RequestPageInput */
         RequestPageInput: {
@@ -5171,6 +5243,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicStudio"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accounts_api_v1_admin_accounts_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                kind?: "all" | "individual" | "company";
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDirectory"];
                 };
             };
             /** @description Validation Error */
