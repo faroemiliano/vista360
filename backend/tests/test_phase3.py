@@ -226,10 +226,10 @@ def test_auth_throttle(clients):
     assert client.mutate("POST", "/auth/login", {"email": "missing@example.com", "password": "Wrong-password-123"}).status_code == 429
 
 
-def test_migration_round_trip(database):
+def test_migration_round_trip(database, clients):
     config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
     command.downgrade(config, "0001_base")
     assert inspect(database[0]).get_table_names() == ["alembic_version"]
     command.upgrade(config, "head")
     command.check(config)
-    assert set(inspect(database[0]).get_table_names()) == {"alembic_version", "users", "auth_sessions", "tours", "scenes", "assets", "processing_jobs", "hotspots", "tour_publications", "publication_assets", "organizations", "organization_memberships", "business_clients", "properties", "service_requests", "service_request_events", "workspaces", "auth_actions", "auth_rate_buckets"}
+    assert set(inspect(database[0]).get_table_names()) == {"alembic_version", "users", "auth_sessions", "tours", "scenes", "assets", "processing_jobs", "hotspots", "tour_publications", "publication_assets", "organizations", "organization_memberships", "business_clients", "properties", "service_requests", "service_request_events", "workspaces", "auth_actions", "auth_rate_buckets", "subscriptions", "subscription_events"}

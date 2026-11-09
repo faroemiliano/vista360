@@ -21,6 +21,7 @@ from app.modules.properties.router import router as property_router
 from app.modules.studio.router import router as studio_router
 from app.modules.workspaces.router import router as workspace_router
 from app.modules.platform.router import router as platform_router
+from app.modules.subscriptions.router import router as subscription_router
 
 
 @asynccontextmanager
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(studio_router, prefix="/api/v1")
     app.include_router(workspace_router, prefix="/api/v1")
     app.include_router(platform_router, prefix="/api/v1")
+    app.include_router(subscription_router, prefix="/api/v1")
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError):

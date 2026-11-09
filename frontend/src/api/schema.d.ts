@@ -1213,6 +1213,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Own Plan */
+        get: operations["own_plan_api_v1_workspaces__workspace_id__subscription_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{user_id}/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account Plan */
+        get: operations["account_plan_api_v1_admin_accounts__user_id__subscription_get"];
+        /** Assign Plan */
+        put: operations["assign_plan_api_v1_admin_accounts__user_id__subscription_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{user_id}/subscription/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Plan */
+        post: operations["cancel_plan_api_v1_admin_accounts__user_id__subscription_cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{user_id}/subscription/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Events */
+        get: operations["events_api_v1_admin_accounts__user_id__subscription_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1304,10 +1373,34 @@ export interface components {
              */
             organization_id: string;
         };
+        /** Assignment */
+        Assignment: {
+            /**
+             * Plan Code
+             * @enum {string}
+             */
+            plan_code: "legacy" | "trial" | "professional" | "studio";
+            /**
+             * Duration Days
+             * @default 30
+             */
+            duration_days: number;
+            /** Revision */
+            revision: number;
+            /** Note */
+            note: string;
+        };
         /** AuthMessage */
         AuthMessage: {
             /** Message */
             message: string;
+        };
+        /** Cancellation */
+        Cancellation: {
+            /** Revision */
+            revision: number;
+            /** Note */
+            note: string;
         };
         /** ChangeEmailInput */
         ChangeEmailInput: {
@@ -1422,6 +1515,36 @@ export interface components {
             status: string;
             /** Note */
             note: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** EventView */
+        EventView: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Actor Id
+             * Format: uuid
+             */
+            actor_id: string;
+            /** Action */
+            action: string;
+            /** Note */
+            note: string;
+            /** Before */
+            before: {
+                [key: string]: unknown;
+            };
+            /** After */
+            after: {
+                [key: string]: unknown;
+            };
             /**
              * Created At
              * Format: date-time
@@ -1673,6 +1796,24 @@ export interface components {
              * @enum {string}
              */
             credentials: "include" | "omit";
+        };
+        /** Plan */
+        Plan: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "legacy" | "trial" | "professional" | "studio";
+            /** Name */
+            name: string;
+            /** Published Limit */
+            published_limit: number | null;
+            /** Scene Limit */
+            scene_limit: number | null;
+            /** Storage Limit Bytes */
+            storage_limit_bytes: number | null;
+            /** Trial Days */
+            trial_days?: number | null;
         };
         /** PlatformContactInput */
         PlatformContactInput: {
@@ -2171,6 +2312,34 @@ export interface components {
              */
             scene_id: string;
         };
+        /** SubscriptionView */
+        SubscriptionView: {
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            plan: components["schemas"]["Plan"];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "cancelled" | "expired";
+            /**
+             * Period Start
+             * Format: date-time
+             */
+            period_start: string;
+            /** Period End */
+            period_end: string | null;
+            /** Revision */
+            revision: number;
+            /** Limits Enabled */
+            limits_enabled: boolean;
+            usage: components["schemas"]["Usage"];
+            /** Catalog */
+            catalog: components["schemas"]["Plan"][];
+        };
         /** TourInput */
         TourInput: {
             /** Title */
@@ -2273,6 +2442,15 @@ export interface components {
              * Format: date-time
              */
             expires_at: string;
+        };
+        /** Usage */
+        Usage: {
+            /** Published */
+            published: number;
+            /** Preparing */
+            preparing: number;
+            /** Storage Reserved Bytes */
+            storage_reserved_bytes: number;
         };
         /** UserResponse */
         UserResponse: {
@@ -5277,6 +5455,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountDirectory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    own_plan_api_v1_workspaces__workspace_id__subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    account_plan_api_v1_admin_accounts__user_id__subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_plan_api_v1_admin_accounts__user_id__subscription_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Assignment"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_plan_api_v1_admin_accounts__user_id__subscription_cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Cancellation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    events_api_v1_admin_accounts__user_id__subscription_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventView"][];
                 };
             };
             /** @description Validation Error */

@@ -91,6 +91,8 @@ def prepare(db: Session, user: User, tour_id: UUID, scene_id: UUID, data: Prepar
         raise HTTPException(429, "Demasiadas cargas recientes. Intentá más tarde")
     used = lambda asset: asset.size_bytes + DELIVERY_RESERVATION if asset.status != "rejected" else 0
     reserve = data.size_bytes + DELIVERY_RESERVATION
+    from app.modules.subscriptions.service import check_tour
+    check_tour(db, tour, 'upload', reserve=data.size_bytes + 2 * DELIVERY_RESERVATION)
     quota = settings.owner_storage_quota_bytes
     if tour.organization_id:
         from app.modules.organizations.models import Organization

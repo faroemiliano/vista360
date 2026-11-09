@@ -71,6 +71,8 @@ def prepare(db: Session, user: User, tour_id: UUID, data: PublishInput):
             return state(db, tour)
     if db.scalar(select(Publication.id).where(Publication.tour_id == tour.id, Publication.status == "preparing").limit(1)):
         return state(db, tour)  # Publicar repetidamente no duplica tareas.
+    from app.modules.subscriptions.service import check_tour
+    check_tour(db, tour, 'publish')
     result = check(db, tour)
     if result.errors:
         raise HTTPException(422, ". ".join(result.errors))

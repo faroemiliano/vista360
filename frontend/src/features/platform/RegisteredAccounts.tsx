@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { businessApi } from '../../api/business'
 import type { components } from '../../api/schema'
+import { ManageSubscription } from '../subscriptions/ManageSubscription'
 import { ApiError } from '../../api/client'
 
 type Directory = components['schemas']['AccountDirectory']
@@ -10,6 +11,7 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
   query: string; kind: string; offset: number;
   onFilter: (query: string, kind: string) => void; onPage: (offset: number) => void; onExpired: () => void;
 }) {
+  const [selected, setSelected] = useState<Directory['items'][number] | null>(null)
   const [data, setData] = useState<Directory | null>(null)
   const [draft, setDraft] = useState(query)
   const [error, setError] = useState('')
@@ -50,7 +52,7 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
       <p role="status" className="mb-4 text-sm text-muted">{data.filtered_total} {data.filtered_total === 1 ? 'cuenta encontrada' : 'cuentas encontradas'}</p>
       {!data.items.length ? <p className="rounded-xl border border-line p-6 text-sm text-muted">No hay cuentas para esta búsqueda o página.</p> : <div className="max-w-full overflow-x-auto rounded-xl border border-line" role="region" aria-label="Tabla de usuarios registrados" tabIndex={0}>
         <table className="w-full min-w-[48rem] border-collapse text-left text-sm" aria-label="Usuarios registrados">
-          <thead className="bg-surface-850 text-xs text-muted"><tr>{['Cuenta', 'Contacto', 'Tipo', 'Estudio', 'Registro', 'Email'].map(label => <th className="px-4 py-3 font-medium" scope="col" key={label}>{label}</th>)}</tr></thead>
+          <thead className="bg-surface-850 text-xs text-muted"><tr>{['Cuenta', 'Contacto', 'Tipo', 'Estudio', 'Registro', 'Email', 'Plan'].map(label => <th className="px-4 py-3 font-medium" scope="col" key={label}>{label}</th>)}</tr></thead>
           <tbody>{data.items.map(user => <tr key={user.id} className="border-t border-line bg-surface-900 hover:bg-surface-850">
             <th scope="row" className="px-4 py-3 font-medium"><span className="block">{user.display_name || 'Sin nombre cargado'}</span>{user.platform_admin && <span className="mt-1 block text-xs text-accent">Administrador del sistema</span>}</th>
             <td className="px-4 py-3 text-xs text-muted"><span className="block break-all">{user.email}</span><span className="mt-1 block">{user.phone || 'Sin teléfono'}</span></td>
@@ -58,6 +60,7 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
             <td className="px-4 py-3 text-muted">{user.studio_name || 'Sin estudio'}</td>
             <td className="whitespace-nowrap px-4 py-3 text-xs text-muted"><time dateTime={user.created_at}>{date(user.created_at)}</time></td>
             <td className="px-4 py-3 text-xs"><span className={user.email_verified ? 'text-accent' : 'text-muted'}>{user.email_verified ? 'Verificado' : 'Sin verificar'}</span></td>
+            <td className="px-4 py-3"><button className="whitespace-nowrap !px-3 !py-2 !text-xs" aria-label={`Gestionar plan de ${user.email}`} onClick={() => setSelected(user)}>Gestionar plan</button></td>
           </tr>)}</tbody>
         </table>
       </div>}
@@ -68,5 +71,6 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
       </div>
       <p className="mt-5 text-xs text-muted">Los datos de contacto y el tipo de cuenta provienen de «Mi cuenta». «Verificado» indica que se confirmó el email, no la identidad o la empresa.</p>
     </>}
+    {selected && <ManageSubscription key={selected.id} userId={selected.id} email={selected.email} onClose={() => setSelected(null)} />}
   </section>
 }

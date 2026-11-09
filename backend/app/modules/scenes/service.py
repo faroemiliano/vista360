@@ -18,6 +18,8 @@ def list_scenes(tour_id: UUID, db: Session, user: User):
 
 def create_scene(tour_id: UUID, data: SceneInput, db: Session, user: User):
     tour = owned_tour(db, user, tour_id, lock=True)
+    from app.modules.subscriptions.service import check_tour
+    check_tour(db, tour, 'scene')
     scenes = ordered_scenes(db, tour.id)
     if len(scenes) >= 1000:
         raise HTTPException(409, "Límite de 1000 ambientes por recorrido")

@@ -21,3 +21,7 @@ Se guarda en el almacenamiento privado ya configurado (local en desarrollo, S3/S
 ## Migración
 
 `0016_account_profile` añade los campos privados y el destino de las confirmaciones de email. Las cuentas anteriores conservan su acceso y pueden completar sus datos. El tipo inicial es Particular, editable; no se intenta inferirlo a partir de sus clientes o estudios. Render ejecuta la migración al iniciar. En desarrollo: `cd backend && .venv/bin/alembic upgrade head` y reiniciar API/worker si no tienen recarga automática.
+
+## Mi plan
+
+La pestaña **Mi plan** muestra la suscripción del estudio propio, vencimiento y uso estimado, con acceso a consultar una ampliación. Las activaciones se coordinan manualmente con administración; ver [Suscripciones](SUSCRIPCIONES.md).

@@ -63,6 +63,8 @@ def test_upgrade_assigns_legacy_clients_without_changing_history(database, monke
             current = MetaData(); current.reflect(engine)
             with engine.connect() as connection:
                 workspaces = list(connection.execute(select(current.tables['workspaces'])).mappings())
+                preserved_plans = list(connection.execute(select(current.tables['subscriptions'])).mappings())
+                assert len(preserved_plans) == 3 and all(row['plan_code'] == 'legacy' and row['period_end'] is None for row in preserved_plans)
                 assert len(workspaces) == 3  # También la cuenta sin clientes.
                 by_owner = {row['owner_id']: row['id'] for row in workspaces}
                 clients = {row['id']: row['workspace_id'] for row in connection.execute(select(current.tables['organizations'])).mappings()}

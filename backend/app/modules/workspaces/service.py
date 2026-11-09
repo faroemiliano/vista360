@@ -18,6 +18,12 @@ def ensure_owned_workspace(db: Session, user: User) -> Workspace:
         workspace = Workspace(owner_id=user.id, name="Mi estudio")
         db.add(workspace)
         db.flush()
+        from app.modules.subscriptions.models import Subscription
+        from app.modules.auth.security import now
+        from datetime import timedelta
+        started = now()
+        db.add(Subscription(workspace_id=workspace.id, plan_code='trial', period_start=started, period_end=started + timedelta(days=14)))
+        db.flush()
     return workspace
 
 
