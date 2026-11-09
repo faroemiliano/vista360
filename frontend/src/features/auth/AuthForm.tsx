@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { authenticate } from '../../api/client'
+import { PlatformContact } from './PlatformContact'
 import type { SessionState } from '../../api/client'
 
 export function AuthForm({ onSession }: { onSession: (state: SessionState) => void }) {
@@ -29,5 +30,6 @@ export function AuthForm({ onSession }: { onSession: (state: SessionState) => vo
     <button className="btn-quiet mt-3 w-full" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}>
       {mode === 'login' ? 'Crear una cuenta' : 'Ya tengo una cuenta'}
     </button>
+    <PlatformContact />
   </section></div>
 }

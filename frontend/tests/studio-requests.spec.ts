@@ -4,6 +4,12 @@ import { navigate } from './navigationHelpers'
 async function register(page: Page, email: string, name: string) {
   await page.goto('/studio')
   await page.getByRole('button', { name: 'Crear una cuenta', exact: true }).click()
+  const contact = page.getByRole('complementary', { name: 'Contacto con el creador de Vision360', exact: true })
+  await expect(contact.getByRole('link', { name: 'farixio.tech@gmail.com', exact: true })).toHaveAttribute('href', 'mailto:farixio.tech@gmail.com?subject=Consulta%20sobre%20Vision360')
+  await contact.getByText('Cómo protegemos tu cuenta y tus datos', { exact: true }).click()
+  await expect(contact.getByText('Contraseñas protegidas.', { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
   await page.getByRole('button', { name: 'Registrarme', exact: true }).click()
