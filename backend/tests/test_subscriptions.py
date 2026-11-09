@@ -175,3 +175,17 @@ def test_concurrent_publications_cannot_exceed_one_slot_between_clients(clients,
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert sorted(pool.map(request_publish, tours)) == [202, 409]
     assert own_plan(owner).json()['usage']['preparing'] == 1
+
+
+def test_public_catalog_matches_private_catalog_without_legacy_or_account_data(clients, monkeypatch):
+    visitor = clients()
+    public = visitor.get('/public/plans')
+    assert public.status_code == 200
+    plans = public.json()
+    assert [item['code'] for item in plans] == ['trial', 'professional', 'studio']
+    assert plans[0]['trial_days'] == 14 and plans[1]['published_limit'] == 10
+    assert 'workspace_id' not in public.text and 'legacy' not in public.text
+    owner = clients(); owner.register()
+    assert own_plan(owner).json()['catalog'] == plans
+    monkeypatch.setattr(get_settings(), 'subscription_trial_storage_bytes', 123456)
+    assert visitor.get('/public/plans').json()[0]['storage_limit_bytes'] == 123456

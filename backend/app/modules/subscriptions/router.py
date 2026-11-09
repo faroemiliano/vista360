@@ -9,9 +9,15 @@ from app.modules.studio.router import administrator
 from app.modules.workspaces.service import owned
 from app.modules.subscriptions import service
 from app.modules.subscriptions.models import SubscriptionEvent
-from app.modules.subscriptions.schemas import Assignment, Cancellation, EventView, SubscriptionView
+from app.modules.subscriptions.schemas import Assignment, Cancellation, EventView, SubscriptionView, Plan
 
 router = APIRouter(tags=['subscriptions'])
+
+
+@router.get('/public/plans', response_model=list[Plan])
+def public_plans():
+    plans = service.catalog()
+    return [plans[code] for code in ('trial', 'professional', 'studio')]
 
 
 @router.get('/workspaces/{workspace_id}/subscription', response_model=SubscriptionView)

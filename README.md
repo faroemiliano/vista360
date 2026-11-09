@@ -227,3 +227,5 @@ El perfil privado se administra desde [Mi cuenta](docs/MI_CUENTA.md): foto, nomb
 La administración de la plataforma tiene un [directorio privado de usuarios registrados](docs/USUARIOS_REGISTRADOS.md), con totales, búsqueda y datos de contacto. Requiere `PLATFORM_ADMIN_USER_IDS`; no se mezcla con los clientes de cada estudio.
 
 La [base de suscripciones](docs/SUSCRIPCIONES.md) incorpora prueba de 14 días, Profesional y Estudio, consulta en Mi cuenta y asignación manual con historial desde administración. Sin cobros automáticos; los límites comerciales permanecen desactivados por defecto.
+
+Los [planes también aparecen en el inicio](docs/SUSCRIPCIONES.md#planes-en-el-inicio-y-elección-antes-del-registro): elegir uno abre el registro si no hay sesión y conserva la elección al ingresar, sin activar cobros ni modificar automáticamente la suscripción.

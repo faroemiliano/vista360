@@ -58,3 +58,13 @@ Migración: `0017_subscriptions` crea `subscriptions` y `subscription_events`, c
 ## Verificaciones
 
 Pruebas con PostgreSQL temporal: privacidad y roles, prueba inicial, conservación de cuentas anteriores, asignación/renovación/cancelación con auditoría, revisiones concurrentes, vencimientos, reservas de almacenamiento entre clientes, editor invitado, cupos de publicación concurrentes y republicación. Playwright comprueba consulta del titular y gestión administrativa completa en escritorio y celular sin proveedores externos ni correos reales.
+
+## Planes en el inicio y elección antes del registro
+
+`/inicio#planes` muestra Prueba, Profesional y Estudio desde `GET /api/v1/public/plans`, que reutiliza el catálogo del backend y omite Acceso anterior. Se muestran las cuotas iniciales, los 14 días gratis de prueba y «Precio a consultar» para los otros planes. No se publica un precio no acordado ni se activa una pasarela de pagos.
+
+Cada botón lleva a `/studio?registro=1&plan=trial|professional|studio`. Sin sesión se abre **Crear cuenta** con la elección visible y la opción de ingresar si ya se tiene una cuenta. Con una sesión iniciada se omite el formulario de registro. Luego del registro o ingreso se abre **Mi cuenta → Mi plan**, conservando la elección en la URL incluso si se recarga o está pendiente verificar el email. Al cerrar Mi cuenta se limpia ese parámetro.
+
+Elegir un plan es una intención de navegación, no una asignación comercial: la cuenta nueva continúa recibiendo su prueba habitual y una cuenta existente conserva su suscripción. El plan elegido se muestra junto al plan real; los planes pagos requieren la activación manual del administrador. «Consultar activación» abre el formulario de contacto con el nombre del plan en la consulta, editable antes de enviarla. No se envían consultas, emails ni cargos al hacer clic en una tarjeta.
+
+Sólo se aceptan los códigos públicos del catálogo como selección. No se interpreta `legacy`, un precio, una URL externa o un código arbitrario como un plan elegible. La elección no cambia permisos, no reinicia la prueba y no habilita planes pagos por modificar la URL. No se requieren migraciones nuevas para esta navegación.

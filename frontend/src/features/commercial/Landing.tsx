@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrandMark } from '../../components/BrandMark'
 import { CaptureVisual } from '../../components/CaptureVisual'
 import { Icon } from '../../components/Icon'
+import { Plans } from './Plans'
 import { PlatformContact, FloatingWhatsApp } from './PlatformContact'
 
 const steps = [
@@ -19,6 +20,7 @@ export function Landing() {
       <nav aria-label="Navegación comercial" className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-5 py-5 sm:gap-6 sm:px-8">
         <a href="/inicio" className="home-brand mr-auto flex items-center gap-3 text-xl font-bold tracking-tight text-ink"><BrandMark dynamic />Vision360</a>
         <a href="#como-funciona" className="text-sm text-muted">Cómo funciona</a>
+        <a href="#planes" className="text-sm text-muted">Planes</a>
         <a href="#contacto" className="text-sm text-muted">Contacto</a>
         <a href="/studio" className="btn-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold">Ingresar al estudio<Icon name="arrow" className="size-4" /></a>
       </nav>
@@ -46,6 +48,7 @@ export function Landing() {
         <div className="flex items-start gap-6"><Icon name="focus" className="hidden size-14 shrink-0 text-violet sm:block" /><div><p className="eyebrow text-violet">Para quienes necesitan mostrar un espacio</p><h2 className="mt-4 max-w-3xl text-3xl sm:text-4xl">Lugares que merecen<br />otra forma de ser vistos.</h2></div></div>
         <ul className="mt-8 flex flex-wrap gap-2">{['Inmobiliarias', 'Fotógrafos', 'Hoteles y alojamientos', 'Arquitectos', 'Constructoras', 'Comercios y locales', 'Empresas'].map((name) => <li key={name} className="rounded-full border border-line bg-canvas/35 px-4 py-2 text-sm text-muted">{name}</li>)}</ul>
       </section>
+      <Plans />
       <PlatformContact />
     </main>
     <FloatingWhatsApp />

@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
+import { publicPlan, publicPlanNames } from '../subscriptions/selection'
 import { getSession, request } from '../../api/client'
 import type { components } from '../../api/schema'
 
 export const ownerWhatsApp = `https://wa.me/5491170612602?text=${encodeURIComponent('Hola Emiliano, quiero saber más sobre Vision360.')}`
 
 export function PlatformContact() {
+  const selectedPlan = publicPlan(new URLSearchParams(window.location.search).get('plan'))
   const submission = useRef(crypto.randomUUID())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -44,7 +46,7 @@ export function PlatformContact() {
         <label>Email de contacto<input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="vos@ejemplo.com" /></label>
         <label>Teléfono de contacto<input name="phone" type="tel" autoComplete="tel" required minLength={8} maxLength={40} pattern="\+?[0-9\s\(\)\.\-]+" placeholder="Ej. 11 2345-6789" /></label>
         <p className="field-hint">Incluí el código de área. Para otro país, usá + y su código.</p>
-        <label>Tu consulta<textarea name="message" required minLength={10} maxLength={5000} rows={4} placeholder="Contame qué te gustaría saber sobre Vision360." /></label>
+        <label>Tu consulta<textarea aria-label="Tu consulta" name="message" defaultValue={selectedPlan ? `Hola, me interesa activar el plan ${publicPlanNames[selectedPlan]} de Vision360. Quisiera conocer el precio y cómo continuar.` : undefined} required minLength={10} maxLength={5000} rows={4} placeholder="Contame qué te gustaría saber sobre Vision360." /></label>
         <div className="sr-only" aria-hidden="true"><label>Sitio web<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
         <p className="mb-4 text-xs leading-relaxed text-muted">Ingresá un email y teléfono donde podamos responderte. Usaremos estos datos para atender tu consulta.</p>
         {error && <p role="alert" className="mb-4 text-sm">{error}</p>}
