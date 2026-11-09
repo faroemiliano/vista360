@@ -1354,6 +1354,21 @@ export interface components {
             /** Items */
             items: components["schemas"]["RegisteredAccount"][];
         };
+        /** AccountPlan */
+        AccountPlan: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "legacy" | "trial" | "professional" | "studio";
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "cancelled" | "expired";
+        };
         /** AccountSummary */
         AccountSummary: {
             /** Total */
@@ -2136,6 +2151,7 @@ export interface components {
             email_verified: boolean;
             /** Platform Admin */
             platform_admin: boolean;
+            plan: components["schemas"]["AccountPlan"] | null;
         };
         /** RequestPageInput */
         RequestPageInput: {

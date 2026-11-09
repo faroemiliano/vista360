@@ -20,3 +20,7 @@ La respuesta se construye con campos explícitos. No expone contraseñas/hashes,
 
 - Pruebas con PostgreSQL temporal: autorización, rechazo de elevación de permisos, recuentos globales, búsqueda, filtros, paginación, límites y campos de respuesta.
 - Playwright contra API real temporal: administrador y cuenta común en contextos distintos; acceso desde sidebar/URL, búsqueda, recarga, retroceso y ancho de pantalla de escritorio/celular.
+
+La columna **Plan** muestra directamente el plan real del estudio propio de cada cuenta (Prueba, Profesional, Estudio o Acceso anterior) y su estado: Activo, Vencido o Cancelación programada. No muestra como activo el plan que alguien solamente eligió en el inicio. Al cerrar Gestionar plan, la tabla se actualiza para reflejar las asignaciones o renovaciones realizadas.
+
+El directorio obtiene estos datos con uniones externas a estudio y suscripción, sin consultar el consumo de cada fila ni excluir cuentas vencidas o sin estudio. Un estudio antiguo sin suscripción registrada conserva el rótulo Acceso anterior; una cuenta sin estudio se indica expresamente. No requiere migraciones ni cambios de permisos.

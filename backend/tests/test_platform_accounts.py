@@ -54,7 +54,7 @@ def test_directory_counts_profiles_filters_and_pagination(clients, database, mon
     row = company_row['items'][0]
     assert row == dict(id=company_user['id'], display_name='Ana Fotógrafa', email='empresa@example.com',
         phone='+5491123456789', account_kind='company', company_name='Luz Fotografía',
-        studio_name='Estudio Luz', created_at=company_user['created_at'], email_verified=True, platform_admin=False)
+        studio_name='Estudio Luz', created_at=company_user['created_at'], email_verified=True, platform_admin=False, plan=dict(code='trial', name='Prueba', status='active'))
     for term in ('LUZ', 'Ana', 'empresa@', '23456789', 'Estudio Luz'):
         result = admin.http.get('/api/v1/admin/accounts', params={'q': term}).json()
         assert result['filtered_total'] == 1 and result['items'][0]['id'] == company_user['id']
@@ -76,3 +76,31 @@ def test_directory_validates_bounded_search_and_pagination(clients, monkeypatch)
         assert admin.http.get('/api/v1/admin/accounts', params=params).status_code == 422
     empty = admin.get('/admin/accounts?offset=100').json()
     assert empty['items'] == [] and empty['filtered_total'] == 1
+
+
+def test_directory_shows_actual_plan_and_state_without_filtering_out_accounts(clients, database, monkeypatch):
+    from datetime import timedelta
+    from sqlalchemy import select
+    from app.modules.subscriptions.models import Subscription
+    from app.modules.workspaces.models import Workspace
+    admin = clients(); administrator(admin, monkeypatch)
+    a = clients(); ua = a.register('paid@example.com').json()['user']
+    b = clients(); ub = b.register('expired@example.com').json()['user']
+    with Session(database[0]) as db:
+        wa = db.scalar(select(Workspace).where(Workspace.owner_id == UUID(ua['id'])))
+        wb = db.scalar(select(Workspace).where(Workspace.owner_id == UUID(ub['id'])))
+        wa_id = wa.id
+        first = db.get(Subscription, wa.id); first.plan_code = 'studio'; first.status = 'cancelled'
+        second = db.get(Subscription, wb.id); second.plan_code = 'professional'
+        second.period_start = now() - timedelta(days=40); second.period_end = now() - timedelta(days=1)
+        db.commit()
+    body = admin.get('/admin/accounts').json()
+    assert body['filtered_total'] == 3
+    users = {row['email']: row for row in body['items']}
+    assert users['paid@example.com']['plan'] == dict(code='studio', name='Estudio', status='cancelled')
+    assert users['expired@example.com']['plan'] == dict(code='professional', name='Profesional', status='expired')
+    assert users['platform@example.com']['plan']['code'] == 'trial'
+    # Un estudio antiguo sin fila de suscripción mantiene su acceso anterior y sigue listado.
+    with Session(database[0]) as db:
+        db.delete(db.get(Subscription, wa_id)); db.commit()
+    assert admin.get('/admin/accounts?q=paid@').json()['items'][0]['plan'] == dict(code='legacy', name='Acceso anterior', status='active')

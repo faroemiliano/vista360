@@ -10,11 +10,29 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.auth.models import User
+from app.modules.auth.security import now
+from app.modules.subscriptions.models import Subscription
+from app.modules.subscriptions.schemas import PlanCode
+from app.modules.subscriptions.service import catalog
 from app.modules.organizations.service import is_staff
 from app.modules.studio.router import administrator
 from app.modules.workspaces.models import Workspace
 
 router = APIRouter(tags=['platform'])
+
+
+class AccountPlan(BaseModel):
+    code: PlanCode
+    name: str
+    status: Literal['active', 'cancelled', 'expired']
+
+
+def account_plan(workspace, subscription, plans, current):
+    if workspace is None:
+        return None
+    code = subscription.plan_code if subscription else 'legacy'
+    status = 'expired' if subscription and subscription.period_end and subscription.period_end <= current else subscription.status if subscription else 'active'
+    return AccountPlan(code=code, name=plans[code].name, status=status)
 
 
 class RegisteredAccount(BaseModel):
@@ -28,6 +46,7 @@ class RegisteredAccount(BaseModel):
     created_at: datetime
     email_verified: bool
     platform_admin: bool
+    plan: AccountPlan | None
 
 
 class AccountSummary(BaseModel):
@@ -60,7 +79,7 @@ def accounts(
         func.count(User.id).filter(User.account_kind == 'company'),
         func.count(User.id).filter(User.email_verified_at.is_not(None)),
     )).one()
-    query = select(User, Workspace.name).outerjoin(Workspace, Workspace.owner_id == User.id)
+    query = select(User, Workspace, Subscription).outerjoin(Workspace, Workspace.owner_id == User.id).outerjoin(Subscription, Subscription.workspace_id == Workspace.id)
     if kind != 'all':
         query = query.where(User.account_kind == kind)
     if term := q.strip():
@@ -70,13 +89,16 @@ def accounts(
         ))))
     filtered_total = db.scalar(select(func.count()).select_from(query.subquery()))
     rows = db.execute(query.order_by(User.created_at.desc(), User.id.desc()).offset(offset).limit(limit))
+    plans = catalog()
+    current = now()
     return AccountDirectory(
         summary=AccountSummary(total=total, individuals=individuals, companies=companies, verified=verified),
         filtered_total=filtered_total, offset=offset, limit=limit,
         items=[RegisteredAccount(
             id=user.id, display_name=user.display_name, email=user.email_normalized,
             phone=user.phone, account_kind=user.account_kind, company_name=user.company_name,
-            studio_name=studio_name, created_at=user.created_at,
+            studio_name=workspace.name if workspace else None, created_at=user.created_at,
+            plan=account_plan(workspace, subscription, plans, current),
             email_verified=user.email_verified_at is not None, platform_admin=is_staff(user),
-        ) for user, studio_name in rows],
+        ) for user, workspace, subscription in rows],
     )

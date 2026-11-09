@@ -60,7 +60,7 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
             <td className="px-4 py-3 text-muted">{user.studio_name || 'Sin estudio'}</td>
             <td className="whitespace-nowrap px-4 py-3 text-xs text-muted"><time dateTime={user.created_at}>{date(user.created_at)}</time></td>
             <td className="px-4 py-3 text-xs"><span className={user.email_verified ? 'text-accent' : 'text-muted'}>{user.email_verified ? 'Verificado' : 'Sin verificar'}</span></td>
-            <td className="px-4 py-3"><button className="whitespace-nowrap !px-3 !py-2 !text-xs" aria-label={`Gestionar plan de ${user.email}`} onClick={() => setSelected(user)}>Gestionar plan</button></td>
+            <td className="px-4 py-3"><p className="whitespace-nowrap font-medium">{user.plan?.name || 'Sin estudio'}</p>{user.plan && <p className="mb-2 mt-1 text-xs text-muted">{user.plan.status === 'expired' ? 'Vencido' : user.plan.status === 'cancelled' ? 'Cancelación programada' : 'Activo'}</p>}<button className="whitespace-nowrap !px-3 !py-2 !text-xs" aria-label={`Gestionar plan de ${user.email}`} onClick={() => setSelected(user)}>Gestionar plan</button></td>
           </tr>)}</tbody>
         </table>
       </div>}
@@ -71,6 +71,6 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
       </div>
       <p className="mt-5 text-xs text-muted">Los datos de contacto y el tipo de cuenta provienen de «Mi cuenta». «Verificado» indica que se confirmó el email, no la identidad o la empresa.</p>
     </>}
-    {selected && <ManageSubscription key={selected.id} userId={selected.id} email={selected.email} onClose={() => setSelected(null)} />}
+    {selected && <ManageSubscription key={selected.id} userId={selected.id} email={selected.email} onClose={() => { setSelected(null); setVersion(value => value + 1) }} />}
   </section>
 }
