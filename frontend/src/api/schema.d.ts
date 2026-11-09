@@ -1247,6 +1247,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/subscription/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate Trial */
+        post: operations["activate_trial_api_v1_workspaces__workspace_id__subscription_trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/accounts/{user_id}/subscription": {
         parameters: {
             query?: never;
@@ -2353,6 +2370,8 @@ export interface components {
             revision: number;
             /** Limits Enabled */
             limits_enabled: boolean;
+            /** Trial Available */
+            trial_available: boolean;
             usage: components["schemas"]["Usage"];
             /** Catalog */
             catalog: components["schemas"]["Plan"][];
@@ -5506,6 +5525,37 @@ export interface operations {
         };
     };
     own_plan_api_v1_workspaces__workspace_id__subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_trial_api_v1_workspaces__workspace_id__subscription_trial_post: {
         parameters: {
             query?: never;
             header?: never;

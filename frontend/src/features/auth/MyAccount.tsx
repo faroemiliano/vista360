@@ -71,7 +71,7 @@ export function MyAccount({ user, onClose, onUser, onSession, onLogout, initialT
       </form>
       <p className="mt-5 break-words text-xs text-muted">Email de acceso: {user.email_normalized}</p>
       <p className="mt-2 text-xs text-muted">Miembro desde {new Date(user.created_at).toLocaleDateString('es-AR')}</p>
-    </> : tab === 'plan' ? <MyPlan selectedPlan={selectedPlan} /> : <>
+    </> : tab === 'plan' ? <MyPlan selectedPlan={selectedPlan} onStart={close} /> : <>
       <details className="mb-6 rounded-xl border border-line p-4">
         <summary>Cambiar email de acceso</summary>
         {user.pending_email && <div className="my-4 text-sm"><p className="break-words">Pendiente de confirmar: {user.pending_email}</p><button className="mt-2" disabled={locked} onClick={() => void act(async () => { onUser(await request<User>('/auth/change-email', 'DELETE')); setMessage('Cambio de email cancelado.') })}>Cancelar cambio de email</button></div>}

@@ -65,6 +65,17 @@ Pruebas con PostgreSQL temporal: privacidad y roles, prueba inicial, conservaci�
 
 Cada botón lleva a `/studio?registro=1&plan=trial|professional|studio`. Sin sesión se abre **Crear cuenta** con la elección visible y la opción de ingresar si ya se tiene una cuenta. Con una sesión iniciada se omite el formulario de registro. Luego del registro o ingreso se abre **Mi cuenta → Mi plan**, conservando la elección en la URL incluso si se recarga o está pendiente verificar el email. Al cerrar Mi cuenta se limpia ese parámetro.
 
-Elegir un plan es una intención de navegación, no una asignación comercial: la cuenta nueva continúa recibiendo su prueba habitual y una cuenta existente conserva su suscripción. El plan elegido se muestra junto al plan real; los planes pagos requieren la activación manual del administrador. «Consultar activación» abre el formulario de contacto con el nombre del plan en la consulta, editable antes de enviarla. No se envían consultas, emails ni cargos al hacer clic en una tarjeta.
+Elegir un plan es una intención de navegación, no una asignación comercial: la cuenta nueva continúa recibiendo su prueba habitual y una cuenta existente conserva su suscripción. El plan elegido se muestra junto al plan real; los planes pagos requieren la activación manual del administrador. La prueba gratuita está activa automáticamente para cuentas nuevas y se puede activar directamente desde Mi plan en cuentas anteriores elegibles. «Consultar activación» abre el formulario de contacto con el nombre del plan en la consulta, editable antes de enviarla. No se envían consultas, emails ni cargos al hacer clic en una tarjeta.
 
 Sólo se aceptan los códigos públicos del catálogo como selección. No se interpreta `legacy`, un precio, una URL externa o un código arbitrario como un plan elegible. La elección no cambia permisos, no reinicia la prueba y no habilita planes pagos por modificar la URL. No se requieren migraciones nuevas para esta navegación.
+
+
+## Activación de la prueba gratuita
+
+La prueba gratuita de **14 días** no requiere precio, tarjeta, contacto ni aprobación administrativa. El inicio muestra «Gratis · 14 días» y «Activación inmediata · Sin tarjeta». Tras registrarse, el plan de prueba ya está activo y se ofrece «Empezar a usar mi estudio».
+
+Una cuenta anterior con Acceso anterior que nunca haya tenido una prueba u otro plan puede activarla con **Activar prueba gratuita** desde la elección del inicio en Mi plan. `POST /workspaces/{workspace_id}/subscription/trial` exige sesión del titular, verificación de email cuando corresponda y CSRF. Guarda período e historial de activación en una sola transacción, reutilizando el candado del estudio. No se agrega ninguna migración.
+
+La operación es idempotente: si ya existe una prueba, devuelve su estado y fecha original, incluso si venció. No la reinicia ni la renueva. No reemplaza planes pagos y volver a Acceso anterior no borra el historial que impide repetir la prueba. Los cambios administrativos deliberados siguen disponibles sólo para administración.
+
+Esta modificación no convierte la prueba en un plan gratuito permanente ni cambia el flag de límites comerciales; se mantiene el período previamente definido de 14 días. Los planes pagos siguen siendo de activación manual.

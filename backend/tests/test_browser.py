@@ -21,6 +21,13 @@ def test_frontend_and_real_api(database):
         db.add(user)
         db.flush()
         ensure_owned_workspace(db, user)
+        # Cuenta anterior a los planes, para probar su activación gratuita sin administración.
+        from app.modules.subscriptions.models import Subscription
+        legacy = User(email_normalized='browser-legacy@example.com', password_hash=password_hasher.hash('Test-password-123!'))
+        db.add(legacy); db.flush()
+        legacy_workspace = ensure_owned_workspace(db, legacy)
+        legacy_plan = db.get(Subscription, legacy_workspace.id)
+        legacy_plan.plan_code = 'legacy'; legacy_plan.period_end = None
         db.commit()
     environment = os.environ.copy()
     environment.update({
@@ -28,6 +35,7 @@ def test_frontend_and_real_api(database):
         "APP_ENV": "test", "COOKIE_SECURE": "false", "TEST_API": "1", "RESEND_API_KEY": "",
         "PLATFORM_ADMIN_USER_IDS": json.dumps([str(admin_id)]),
         "TEST_ADMIN_EMAIL": "browser-admin@example.com",
+        "TEST_LEGACY_EMAIL": "browser-legacy@example.com",
         "AUTH_REQUIRE_VERIFIED_EMAIL": os.environ.get("BROWSER_TEST_REQUIRE_VERIFIED_EMAIL", "false"),
     })
     frontend = Path(__file__).resolve().parents[2] / "frontend"

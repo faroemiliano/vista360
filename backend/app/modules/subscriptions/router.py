@@ -25,6 +25,11 @@ def own_plan(workspace_id: UUID, db: Session = Depends(get_db), user: User = Dep
     return service.view(db, owned(db, user, workspace_id))
 
 
+@router.post('/workspaces/{workspace_id}/subscription/trial', response_model=SubscriptionView, dependencies=[Depends(require_csrf)])
+def activate_trial(workspace_id: UUID, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return service.start_trial(db, user, owned(db, user, workspace_id))
+
+
 @router.get('/admin/accounts/{user_id}/subscription', response_model=SubscriptionView)
 def account_plan(user_id: UUID, db: Session = Depends(get_db), actor: User = Depends(administrator)):
     return service.view(db, service.owner_workspace(db, user_id))

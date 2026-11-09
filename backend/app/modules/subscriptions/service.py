@@ -55,13 +55,45 @@ def usage(db, workspace):
     return Usage(published=published, preparing=reserved, storage_reserved_bytes=storage)
 
 
+def trial_available(db, workspace, row):
+    # Un cambio de email o volver a legacy no habilita una prueba nueva.
+    if row.plan_code != 'legacy':
+        return False
+    previous = db.scalar(select(SubscriptionEvent.id).where(
+        SubscriptionEvent.workspace_id == workspace.id,
+        or_(SubscriptionEvent.before['plan_code'].as_string() != 'legacy',
+            SubscriptionEvent.after['plan_code'].as_string() != 'legacy'),
+    ).limit(1))
+    return previous is None
+
+
+def start_trial(db, actor, workspace):
+    row = subscription(db, workspace, lock=True)
+    if row.plan_code == 'trial':
+        return view(db, workspace)  # Reintentos no reinician ni prolongan el período.
+    if not trial_available(db, workspace, row):
+        raise HTTPException(409, 'La prueba gratuita no está disponible para esta cuenta. Tu plan actual se conserva')
+    before = snapshot(row)
+    started = now()
+    row.plan_code = 'trial'
+    row.status = 'active'
+    row.period_start = started
+    row.period_end = started + timedelta(days=14)
+    row.revision += 1
+    db.add(row)
+    db.add(SubscriptionEvent(workspace_id=workspace.id, actor_id=actor.id, action='trial_start',
+        note='Prueba gratuita activada directamente por el titular', before=before, after=snapshot(row)))
+    db.commit()
+    return view(db, workspace)
+
+
 def view(db, workspace):
     row = subscription(db, workspace)
     plans = catalog()
     return SubscriptionView(workspace_id=workspace.id, plan=plans[row.plan_code],
         status='expired' if row.period_end and row.period_end <= now() else row.status,
         period_start=row.period_start, period_end=row.period_end, revision=row.revision,
-        limits_enabled=get_settings().subscription_limits_enabled, usage=usage(db, workspace),
+        limits_enabled=get_settings().subscription_limits_enabled, trial_available=trial_available(db, workspace, row), usage=usage(db, workspace),
         catalog=[plans[key] for key in ('trial', 'professional', 'studio')])
 
 

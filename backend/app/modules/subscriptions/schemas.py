@@ -29,6 +29,7 @@ class SubscriptionView(BaseModel):
     period_end: datetime | None
     revision: int
     limits_enabled: bool
+    trial_available: bool
     usage: Usage
     catalog: list[Plan]
 

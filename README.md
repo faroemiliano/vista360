@@ -229,3 +229,5 @@ La administración de la plataforma tiene un [directorio privado de usuarios reg
 La [base de suscripciones](docs/SUSCRIPCIONES.md) incorpora prueba de 14 días, Profesional y Estudio, consulta en Mi cuenta y asignación manual con historial desde administración. Sin cobros automáticos; los límites comerciales permanecen desactivados por defecto.
 
 Los [planes también aparecen en el inicio](docs/SUSCRIPCIONES.md#planes-en-el-inicio-y-elección-antes-del-registro): elegir uno abre el registro si no hay sesión y conserva la elección al ingresar, sin activar cobros ni modificar automáticamente la suscripción.
+
+La prueba gratuita se activa al registrarse sin tarjeta ni aprobación; las cuentas anteriores elegibles pueden activarla directamente desde Mi plan. Conserva sus 14 días originales y no se reinicia al volver a elegirla.

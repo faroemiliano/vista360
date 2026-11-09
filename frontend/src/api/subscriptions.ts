@@ -5,6 +5,7 @@ export type PlanCode = components['schemas']['Plan']['code']
 export type SubscriptionEvent = components['schemas']['EventView']
 export const subscriptionApi = {
   catalog: () => request<components['schemas']['Plan'][]>('/public/plans', 'GET', undefined, 'omit'),
+  startTrial: (workspace: string) => request<Subscription>(`/workspaces/${workspace}/subscription/trial`, 'POST'),
   own: (workspace: string) => request<Subscription>(`/workspaces/${workspace}/subscription`),
   account: (user: string) => request<Subscription>(`/admin/accounts/${user}/subscription`),
   assign: (user: string, data: components['schemas']['Assignment']) => request<Subscription>(`/admin/accounts/${user}/subscription`, 'PUT', data),

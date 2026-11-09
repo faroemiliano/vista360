@@ -9,7 +9,7 @@ test('planes del inicio llevan al registro y conservan la elección sin activar 
   await page.getByRole('link', { name: 'Planes', exact: true }).click()
   const plans = page.getByRole('region', { name: 'Un plan para tu estudio.', exact: true })
   await expect(plans.getByRole('article')).toHaveCount(3)
-  await expect(plans.getByText('14 días gratis', { exact: true })).toBeVisible()
+  await expect(plans.getByText('Gratis · 14 días', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('planes-inicio.png') })
   for (const [label, code] of [['Probar gratis', 'trial'], ['Elegir Estudio', 'studio'], ['Elegir Profesional', 'professional']]) {
@@ -82,4 +82,43 @@ test('plan elegido se conserva hasta confirmar el email obligatorio', async ({ p
     await expect(account.getByText('Elegiste Profesional', { exact: true })).toBeVisible()
     await expect(account.getByText('Prueba', { exact: true })).toBeVisible()
   } finally { await context.close() }
+})
+
+
+test('prueba gratuita se usa al registrarse sin aprobación ni consulta de activación', async ({ page }, testInfo) => {
+  test.skip(process.env.TEST_API !== '1' || process.env.AUTH_REQUIRE_VERIFIED_EMAIL === 'true', 'Requiere API temporal')
+  const email = `gratis-${testInfo.project.name}-${Date.now()}@example.com`
+  await page.goto('/inicio#planes')
+  await page.getByRole('link', { name: 'Probar gratis', exact: true }).click()
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
+  await page.getByRole('button', { name: 'Registrarme', exact: true }).click()
+  const account = page.getByRole('dialog', { name: 'Mi cuenta', exact: true })
+  await expect(account.getByText('Elegiste Prueba', { exact: true })).toBeVisible()
+  await expect(account.getByText('Tu prueba gratuita ya está activa. Podés usar el estudio sin tarjeta ni aprobación manual.', { exact: true })).toBeVisible()
+  await expect(account.getByRole('link', { name: 'Consultar activación de Prueba', exact: true })).toHaveCount(0)
+  await account.getByRole('button', { name: 'Empezar a usar mi estudio', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Trabajos', exact: true })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Mi cuenta', exact: true })).toHaveCount(0)
+})
+
+
+test('prueba gratuita existente se activa por su titular sin esperar administración', async ({ page }) => {
+  test.skip(process.env.TEST_API !== '1' || process.env.AUTH_REQUIRE_VERIFIED_EMAIL === 'true', 'Requiere API temporal')
+  await page.goto('/inicio#planes')
+  await page.getByRole('link', { name: 'Probar gratis', exact: true }).click()
+  await page.getByRole('button', { name: 'Ya tengo una cuenta', exact: true }).click()
+  await page.getByLabel('Email', { exact: true }).fill(process.env.TEST_LEGACY_EMAIL!)
+  await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
+  await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
+  const account = page.getByRole('dialog', { name: 'Mi cuenta', exact: true })
+  // Cada proyecto usa la misma cuenta efímera: el segundo también comprueba reintentos.
+  const activate = account.getByRole('button', { name: 'Activar prueba gratuita', exact: true })
+  await expect(account.getByText('Elegiste Prueba', { exact: true })).toBeVisible()
+  if (await activate.isVisible()) await activate.click()
+  await expect(account.getByRole('button', { name: 'Empezar a usar mi estudio', exact: true })).toBeVisible()
+  await expect(account.getByRole('link', { name: 'Consultar activación de Prueba', exact: true })).toHaveCount(0)
+  await page.reload()
+  await expect(account.getByRole('button', { name: 'Empezar a usar mi estudio', exact: true })).toBeVisible()
+  await expect(account.getByRole('button', { name: 'Activar prueba gratuita', exact: true })).toHaveCount(0)
 })

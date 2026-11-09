@@ -189,3 +189,61 @@ def test_public_catalog_matches_private_catalog_without_legacy_or_account_data(c
     assert own_plan(owner).json()['catalog'] == plans
     monkeypatch.setattr(get_settings(), 'subscription_trial_storage_bytes', 123456)
     assert visitor.get('/public/plans').json()[0]['storage_limit_bytes'] == 123456
+
+
+def test_existing_account_can_start_free_trial_once_without_admin(clients, database):
+    owner = clients(); owner.register()
+    workspace = owned(owner)
+    with Session(database[0]) as db:
+        row = db.get(Subscription, UUID(workspace['id']))
+        row.plan_code = 'legacy'; row.period_end = None; db.commit()
+    before = own_plan(owner).json()
+    assert before['trial_available'] is True
+    path = f"/workspaces/{workspace['id']}/subscription/trial"
+    assert owner.http.post('/api/v1' + path).status_code == 403
+    other = clients(); other.register('other@example.com')
+    assert other.mutate('POST', path).status_code == 404
+    assert clients().mutate('POST', path).status_code == 401
+    result = owner.mutate('POST', path)
+    assert result.status_code == 200
+    after = result.json()
+    assert after['plan']['code'] == 'trial' and after['status'] == 'active' and after['trial_available'] is False
+    assert owner.mutate('POST', path).json() == after
+    with Session(database[0]) as db:
+        history = list(db.scalars(select(SubscriptionEvent)))
+        assert len(history) == 1 and history[0].action == 'trial_start'
+        row = db.get(Subscription, UUID(workspace['id']))
+        row.period_start = now() - timedelta(days=15); row.period_end = now() - timedelta(days=1); db.commit()
+    expired = owner.mutate('POST', path).json()
+    assert expired['status'] == 'expired' and expired['revision'] == after['revision']
+
+
+def test_trial_activation_does_not_replace_paid_plan_or_restart_after_returning_to_legacy(clients, database, monkeypatch):
+    owner = clients(); user = owner.register().json()['user']
+    admin = clients(); administrator(admin, monkeypatch)
+    path = f"/admin/accounts/{user['id']}/subscription"
+    own_path = f"/workspaces/{owned(owner)['id']}/subscription/trial"
+    paid = admin.mutate('PUT', path, dict(plan_code='professional', duration_days=30, revision=0, note='Plan acordado')).json()
+    assert owner.mutate('POST', own_path).status_code == 409
+    assert own_plan(owner).json() == paid
+    restored = admin.mutate('PUT', path, dict(plan_code='legacy', duration_days=30, revision=1, note='Conservar acceso anterior')).json()
+    assert restored['trial_available'] is False
+    assert owner.mutate('POST', own_path).status_code == 409
+    assert own_plan(owner).json() == restored
+
+
+def test_concurrent_free_activation_is_idempotent(clients, database):
+    owner = clients(); user = owner.register().json()['user']
+    workspace_id = UUID(owned(owner)['id'])
+    with Session(database[0]) as db:
+        row = db.get(Subscription, workspace_id); row.plan_code = 'legacy'; row.period_end = None; db.commit()
+    from app.modules.auth.models import User
+    def activate():
+        with Session(database[0]) as db:
+            workspace = db.get(Workspace, workspace_id)
+            return service.start_trial(db, db.get(User, UUID(user['id'])), workspace).model_dump()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a, b = list(pool.map(lambda _: activate(), range(2)))
+    assert a == b and a['revision'] == 1
+    with Session(database[0]) as db:
+        assert len(list(db.scalars(select(SubscriptionEvent)))) == 1
