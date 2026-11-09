@@ -10,6 +10,8 @@ export function ManageSubscription({ userId, email, onClose }: { userId: string;
   const [data, setData] = useState<Subscription | null>(null)
   const [events, setEvents] = useState<SubscriptionEvent[]>([])
   const [plan, setPlan] = useState<PlanCode>('professional')
+  const [period, setPeriod] = useState<'monthly' | 'custom'>('monthly')
+  const [months, setMonths] = useState(1)
   const [days, setDays] = useState(30)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -31,11 +33,11 @@ export function ManageSubscription({ userId, email, onClose }: { userId: string;
     if (!data || busy) return
     setError(''); setMessage('')
     if (note.trim().length < 3) { setError('Escribí una nota de al menos tres caracteres para dejar constancia.'); return }
-    if (!window.confirm(cancel ? '¿Programar la cancelación al terminar el período? Los datos y enlaces existentes se conservarán.' : `¿Asignar o renovar este plan para ${email}? Esto no registra ni ejecuta un cobro.`)) return
+    if (!window.confirm(cancel ? '¿Programar la cancelación al terminar el período? Los datos y enlaces existentes se conservarán.' : `¿Asignar o renovar este plan para ${email}? Confirmá que coordinaste el pago personalmente antes de habilitar un plan pago. La aplicación no cobra automáticamente.`)) return
     setBusy(true)
     try {
       await getSession()
-      const updated = cancel ? await subscriptionApi.cancel(userId, { revision: data.revision, note }) : await subscriptionApi.assign(userId, { plan_code: plan, duration_days: days, revision: data.revision, note })
+      const updated = cancel ? await subscriptionApi.cancel(userId, { revision: data.revision, note }) : await subscriptionApi.assign(userId, { plan_code: plan, ...(period === 'monthly' ? { duration_months: months } : { duration_days: days }), revision: data.revision, note })
       setData(updated); setNote(''); setMessage(cancel ? 'Cancelación programada.' : 'Plan actualizado. No se realizó ningún cobro.')
       setVersion(value => value + 1)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar el plan.') }
@@ -44,13 +46,17 @@ export function ManageSubscription({ userId, email, onClose }: { userId: string;
   return <dialog ref={dialog} aria-labelledby="manage-plan-title" onCancel={event => { event.preventDefault(); close() }} className="m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-2xl overflow-y-auto rounded-2xl border border-line bg-surface-900 p-5 text-ink backdrop:bg-black/70 sm:p-7">
     <div className="flex items-center justify-between gap-3"><h2 id="manage-plan-title">Gestionar plan</h2><button disabled={busy} aria-label="Cerrar gestión del plan" onClick={close}>×</button></div>
     <p className="my-4 break-all text-sm text-muted">{email}</p>
+    <p className="mb-4 text-sm text-muted">Los planes pagos son mensuales. El pago se coordina personalmente y vos habilitás el plan después de confirmarlo. No hay cobros ni renovación automáticos.</p>
     {data ? <>
       <PlanSummary data={data} />
       <form className="my-5" aria-label="Asignar plan" onSubmit={event => { event.preventDefault(); void save() }}>
         <fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">
           <label>Plan<select value={plan} onChange={event => setPlan(event.target.value as PlanCode)}><option value="legacy">Acceso anterior</option>{data.catalog.map(item => <option value={item.code} key={item.code}>{item.name}</option>)}</select></label>
-          {plan !== 'legacy' && plan !== 'trial' && <label>Días del período<input type="number" min={1} max={366} required value={days} onChange={event => setDays(Number(event.target.value))} /></label>}
-          <p className="text-xs text-muted sm:col-span-2">{plan === 'trial' ? 'La prueba dura 14 días. Si sigue vigente, se agregan al vencimiento actual.' : plan === 'legacy' ? 'Conserva el acceso sin límites comerciales del nuevo catálogo.' : 'El mismo plan vigente suma días al vencimiento actual. Al cambiar de plan, el período comienza hoy.'}</p>
+          {plan !== 'legacy' && plan !== 'trial' && <>
+            <label>Período a habilitar<select value={period} onChange={event => setPeriod(event.target.value as 'monthly' | 'custom')}><option value="monthly">Mensual</option><option value="custom">Días especiales</option></select></label>
+            {period === 'monthly' ? <label>Meses a habilitar<input type="number" min={1} max={12} required value={months} onChange={event => setMonths(Number(event.target.value))} /></label> : <label>Días del período<input type="number" min={1} max={366} required value={days} onChange={event => setDays(Number(event.target.value))} /></label>}
+          </>}
+          <p className="text-xs text-muted sm:col-span-2">{plan === 'trial' ? 'La prueba dura 14 días. Si sigue vigente, se agregan al vencimiento actual.' : plan === 'legacy' ? 'Conserva el acceso sin límites comerciales del nuevo catálogo.' : 'Confirmá el pago personal y habilitá el período acordado. El mismo plan vigente se extiende desde su vencimiento; un plan distinto comienza hoy. Mensual suma meses calendario, no treinta días fijos.'}</p>
           <label className="sm:col-span-2">Nota administrativa<textarea required minLength={3} maxLength={500} value={note} onChange={event => setNote(event.target.value)} placeholder="Ej.: activación manual acordada con el titular" /></label>
           <button className="btn-primary sm:col-span-2">Asignar o renovar plan</button>
         </fieldset>

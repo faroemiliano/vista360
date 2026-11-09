@@ -18,7 +18,7 @@ export function AuthForm({ onSession, initialMode = 'login', selectedPlan }: { o
     <p className="mt-8 text-xs text-subtle">Necesitás fotos panorámicas 360° completas. Podés empezar con una imagen de muestra.</p>
   </div><section className="auth-panel card order-first p-6 sm:p-8 lg:order-last">
     <p className="eyebrow mb-2">Bienvenido a Vision360</p><h2>{mode === 'forgot' ? 'Recuperar contraseña' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</h2><p className="muted mt-2 mb-6">{mode === 'forgot' ? 'Ingresá tu email para pedir un enlace de recuperación.' : mode === 'login' ? 'Tus recorridos te están esperando.' : 'Creá tu cuenta y prepará tu primera visita virtual.'}</p>
-    {selectedPlan && <p className="mb-5 rounded-xl border border-accent/25 bg-accent/5 p-4 text-sm">Elegiste {publicPlanNames[selectedPlan]}. {mode === 'login' ? 'Ingresá para continuar con tu elección.' : 'Creá tu cuenta para continuar con tu elección.'}{selectedPlan !== 'trial' && <span className="mt-2 block text-xs text-muted">Después del registro, coordinamos la activación. No se realiza ningún cobro.</span>}</p>}
+    {selectedPlan && <p className="mb-5 rounded-xl border border-accent/25 bg-accent/5 p-4 text-sm">Elegiste {publicPlanNames[selectedPlan]}. {mode === 'login' ? 'Ingresá para continuar con tu elección.' : 'Creá tu cuenta para continuar con tu elección.'}{selectedPlan !== 'trial' && <span className="mt-2 block text-xs text-muted">El plan es mensual. Después del registro coordinás el pago personalmente y administración lo habilita. No se realiza ningún cobro automático.</span>}</p>}
     {mode === 'forgot' && <EmailDeliveryHint />}
     <form onSubmit={async (event) => {
       event.preventDefault(); setBusy(true); setError('')

@@ -268,3 +268,25 @@ def test_trial_fits_six_high_resolution_panoramas_and_rejects_seventh_scene(clie
     publish(owner, tour); drain(database)
     public = clients().get(f"/public/tours/{tour['slug']}")
     assert public.status_code == 200 and len(public.json()['scenes']) == 6
+
+
+def test_paid_plan_defaults_to_calendar_month_and_requires_admin(clients, monkeypatch):
+    from datetime import datetime, timezone
+    owner = clients(); user = owner.register().json()['user']
+    admin = clients(); administrator(admin, monkeypatch)
+    monkeypatch.setattr(service, 'now', lambda: datetime(2028, 1, 31, 12, tzinfo=timezone.utc))
+    path = f"/admin/accounts/{user['id']}/subscription"
+    payload = dict(plan_code='studio', revision=0, note='Pago personal confirmado, habilitar un mes')
+    assert owner.mutate('PUT', path, payload).status_code == 403
+    result = admin.mutate('PUT', path, payload)
+    assert result.status_code == 200, result.text
+    first = result.json()
+    assert first['plan']['billing_interval'] == 'month'
+    assert datetime.fromisoformat(first['period_end']) == datetime(2028, 2, 29, 12, tzinfo=timezone.utc)
+    renewed = admin.mutate('PUT', path, {**payload, 'revision': 1, 'duration_months': 1})
+    assert renewed.status_code == 200
+    assert datetime.fromisoformat(renewed.json()['period_end']) == datetime(2028, 3, 29, 12, tzinfo=timezone.utc)
+    assert admin.mutate('PUT', path, {**payload, 'revision': 2, 'duration_months': 1, 'duration_days': 30}).status_code == 422
+    assert admin.mutate('PUT', path, {**payload, 'revision': 2, 'duration_months': 13}).status_code == 422
+    assert service.add_months(datetime(2026, 12, 31, tzinfo=timezone.utc), 1) == datetime(2027, 1, 31, tzinfo=timezone.utc)
+    assert service.add_months(datetime(2027, 1, 31, tzinfo=timezone.utc), 1) == datetime(2027, 2, 28, tzinfo=timezone.utc)

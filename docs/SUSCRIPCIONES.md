@@ -13,8 +13,8 @@ Catálogo inicial provisional (sin precios):
 | Plan | Duración inicial | Publicados simultáneamente | Ambientes por recorrido | Reserva estimada |
 | --- | --- | --- | --- | --- |
 | Prueba | 14 días | 1 | 6 | 1 GiB |
-| Profesional | Período manual (30 días por defecto) | 10 | Límite técnico existente | 2 GiB |
-| Estudio | Período manual (30 días por defecto) | 30 | Límite técnico existente | 10 GiB |
+| Profesional | Mensual (habilitación manual) | 10 | Límite técnico existente | 2 GiB |
+| Estudio | Mensual (habilitación manual) | 30 | Límite técnico existente | 10 GiB |
 
 Las cuotas de almacenamiento se configuran en `SUBSCRIPTION_TRIAL_STORAGE_BYTES`, `SUBSCRIPTION_PROFESSIONAL_STORAGE_BYTES` y `SUBSCRIPTION_STUDIO_STORAGE_BYTES`. No representan espacio contratado en Supabase: antes de vender, hay que contrastarlas con capacidad y consumo reales. Los límites técnicos anteriores por archivo, recorrido y organización siguen aplicándose.
 
@@ -22,7 +22,7 @@ Las nuevas cuentas reciben la prueba al crearse su estudio, incluso si después 
 
 ## Períodos, renovación y cancelación
 
-Asignar el mismo plan con período aún vigente suma días al vencimiento actual; un plan distinto o vencido comienza un período nuevo desde el momento de asignación. La prueba siempre suma 14 días. Profesional y Estudio admiten 1–366 días por operación (no se presupone que todos los meses tienen 30 días). Acceso anterior no vence.
+Asignar el mismo plan con período aún vigente suma el período acordado al vencimiento actual; un plan distinto o vencido comienza un período nuevo desde el momento de asignación. La prueba siempre suma 14 días. Profesional y Estudio se habilitan por meses calendario (1 mes por defecto; hasta 12 por operación). El vencimiento conserva la hora y ajusta al último día válido si el mes siguiente no tiene ese día. Administración también conserva la opción explícita Días especiales (1–366 días); la API rechaza enviar días y meses simultáneamente. Acceso anterior no vence.
 
 Cancelar programa el fin al vencimiento ya existente; no corta el período vigente. Renovar/reactivar es una acción manual explícita. No se registran estados de pago ni se presupone dinero cobrado.
 
@@ -47,7 +47,7 @@ Esta reserva es conservadora, **no es medición exacta del proveedor**: no inclu
 
 - `GET /workspaces/{workspace_id}/subscription`: sólo titular del estudio.
 - `GET /admin/accounts/{user_id}/subscription`: sólo administrador de plataforma.
-- `PUT /admin/accounts/{user_id}/subscription`: asignación/renovación; CSRF, `plan_code`, `duration_days`, `revision`, `note`.
+- `PUT /admin/accounts/{user_id}/subscription`: asignación/renovación; CSRF, `plan_code`, `duration_months` o `duration_days`, `revision`, `note`. Si no se indica duración, los planes pagos usan un mes calendario.
 - `POST /admin/accounts/{user_id}/subscription/cancel`: CSRF, `revision`, `note`.
 - `GET /admin/accounts/{user_id}/subscription/events`: historial privado de administración.
 
@@ -84,3 +84,12 @@ Esta modificación no convierte la prueba en un plan gratuito permanente ni camb
 La cuota gratuita se ajustó a **un recorrido publicado, hasta seis panorámicas (una por ambiente) y 1 GiB de reserva**, manteniendo los 14 días. Con el límite técnico actual de 50 MiB por original y el margen de 40 MiB por original, seis fotos requieren como máximo 540 MiB de reserva; el GiB deja margen para reemplazos. Los borradores y versiones retenidas también consumen esa cuota. No se reducen las dimensiones ni la calidad de imagen por pertenecer al plan gratuito.
 
 Si Render ya tiene `SUBSCRIPTION_TRIAL_STORAGE_BYTES` definido, actualizarlo a `1073741824` porque las variables de entorno prevalecen sobre el valor predeterminado del código. Este cambio no activa `SUBSCRIPTION_LIMITS_ENABLED`.
+
+
+## Venta mensual con pago personal
+
+Profesional y Estudio se presentan como **planes mensuales** en inicio, registro, selección y Mi plan. Hasta acordar importes, se muestra «Mensual · Precio a consultar». El interesado elige el plan, se registra o ingresa y puede contactar a Vision360 con el plan indicado para coordinar el pago personalmente.
+
+El pago se realiza fuera del sistema. Después de confirmarlo, el administrador entra en **Usuarios registrados → Gestionar plan**, elige Profesional o Estudio, deja Mensual y 1 mes (o el período acordado), registra una nota y habilita el plan. Los controles de ese estudio pasan a usar la cuota del plan habilitado, siempre sujeto al flag global de límites. Elegirlo en inicio no permite activarse un plan pago por cuenta propia. Renovar requiere una nueva intervención del administrador.
+
+No hay pasarela, cobro, renovación automática, validación de comprobantes ni registro contable de pagos en esta etapa. La nota deja constancia administrativa del acuerdo y de la habilitación. No se modifica retroactivamente el vencimiento de suscripciones existentes ni la prueba gratuita de 14 días.

@@ -1414,11 +1414,10 @@ export interface components {
              * @enum {string}
              */
             plan_code: "legacy" | "trial" | "professional" | "studio";
-            /**
-             * Duration Days
-             * @default 30
-             */
-            duration_days: number;
+            /** Duration Days */
+            duration_days?: number | null;
+            /** Duration Months */
+            duration_months?: number | null;
             /** Revision */
             revision: number;
             /** Note */
@@ -1848,6 +1847,12 @@ export interface components {
             storage_limit_bytes: number | null;
             /** Trial Days */
             trial_days?: number | null;
+            /**
+             * Billing Interval
+             * @default none
+             * @enum {string}
+             */
+            billing_interval: "month" | "trial" | "none";
         };
         /** PlatformContactInput */
         PlatformContactInput: {

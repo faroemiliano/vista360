@@ -1,3 +1,4 @@
+from calendar import monthrange
 from datetime import timedelta
 from fastapi import HTTPException
 from sqlalchemy import exists, func, or_, select
@@ -18,9 +19,9 @@ def catalog():
     settings = get_settings()
     return {
         'legacy': Plan(code='legacy', name='Acceso anterior', published_limit=None, scene_limit=None, storage_limit_bytes=None),
-        'trial': Plan(code='trial', name='Prueba', published_limit=1, scene_limit=6, storage_limit_bytes=settings.subscription_trial_storage_bytes, trial_days=14),
-        'professional': Plan(code='professional', name='Profesional', published_limit=10, scene_limit=None, storage_limit_bytes=settings.subscription_professional_storage_bytes),
-        'studio': Plan(code='studio', name='Estudio', published_limit=30, scene_limit=None, storage_limit_bytes=settings.subscription_studio_storage_bytes),
+        'trial': Plan(code='trial', name='Prueba', published_limit=1, scene_limit=6, storage_limit_bytes=settings.subscription_trial_storage_bytes, trial_days=14, billing_interval='trial'),
+        'professional': Plan(code='professional', name='Profesional', published_limit=10, scene_limit=None, storage_limit_bytes=settings.subscription_professional_storage_bytes, billing_interval='month'),
+        'studio': Plan(code='studio', name='Estudio', published_limit=30, scene_limit=None, storage_limit_bytes=settings.subscription_studio_storage_bytes, billing_interval='month'),
     }
 
 
@@ -109,6 +110,11 @@ def snapshot(row):
         period_start=row.period_start.isoformat(), period_end=row.period_end.isoformat() if row.period_end else None)
 
 
+def add_months(value, months):
+    year, month = divmod(value.year * 12 + value.month - 1 + months, 12)
+    return value.replace(year=year, month=month + 1, day=min(value.day, monthrange(year, month + 1)[1]))
+
+
 def change(db, actor, workspace, data, cancel=False):
     row = subscription(db, workspace, lock=True)
     if row.revision != data.revision:
@@ -122,12 +128,17 @@ def change(db, actor, workspace, data, cancel=False):
         row.status = 'cancelled'
     else:
         started = now()
-        days = 14 if data.plan_code == 'trial' else data.duration_days
         if data.plan_code == row.plan_code and row.period_end and row.period_end > started:
             started = row.period_start
-            ends = row.period_end + timedelta(days=days)
+            base = row.period_end
         else:
-            ends = started + timedelta(days=days)
+            base = started
+        if data.plan_code == 'trial':
+            ends = base + timedelta(days=14)
+        elif data.duration_days is not None:
+            ends = base + timedelta(days=data.duration_days)
+        else:
+            ends = add_months(base, data.duration_months or 1)
         row.plan_code = data.plan_code
         row.status = 'active'
         row.period_start = started

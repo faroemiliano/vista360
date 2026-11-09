@@ -31,8 +31,8 @@ export function Plans() {
         <div className="flex min-h-7 items-center justify-between gap-3"><Icon name={code === 'studio' ? 'grid' : code === 'professional' ? 'camera' : 'aperture'} className="size-6 text-accent" />{featured && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">Para tu actividad diaria</span>}</div>
         <h3 id={`plan-${code}`} className="mt-5 text-2xl">{plan.name}</h3>
         <p className="mt-3 text-sm text-muted">{audiences[code]}</p>
-        <p className="my-6 text-xl font-semibold">{plan.trial_days ? `Gratis · ${plan.trial_days} días` : 'Precio a consultar'}</p>
-        {code === 'trial' && <p className="mb-4 text-xs text-accent">Activación inmediata · Sin tarjeta</p>}
+        <p className="my-6 text-xl font-semibold">{plan.trial_days ? `Gratis · ${plan.trial_days} días` : 'Mensual · Precio a consultar'}</p>
+        <p className="mb-4 text-xs text-accent">{code === 'trial' ? 'Activación inmediata · Sin tarjeta' : 'Pago personal · Activación por administración'}</p>
         <ul className="mb-7 space-y-3 text-sm text-muted">
           <li>{plan.published_limit} {plan.published_limit === 1 ? 'recorrido publicado' : 'recorridos publicados'} a la vez</li>
           {plan.scene_limit !== null && <li>Hasta {plan.scene_limit} ambientes por recorrido</li>}
@@ -44,6 +44,6 @@ export function Plans() {
         <a href={planRegistrationUrl(code)} className={`${featured ? 'btn-primary' : 'border border-line bg-surface-850 text-ink hover:border-accent/50'} mt-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold`}>{code === 'trial' ? 'Probar gratis' : `Elegir ${plan.name}`}<Icon name="arrow" className="size-4" /></a>
       </article>
     })}</div>}
-    <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted">Estamos en etapa de prueba: las cuotas son iniciales y los límites comerciales todavía no bloquean el uso. La activación de planes pagos se coordina con Vision360, sin cobros automáticos. La toma de fotografías se contrata por separado.</p>
+    <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted">Estamos en etapa de prueba: las cuotas son iniciales y los límites comerciales todavía no bloquean el uso. Los planes Profesional y Estudio son mensuales. Coordinás el pago personalmente con Vision360 y administración habilita el plan elegido al confirmarlo. No hay cobros ni renovación automáticos. La toma de fotografías se contrata por separado.</p>
   </section>
 }

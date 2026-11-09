@@ -7,7 +7,7 @@ export function PlanSummary({ data }: { data: Subscription }) {
   const nearTours = data.plan.published_limit && data.usage.published + data.usage.preparing >= data.plan.published_limit * .8
   return <div>
     <div className="rounded-xl border border-line bg-surface-850 p-4">
-      <p className="text-lg font-semibold">{data.plan.name}</p>
+      <p className="text-lg font-semibold">{data.plan.name}{data.plan.billing_interval === 'month' ? ' · Mensual' : ''}</p>
       <p className="mt-2 text-sm text-muted">{data.status === 'expired' ? 'Período finalizado' : data.status === 'cancelled' ? 'Cancelación programada: acceso hasta terminar el período' : 'Activo'}</p>
       <p className="mt-2 text-xs text-muted">{data.period_end ? `${data.status === 'expired' ? 'Finalizó el' : 'Vigente hasta el'} ${planDate(data.period_end)}` : 'Tu acceso actual se conserva'}</p>
     </div>
