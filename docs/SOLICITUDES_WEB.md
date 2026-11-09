@@ -1,6 +1,6 @@
 # Consultas web y avisos por email
 
-La página de inicio presenta la plataforma y el acceso al estudio; ya no incluye un formulario general de contratación. Las nuevas consultas se reciben desde el enlace o QR propio de cada estudio. Las consultas globales anteriores se conservan en la bandeja de administración.
+La página de inicio presenta la plataforma y el acceso al estudio; ya no incluye un formulario general de contratación. Los pedidos de fotografía se reciben desde el enlace o QR propio de cada estudio. El [contacto del dueño en el inicio](CONTACTO_PLATAFORMA.md) es para consultas sobre el sistema y no crea trabajos de fotografía. Las consultas globales anteriores se conservan en la bandeja de administración.
 
 El formulario público guarda la consulta y un trabajo de notificación en la misma
 transacción PostgreSQL. El worker existente envía el aviso al operador mediante

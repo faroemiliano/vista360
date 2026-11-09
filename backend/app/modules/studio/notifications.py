@@ -112,12 +112,18 @@ def run(factory, ticket):
         job = locked_job(db, ticket)
         if not job:
             return
-        item = db.get(ServiceRequest, UUID(job.details['request_id']))
-        if not item:
-            job.status = 'cancelled'; db.commit(); return
         details = dict(job.details)
+        if 'platform_contact' not in details:
+            item = db.get(ServiceRequest, UUID(details['request_id']))
+            if not item:
+                job.status = 'cancelled'; db.commit(); return
         if 'payload' not in details:
-            details.update(payload=payload(item, details.get('recipient')), first_attempt_at=now().isoformat())
+            if 'platform_contact' in details:
+                from app.modules.studio.contact import payload as contact_payload
+                message = contact_payload(details['platform_contact'])
+            else:
+                message = payload(item, details.get('recipient'))
+            details.update(payload=message, first_attempt_at=now().isoformat())
             job.details = details
             db.commit()
         message = details['payload']

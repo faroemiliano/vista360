@@ -647,6 +647,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Contact Owner */
+        post: operations["contact_owner_api_v1_platform_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/service-requests": {
         parameters: {
             query?: never;
@@ -1391,6 +1408,41 @@ export interface components {
              * @enum {string}
              */
             credentials: "include" | "omit";
+        };
+        /** PlatformContactInput */
+        PlatformContactInput: {
+            /**
+             * Submission Id
+             * Format: uuid
+             */
+            submission_id: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Phone */
+            phone: string;
+            /** Message */
+            message: string;
+            /**
+             * Website
+             * @default
+             */
+            website: string;
+        };
+        /** PlatformContactReceipt */
+        PlatformContactReceipt: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Message
+             * @default Tu consulta quedó registrada para Emiliano.
+             */
+            message: string;
         };
         /** PrepareUpload */
         PrepareUpload: {
@@ -3700,6 +3752,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TourResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    contact_owner_api_v1_platform_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformContactInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformContactReceipt"];
                 };
             };
             /** @description Validation Error */

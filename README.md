@@ -109,7 +109,7 @@ npm ci
 npm run dev
 ```
 
-Abrir <http://localhost:5174/inicio> para la página de presentación de la plataforma. Cada estudio comparte su formulario de solicitudes mediante su enlace o QR propio. <http://localhost:5174/studio> y <http://localhost:5174> permiten registro/login y administración de recorridos. El visor técnico está en <http://localhost:5174/visor>. El servidor usa puerto fijo y falla si está ocupado, para que CORS no cambie silenciosamente.
+Abrir <http://localhost:5174/inicio> para la página de presentación de la plataforma. Cada estudio comparte su formulario de solicitudes mediante su enlace o QR propio. El inicio incluye un [formulario de consultas sobre el sistema y WhatsApp del creador](docs/CONTACTO_PLATAFORMA.md). <http://localhost:5174/studio> y <http://localhost:5174> permiten registro/login y administración de recorridos. El visor técnico está en <http://localhost:5174/visor>. El servidor usa puerto fijo y falla si está ocupado, para que CORS no cambie silenciosamente.
 
 Build con verificación TypeScript y previsualización:
 

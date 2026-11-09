@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.modules.auth.models import User
 from app.modules.auth.security import current_user, require_csrf
 from app.modules.organizations.service import is_staff
-from app.modules.studio import service, work_service, notifications
+from app.modules.studio import service, work_service, notifications, contact
 from app.modules.organizations.service import organization_access
 from app.modules.studio.models import ServiceEvent, ServiceRequest
 from app.modules.studio.schemas import (AssignWorkInput, DeliveryInput, EventResponse, ServiceInput,
@@ -27,6 +27,11 @@ def web_request(db, request_id, workspace_id=None):
     if not item:
         raise HTTPException(404, 'Solicitud no encontrada')
     return item
+
+
+@router.post('/platform-contact', response_model=contact.PlatformContactReceipt, status_code=201, dependencies=[Depends(require_csrf)])
+def contact_owner(data: contact.PlatformContactInput, request: Request, db: Session = Depends(get_db)):
+    return contact.submit(db, data, request)
 
 
 @router.post("/service-requests", response_model=ServiceReceipt, status_code=201, dependencies=[Depends(require_csrf)])
