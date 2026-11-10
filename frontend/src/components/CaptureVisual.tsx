@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { useId, useMemo, useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 import { Icon } from './Icon'
@@ -46,8 +47,8 @@ export function CaptureVisual() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
   }
   return <div className="capture-visual">
-    <div className="capture-caption"><span className="flex items-center gap-2"><span className="capture-dot" />Explorá en todas las direcciones</span><Icon name="focus" className="size-5" /></div>
-    <div className="capture-globe" role="group" aria-label="Esfera 360° interactiva" aria-describedby={`${id}-instructions`} tabIndex={0} data-dragging={dragging}
+    <div className="capture-caption"><span className="flex items-center gap-2"><span className="capture-dot" />{t("Explorá en todas las direcciones")}</span><Icon name="focus" className="size-5" /></div>
+    <div className="capture-globe" role="group" aria-label={t("Esfera 360° interactiva")} aria-describedby={`${id}-instructions`} tabIndex={0} data-dragging={dragging}
       onPointerDown={(event) => {
         if (!event.isPrimary || event.button !== 0 || drag.current) return
         const width = event.currentTarget.getBoundingClientRect().width
@@ -66,7 +67,7 @@ export function CaptureVisual() {
       onPointerUp={finishDrag} onPointerCancel={finishDrag} onLostPointerCapture={finishDrag}
       onKeyDown={(event) => {
         const directions: Record<string, [number, number]> = { ArrowLeft: [-15, 0], ArrowRight: [15, 0], ArrowUp: [0, 15], ArrowDown: [0, -15] }
-        if (event.key === 'Home') { event.preventDefault(); setRotation({ yaw: 0, pitch: 0 }) }
+        if (event.key === t("Home")) { event.preventDefault(); setRotation({ yaw: 0, pitch: 0 }) }
         else if (directions[event.key]) {
           event.preventDefault()
           const [yaw, pitch] = directions[event.key]
@@ -102,8 +103,8 @@ export function CaptureVisual() {
       </g>
     </svg>
     </div>
-    <p id={`${id}-instructions`} className="capture-instructions">Arrastrá para girar 360° <span>· Con teclado, usá las flechas</span></p>
-    <div className="capture-foot"><div><span className="capture-spec">UNA MIRADA SIN LÍMITES</span><p>Tu espacio. <span>Desde cada ángulo.</span></p></div><span className="capture-axis" aria-hidden="true">↔<br />↕</span></div>
+    <p id={`${id}-instructions`} className="capture-instructions">{t("Arrastrá para girar 360°")} <span>{t("· Con teclado, usá las flechas")}</span></p>
+    <div className="capture-foot"><div><span className="capture-spec">{t("UNA MIRADA SIN LÍMITES")}</span><p>{t("Tu espacio.")} <span>{t("Desde cada ángulo.")}</span></p></div><span className="capture-axis" aria-hidden="true">↔<br />↕</span></div>
   </div>
 }
 
@@ -112,6 +113,6 @@ export function TourCover() {
     <span className="tour-cover-label">PANORAMA / 360°</span>
     <div className="tour-cover-focus"><Icon name="aperture" className="size-14" /></div>
     <span className="tour-cover-line" />
-    <span className="tour-cover-bottom"><Icon name="camera" className="size-4" />Una nueva perspectiva</span>
+    <span className="tour-cover-bottom"><Icon name="camera" className="size-4" />{t("Una nueva perspectiva")}</span>
   </div>
 }

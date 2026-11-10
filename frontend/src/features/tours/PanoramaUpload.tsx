@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { apiResourceUrl, assetsApi, uploadPanorama } from '../../api/client'
 import type { AssetState, Scene } from '../../api/client'
@@ -39,11 +40,11 @@ export function PanoramaUpload({ scene, onReady }: { scene: Scene; onReady: () =
           if (input.current) input.current.value = ''
           await onReady()
         } else if (result.status === 'rejected') {
-          setBusy(false); setError(result.error_message || 'El archivo fue rechazado.')
+          setBusy(false); setError(result.error_message || t("El archivo fue rechazado."))
           await onReady()
         } else timer = setTimeout(poll, 1500)
       } catch (cause) {
-        if (active) { setBusy(false); setError(cause instanceof Error ? cause.message : 'No se pudo consultar la carga.') }
+        if (active) { setBusy(false); setError(cause instanceof Error ? cause.message : t("No se pudo consultar la carga.")) }
       }
     }
     timer = setTimeout(poll, 1500)
@@ -62,9 +63,8 @@ export function PanoramaUpload({ scene, onReady }: { scene: Scene; onReady: () =
   }, [showPreview, scene.panorama_asset_id, scene.initial_yaw, scene.initial_pitch, scene.initial_hfov, scene.name])
 
   return <div className="panorama-upload">
-    <div className="flex items-center gap-2 text-sm font-semibold"><Icon name={scene.panorama_asset_id ? 'check' : 'image'} className={`size-4 ${scene.panorama_asset_id ? 'text-accent' : 'text-subtle'}`} /><p>{scene.panorama_asset_id ? 'Panorámica validada.' : 'Sin panorámica.'}</p></div>
-    <label>Elegí la foto 360° de este ambiente
-      <input aria-label={`Panorámica JPEG para ${scene.name}`} ref={input} type="file" accept="image/jpeg,.jpg,.jpeg" disabled={busy}
+    <div className="flex items-center gap-2 text-sm font-semibold"><Icon name={scene.panorama_asset_id ? 'check' : 'image'} className={`size-4 ${scene.panorama_asset_id ? 'text-accent' : 'text-subtle'}`} /><p>{scene.panorama_asset_id ? t("Panorámica validada.") : t("Sin panorámica.")}</p></div>
+    <label>{t("Elegí la foto 360° de este ambiente")}<input aria-label={t("Panorámica JPEG para {0}", [scene.name])} ref={input} type="file" accept="image/jpeg,.jpg,.jpeg" disabled={busy}
         onChange={(event) => { setFile(event.target.files?.[0] || null); setError('') }} />
     </label>
     <button className="btn-soft" disabled={!file || busy} onClick={async () => {
@@ -76,19 +76,19 @@ export function PanoramaUpload({ scene, onReady }: { scene: Scene; onReady: () =
           (value) => { if (mounted.current) setProgress(value) }, controller.current.signal)
         if (!mounted.current) return
         setAsset(result)
-        if (result.status === 'rejected') { setBusy(false); setError(result.error_message || 'Archivo rechazado.') }
+        if (result.status === 'rejected') { setBusy(false); setError(result.error_message || t("Archivo rechazado.")) }
       } catch (cause) {
-        if (mounted.current) { setBusy(false); setError(cause instanceof Error ? cause.message : 'No se pudo cargar la imagen.') }
+        if (mounted.current) { setBusy(false); setError(cause instanceof Error ? cause.message : t("No se pudo cargar la imagen.")) }
       }
-    }}>{scene.panorama_asset_id ? 'Reemplazar panorámica' : 'Subir panorámica'}</button>
+    }}>{scene.panorama_asset_id ? t("Reemplazar panorámica") : t("Subir panorámica")}</button>
     {busy && <>
-      <progress max={100} value={progress} aria-label={`Progreso de ${scene.name}`} />
-      <p className="mt-2 text-muted" role="status">{progress < 100 ? `Subiendo ${progress}%` : 'Foto recibida. Estamos comprobando que esté lista para el visor…'}</p>
+      <progress max={100} value={progress} aria-label={t("Progreso de {0}", [scene.name])} />
+      <p className="mt-2 text-muted" role="status">{progress < 100 ? t("Subiendo {0}%", [progress]) : t("Foto recibida. Estamos comprobando que esté lista para el visor…")}</p>
     </>}
-    {asset && asset.status !== 'ready' && !busy && <p className="text-xs text-muted">{asset.status === 'rejected' ? 'La foto no se pudo validar. Revisá el mensaje e intentá otra vez.' : 'Tu foto se está preparando. Podés seguir trabajando.'}</p>}
-    {error && <p role="alert">{error}</p>}
+    {asset && asset.status !== 'ready' && !busy && <p className="text-xs text-muted">{asset.status === 'rejected' ? t("La foto no se pudo validar. Revisá el mensaje e intentá otra vez.") : t("Tu foto se está preparando. Podés seguir trabajando.")}</p>}
+    {error && <p role="alert">{t(error)}</p>}
     {scene.panorama_asset_id && <button onClick={() => { setError(''); setShowPreview(!showPreview) }}>
-      {showPreview ? `Cerrar panorama de ${scene.name}` : `Ver panorama de ${scene.name}`}
+      {showPreview ? t("Cerrar panorama de {0}", [scene.name]) : t("Ver panorama de {0}", [scene.name])}
     </button>}
     {preview && <PanoramaViewer scene={preview} onNavigate={() => {}} experimentalTools={false} />}
   </div>

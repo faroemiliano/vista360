@@ -231,3 +231,5 @@ La [base de suscripciones](docs/SUSCRIPCIONES.md) incorpora prueba de 14 días, 
 Los [planes también aparecen en el inicio](docs/SUSCRIPCIONES.md#planes-en-el-inicio-y-elección-antes-del-registro): elegir uno abre el registro si no hay sesión y conserva la elección al ingresar, sin activar cobros ni modificar automáticamente la suscripción.
 
 La prueba gratuita se activa al registrarse sin tarjeta ni aprobación; las cuentas anteriores elegibles pueden activarla directamente desde Mi plan. Conserva sus 14 días originales y no se reinicia al volver a elegirla.
+
+La interfaz ofrece [español y portugués de Brasil](docs/IDIOMAS.md), con selector de idioma y preferencia guardada en el navegador. Los textos cargados por los usuarios conservan su idioma original.

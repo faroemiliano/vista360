@@ -1,8 +1,11 @@
+import { LanguageSwitcher } from '../../i18n/LanguageSwitcher'
+import { t, useLanguage } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { getSession, request } from '../../api/client'
 import { BrandMark } from '../../components/BrandMark'
 
 export function AccountActionPage({ reset, changeEmail = false }: { reset: boolean; changeEmail?: boolean }) {
+  const language = useLanguage()
   const [token, setToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('token') || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -17,29 +20,31 @@ export function AccountActionPage({ reset, changeEmail = false }: { reset: boole
     }
     readLink()
     window.addEventListener('hashchange', readLink)
-    document.title = `${changeEmail ? 'Confirmar nuevo email' : reset ? 'Restablecer contraseña' : 'Verificar email'} · Vision360`
     return () => window.removeEventListener('hashchange', readLink)
   }, [reset, changeEmail])
-  return <main className="mx-auto max-w-lg py-10">
+  useEffect(() => {
+    document.title = `${changeEmail ? t("Confirmar nuevo email") : reset ? t("Restablecer contraseña") : t("Verificar email")} · Vision360`
+  }, [reset, changeEmail, language])
+  return <main className="mx-auto max-w-lg py-10"><div className="mb-5 flex justify-end"><LanguageSwitcher /></div>
     <a href="/inicio" className="mb-8 inline-flex items-center gap-3 font-bold text-accent"><BrandMark className="size-9" />Vision360</a>
     <section className="card p-6 sm:p-8">
-      <h1 className="text-2xl">{changeEmail ? 'Confirmá tu nuevo email' : reset ? 'Elegí tu nueva contraseña' : 'Verificá tu email'}</h1>
-      {message ? <><p role="status" className="muted my-5">{message}</p><a href="/studio" className="text-accent underline">Ir al ingreso</a></> : !token ? <><p role="alert" className="my-4">El enlace no contiene un código válido. Solicitá un enlace nuevo.</p><a href="/studio" className="text-accent underline">Volver al ingreso</a></> : <form className="mt-5" onSubmit={async event => {
+      <h1 className="text-2xl">{changeEmail ? t("Confirmá tu nuevo email") : reset ? t("Elegí tu nueva contraseña") : t("Verificá tu email")}</h1>
+      {message ? <><p role="status" className="muted my-5">{t(message)}</p><a href="/studio" className="text-accent underline">{t("Ir al ingreso")}</a></> : !token ? <><p role="alert" className="my-4">{t("El enlace no contiene un código válido. Solicitá un enlace nuevo.")}</p><a href="/studio" className="text-accent underline">{t("Volver al ingreso")}</a></> : <form className="mt-5" onSubmit={async event => {
         event.preventDefault(); const data = new FormData(event.currentTarget)
-        if (reset && data.get('password') !== data.get('confirm')) { setError('Las contraseñas no coinciden.'); return }
+        if (reset && data.get('password') !== data.get('confirm')) { setError(t("Las contraseñas no coinciden.")); return }
         setBusy(true); setError('')
         try {
           await getSession()
           const result = await request<{ message: string }>(changeEmail ? '/auth/confirm-email-change' : reset ? '/auth/reset-password' : '/auth/verify-email', 'POST', reset ? { token, password: data.get('password') } : { token })
           setMessage(result.message)
-        } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo completar la operación.') }
+        } catch (cause) { setError(cause instanceof Error ? cause.message : t("No se pudo completar la operación.")) }
         finally { setBusy(false) }
       }}>
         <fieldset disabled={busy}>
-          {reset ? <><label>Nueva contraseña<input name="password" type="password" required minLength={12} maxLength={128} autoComplete="new-password" /></label><label>Repetir nueva contraseña<input name="confirm" type="password" required minLength={12} maxLength={128} autoComplete="new-password" /></label><p className="field-hint">Entre 12 y 128 caracteres. Al cambiarla se cerrarán las sesiones anteriores.</p></> : <p className="muted mb-5">{changeEmail ? 'Al confirmar, se actualizará tu email y se cerrarán las sesiones anteriores. Después ingresá con el nuevo email.' : 'Confirmá para verificar la dirección de tu cuenta.'}</p>}
-          <button className="btn-primary w-full">{busy ? 'Procesando…' : changeEmail ? 'Confirmar nuevo email' : reset ? 'Guardar nueva contraseña' : 'Confirmar mi email'}</button>
+          {reset ? <><label>{t("Nueva contraseña")}<input name="password" type="password" required minLength={12} maxLength={128} autoComplete="new-password" /></label><label>{t("Repetir nueva contraseña")}<input name="confirm" type="password" required minLength={12} maxLength={128} autoComplete="new-password" /></label><p className="field-hint">{t("Entre 12 y 128 caracteres. Al cambiarla se cerrarán las sesiones anteriores.")}</p></> : <p className="muted mb-5">{changeEmail ? t("Al confirmar, se actualizará tu email y se cerrarán las sesiones anteriores. Después ingresá con el nuevo email.") : t("Confirmá para verificar la dirección de tu cuenta.")}</p>}
+          <button className="btn-primary w-full">{busy ? t("Procesando…") : changeEmail ? t("Confirmar nuevo email") : reset ? t("Guardar nueva contraseña") : t("Confirmar mi email")}</button>
         </fieldset>
-        {error && <><p role="alert" className="mt-4 text-sm">{error}</p><a href="/studio" className="mt-3 inline-block text-sm text-accent underline">Volver al ingreso y solicitar otro enlace</a></>}
+        {error && <><p role="alert" className="mt-4 text-sm">{t(error)}</p><a href="/studio" className="mt-3 inline-block text-sm text-accent underline">{t("Volver al ingreso y solicitar otro enlace")}</a></>}
       </form>}
     </section>
   </main>

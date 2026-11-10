@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { createPannellumAdapter } from './pannellumAdapter'
 import type { Coordinates, PanoramaAdapter, PanoramaScene, ViewerCallbacks, ViewerDiagnostics } from './types'
@@ -53,7 +54,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
       })
     } catch (cause) {
       setStatus('error')
-      setError(cause instanceof Error ? cause.message : 'No se pudo iniciar el visor.')
+      setError(cause instanceof Error ? cause.message : t("No se pudo iniciar el visor."))
     }
     return () => { motion.current?.destroy(); motion.current = null; adapter.current?.destroy(); adapter.current = null }
   }, [attempt])
@@ -62,75 +63,75 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
   useEffect(() => { adapter.current?.setPicking(picking) }, [picking, attempt])
 
   return (
-    <section className="viewer-section" aria-label={`Panorama de ${scene.name}`}>
+    <section className="viewer-section" aria-label={t("Panorama de {0}", [scene.name])}>
       <div className="viewer-stage">
       <div className="viewer-frame" data-status={status}>
         <div ref={container} className="panorama" data-testid="panorama" />
-        {status === 'loading' && <p className={hasPanorama ? 'viewer-switching-message' : 'viewer-message viewer-loading'} role="status">{hasPanorama ? `Cambiando a ${scene.name}…` : 'Cargando panorama…'}</p>}
+        {status === 'loading' && <p className={hasPanorama ? 'viewer-switching-message' : 'viewer-message viewer-loading'} role="status">{hasPanorama ? t("Cambiando a {0}…", [scene.name]) : t("Cargando panorama…")}</p>}
         {status === 'error' && (
           <div className="viewer-message" role="alert">
-            <p>{error}</p>
+            <p>{t(error)}</p>
             <button onClick={() => {
               if (adapter.current) void adapter.current.loadScene(scene)
               else setAttempt((value) => value + 1)
-            }}>Reintentar</button>
+            }}>{t("Reintentar")}</button>
           </div>
         )}
       </div>
       <div className="viewer-controls">
-      <div className="viewer-toolbar" aria-label="Controles del panorama">
+      <div className="viewer-toolbar" aria-label={t("Controles del panorama")}>
         {motionDevice && <>
           <button disabled={status !== 'ready' || Boolean(motionUnavailable) || motionState.mode === 'waiting'} aria-pressed={motionState.mode === 'active'} onClick={() => {
             if (motionState.mode === 'active') motion.current?.stop()
             else { setPicking(false); void motion.current?.start() }
-          }}>{motionState.mode === 'active' ? 'Desactivar movimiento' : 'Mirar con el celular'}</button>
-          {motionState.mode === 'active' && <button disabled={status !== 'ready'} onClick={() => motion.current?.recenter()}>Centrar movimiento</button>}
+          }}>{motionState.mode === 'active' ? t("Desactivar movimiento") : t("Mirar con el celular")}</button>
+          {motionState.mode === 'active' && <button disabled={status !== 'ready'} onClick={() => motion.current?.recenter()}>{t("Centrar movimiento")}</button>}
         </>}
-        <button disabled={status !== 'ready'} onClick={() => adapter.current?.zoom(-10)} aria-label="Acercar">+ Acercar</button>
-        <button disabled={status !== 'ready'} onClick={() => adapter.current?.zoom(10)} aria-label="Alejar">− Alejar</button>
+        <button disabled={status !== 'ready'} onClick={() => adapter.current?.zoom(-10)} aria-label={t("Acercar")}>{t("+ Acercar")}</button>
+        <button disabled={status !== 'ready'} onClick={() => adapter.current?.zoom(10)} aria-label={t("Alejar")}>{t("− Alejar")}</button>
         <button disabled={status !== 'ready'} onClick={() => {
           const view = adapter.current?.getView()
           if (view) adapter.current?.setView({ ...view, hfov: 110 })
-        }}>Vista amplia</button>
-        <button disabled={status !== 'ready'} onClick={() => { motion.current?.stop(); adapter.current?.setView({ ...scene.initialView, hfov: 110 }) }}>Vista inicial</button>
-        {onPick && <button disabled={status !== 'ready'} aria-pressed={picking} onClick={() => { motion.current?.stop(); setPicking(!picking) }}>Ubicar punto</button>}
+        }}>{t("Vista amplia")}</button>
+        <button disabled={status !== 'ready'} onClick={() => { motion.current?.stop(); adapter.current?.setView({ ...scene.initialView, hfov: 110 }) }}>{t("Vista inicial")}</button>
+        {onPick && <button disabled={status !== 'ready'} aria-pressed={picking} onClick={() => { motion.current?.stop(); setPicking(!picking) }}>{t("Ubicar punto")}</button>}
         {onPick && <button disabled={status !== 'ready'} onClick={() => {
           motion.current?.stop()
           const view = adapter.current?.getView()
           if (view) onPick({ yaw: view.yaw, pitch: view.pitch })
-        }}>Nuevo punto en el centro</button>}
+        }}>{t("Nuevo punto en el centro")}</button>}
         {onSaveView && <button disabled={status !== 'ready'} onClick={() => {
           const view = adapter.current?.getView()
           if (view) onSaveView(view)
-        }}>Guardar vista actual como inicial</button>}
+        }}>{t("Guardar vista actual como inicial")}</button>}
         {experimentalTools && <>
-        <button disabled={status !== 'ready'} aria-pressed={picking} onClick={() => { motion.current?.stop(); setPicking(!picking) }}>Medir coordenadas</button>
+        <button disabled={status !== 'ready'} aria-pressed={picking} onClick={() => { motion.current?.stop(); setPicking(!picking) }}>{t("Medir coordenadas")}</button>
         <button disabled={status !== 'ready' || !coordinates} onClick={() => {
           if (coordinates) adapter.current?.addHotspot({
-            ...coordinates, id: 'test-marker', type: 'info', label: 'Punto de prueba',
-            text: 'Este marcador es temporal y desaparece al cambiar de ambiente.',
+            ...coordinates, id: 'test-marker', type: 'info', label: t("Punto de prueba"),
+            text: t("Este marcador es temporal y desaparece al cambiar de ambiente."),
           })
-        }}>Mostrar punto</button>
-        <button disabled={status !== 'ready'} onClick={() => adapter.current?.removeHotspot('test-marker')}>Quitar punto</button>
+        }}>{t("Mostrar punto")}</button>
+        <button disabled={status !== 'ready'} onClick={() => adapter.current?.removeHotspot('test-marker')}>{t("Quitar punto")}</button>
         </>}
       </div>
-      {motionDevice && <p className="viewer-hint" role="status">{motionUnavailable || motionState.message || 'Activá «Mirar con el celular» para explorar moviendo el teléfono.'}</p>}
+      {motionDevice && <p className="viewer-hint" role="status">{t(motionUnavailable || motionState.message || t("Activá «Mirar con el celular» para explorar moviendo el teléfono."))}</p>}
       </div>
       </div>
-      <p className="viewer-hint">Arrastrá para mirar alrededor. Usá Acercar y Alejar para ajustar el zoom, o Vista amplia para ver más del ambiente.{onSaveView && ' Para conservar ese encuadre, pulsá Guardar vista actual como inicial.'}</p>
-      {picking && <p role="status">Tocá un punto sin arrastrar para obtener sus coordenadas.</p>}
+      <p className="viewer-hint">{t("Arrastrá para mirar alrededor. Usá Acercar y Alejar para ajustar el zoom, o Vista amplia para ver más del ambiente.")}{onSaveView && t(" Para conservar ese encuadre, pulsá Guardar vista actual como inicial.")}</p>
+      {picking && <p role="status">{t("Tocá un punto sin arrastrar para obtener sus coordenadas.")}</p>}
       {experimentalTools && <output data-testid="coordinates" aria-live="polite">
-        {coordinates ? `Yaw ${coordinates.yaw.toFixed(2)}° · Pitch ${coordinates.pitch.toFixed(2)}°` : 'Sin punto seleccionado.'}
+        {coordinates ? t("Yaw {0}° · Pitch {1}°", [coordinates.yaw.toFixed(2), coordinates.pitch.toFixed(2)]) : t("Sin punto seleccionado.")}
       </output>}
       {information && <aside className="information" aria-live="polite">
         <strong>{information.label}</strong><p>{information.text}</p>
-        <button onClick={() => setInformation(null)}>Cerrar información</button>
+        <button onClick={() => setInformation(null)}>{t("Cerrar información")}</button>
       </aside>}
       {experimentalTools && diagnostics && status === 'ready' && <details className="diagnostics">
-        <summary>Datos de esta prueba</summary>
-        <p>Imagen: {diagnostics.source.width} × {diagnostics.source.height} · Límite de textura: {diagnostics.maxTextureSize}</p>
-        <p>Archivo: {(diagnostics.transferBytes / 1024).toFixed(1)} KiB · Decodificación estimada RGBA: {(diagnostics.decodedBytes / 1024 / 1024).toFixed(0)} MiB</p>
-        <p>Carga hasta visor listo: {diagnostics.loadMilliseconds.toFixed(0)} ms. Medición local, no benchmark de fotografías.</p>
+        <summary>{t("Datos de esta prueba")}</summary>
+        <p>{t("Imagen:")} {diagnostics.source.width} × {diagnostics.source.height}{' '}{t("· Límite de textura:")} {diagnostics.maxTextureSize}</p>
+        <p>{t("Archivo:")} {(diagnostics.transferBytes / 1024).toFixed(1)}{' '}{t("KiB · Decodificación estimada RGBA:")} {(diagnostics.decodedBytes / 1024 / 1024).toFixed(0)} MiB</p>
+        <p>{t("Carga hasta visor listo:")} {diagnostics.loadMilliseconds.toFixed(0)}{' '}{t("ms. Medición local, no benchmark de fotografías.")}</p>
       </details>}
     </section>
   )

@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 type Location = { label: string; latitude?: number | null; longitude?: number | null }
 
 export function isGoogleMapsUrl(value: string) {
@@ -13,9 +14,9 @@ export function isGoogleMapsUrl(value: string) {
 }
 
 export function destinationError(value: string) {
-  if (!value.trim()) return 'Escribí una dirección o pegá un enlace de Google Maps.'
+  if (!value.trim()) return t("Escribí una dirección o pegá un enlace de Google Maps.")
   if ((/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value) || value.startsWith('//')) && !isGoogleMapsUrl(value)) {
-    return 'Pegá un enlace HTTPS de Google Maps o escribí la dirección del lugar.'
+    return t("Pegá un enlace HTTPS de Google Maps o escribí la dirección del lugar.")
   }
   return ''
 }

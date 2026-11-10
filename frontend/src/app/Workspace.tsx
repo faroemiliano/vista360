@@ -1,3 +1,5 @@
+import { LanguageSwitcher } from '../i18n/LanguageSwitcher'
+import { t } from '../i18n'
 import { useEffect, useState } from 'react'
 import { getSession, logout } from '../api/client'
 import type { SessionState } from '../api/client'
@@ -76,7 +78,7 @@ export function Workspace() {
     if (!navigation.canLeave()) return
     setBusy(true); setError('')
     try { handleSession(await logout()); setSecurityOpen(false) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo cerrar sesión') }
+    catch (cause) { setError(cause instanceof Error ? cause.message : t("No se pudo cerrar sesión")) }
     finally { setBusy(false) }
   }
   function refreshSession() {
@@ -104,7 +106,7 @@ export function Workspace() {
     if (!userId || verificationPending) { setStudioState(null); return }
     businessApi.workspaces().then((rows) => {
       if (!active) return
-      if (!rows.length) { setStudioError('No se encontró tu estudio. Volvé a iniciar sesión.'); return }
+      if (!rows.length) { setStudioError(t("No se encontró tu estudio. Volvé a iniciar sesión.")); return }
       setStudioState({ userId, rows, selectedId: rows.find((row) => row.is_owner)?.id || rows[0].id })
     }).catch((cause: Error) => { if (active) setStudioError(cause.message) })
     return () => { active = false }
@@ -126,50 +128,51 @@ export function Workspace() {
     getSession().then((state) => { if (active) setSession(state) }).catch((cause: Error) => { if (active) setError(cause.message) })
     return () => { active = false }
   }, [])
-  if (verificationPending && session?.user) return <main className="py-10"><VerificationPending user={session.user} onSession={handleSession} /></main>
+  if (verificationPending && session?.user) return <main className="py-10"><LanguageSwitcher /><VerificationPending user={session.user} onSession={handleSession} /></main>
   return <NavigationGuardContext.Provider value={navigation.register}><div className="min-h-screen lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
     <aside className="studio-sidebar flex flex-col bg-canvas px-5 py-5 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:px-6 lg:py-8">
       <div className="flex items-center justify-between gap-3">
         <a href="/inicio" className="flex items-center gap-3 text-xl font-bold tracking-tight"><BrandMark className="size-10 shrink-0" />Vision360</a>
-        <button className="!border-line !bg-transparent !px-3 lg:!hidden" aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={mobileMenuOpen} aria-controls="studio-navigation" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}><Icon name="grid" className="size-4" /><span className="text-xs">Menú</span></button>
+        <button className="!border-line !bg-transparent !px-3 lg:!hidden" aria-label={mobileMenuOpen ? t("Cerrar menú") : t("Abrir menú")} aria-expanded={mobileMenuOpen} aria-controls="studio-navigation" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}><Icon name="grid" className="size-4" /><span className="text-xs">{t("Menú")}</span></button>
       </div>
-      <nav id="studio-navigation" aria-label="Navegación principal" className={`${mobileMenuOpen ? 'block' : 'hidden'} mt-6 lg:mt-10 lg:block`}>
-        <p className="mb-3 text-[10px] font-semibold tracking-[.2em] text-subtle">TU ESPACIO</p>
-        <button {...navigationProps('jobs')} onClick={() => openPanel('jobs')}><Icon name="camera" />Trabajos</button>
+      <nav id="studio-navigation" aria-label={t("Navegación principal")} className={`${mobileMenuOpen ? 'block' : 'hidden'} mt-6 lg:mt-10 lg:block`}>
+        <p className="mb-3 text-[10px] font-semibold tracking-[.2em] text-subtle">{t("TU ESPACIO")}</p>
+        <button {...navigationProps('jobs')} onClick={() => openPanel('jobs')}><Icon name="camera" />{t("Trabajos")}</button>
         {session?.user && <>
-          <button {...navigationProps('organizations')} onClick={() => openOrganizations()}><Icon name="globe" />Organizaciones</button>
-          <button {...navigationProps('individuals')} onClick={() => openOrganizations('individuals')}><Icon name="camera" />Particulares</button>
-          {(activeStudio?.is_owner || staff) && <button {...navigationProps('requests')} onClick={() => openPanel('requests')}><Icon name="image" />Solicitudes web</button>}
-          <button aria-label="Gestionar clientes" {...navigationProps('clients')} onClick={() => openPanel('clients')}><Icon name="link" />Clientes</button>
+          <button {...navigationProps('organizations')} onClick={() => openOrganizations()}><Icon name="globe" />{t("Organizaciones")}</button>
+          <button {...navigationProps('individuals')} onClick={() => openOrganizations('individuals')}><Icon name="camera" />{t("Particulares")}</button>
+          {(activeStudio?.is_owner || staff) && <button {...navigationProps('requests')} onClick={() => openPanel('requests')}><Icon name="image" />{t("Solicitudes web")}</button>}
+          <button aria-label={t("Gestionar clientes")} {...navigationProps('clients')} onClick={() => openPanel('clients')}><Icon name="link" />{t("Clientes")}</button>
         </>}
-        {staff && <><p className="mb-3 mt-7 text-[10px] font-semibold tracking-[.2em] text-subtle">ADMINISTRACIÓN</p><button {...navigationProps('accounts')} onClick={() => openPanel('accounts')}><Icon name="grid" />Usuarios registrados</button></>}
+        {staff && <><p className="mb-3 mt-7 text-[10px] font-semibold tracking-[.2em] text-subtle">{t("ADMINISTRACIÓN")}</p><button {...navigationProps('accounts')} onClick={() => openPanel('accounts')}><Icon name="grid" />{t("Usuarios registrados")}</button></>}
       </nav>
       <div className="mt-auto hidden pt-10 lg:block">
-        <div className="rounded-2xl border border-white/10 bg-surface-900/5 p-4"><Icon name="image" className="mb-3 size-6 text-accent" /><p className="text-sm font-semibold">Un espacio. Otra perspectiva.</p><p className="mt-2 text-xs leading-relaxed text-muted">Convertí tus fotos 360° en una visita que se puede recorrer.</p></div>
-        <a href="/visor" className="mt-5 flex items-center gap-2 text-xs text-subtle hover:text-white"><Icon name="eye" className="size-4" />Abrir prueba del visor 360°</a>
+        <div className="rounded-2xl border border-white/10 bg-surface-900/5 p-4"><Icon name="image" className="mb-3 size-6 text-accent" /><p className="text-sm font-semibold">{t("Un espacio. Otra perspectiva.")}</p><p className="mt-2 text-xs leading-relaxed text-muted">{t("Convertí tus fotos 360° en una visita que se puede recorrer.")}</p></div>
+        <a href="/visor" className="mt-5 flex items-center gap-2 text-xs text-subtle hover:text-white"><Icon name="eye" className="size-4" />{t("Abrir prueba del visor 360°")}</a>
       </div>
     </aside>
     <div className="min-w-0">
       <header className="studio-header flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-line/70 bg-surface-900/70 px-5 py-4 sm:px-8 lg:px-10">
-        {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} /> : <div><p className="eyebrow">Tu estudio virtual</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">Tu estudio de digitalización</h1></div>}
-        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label="Mi cuenta" onClick={() => { setAccountTab('profile'); setSecurityOpen(true) }}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">Mi cuenta</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>Cerrar sesión</span></button></div>}
+        {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} /> : <div><p className="eyebrow">{t("Tu estudio virtual")}</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">{t("Tu estudio de digitalización")}</h1></div>}
+        <LanguageSwitcher />
+        {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label={t("Mi cuenta")} onClick={() => { setAccountTab('profile'); setSecurityOpen(true) }}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">{t("Mi cuenta")}</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>{t("Cerrar sesión")}</span></button></div>}
       </header>
       <main tabIndex={-1} className="max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
-        {session?.user && activeStudio && <nav aria-label="Historial de navegación" className="mb-6 flex flex-wrap items-center gap-2">
-          <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canBack} onClick={navigation.back}><Icon name="arrow" className="size-4 rotate-180" />Atrás</button>
-          <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>Adelante<Icon name="arrow" className="size-4" /></button>
-          <span className="ml-auto text-xs text-muted">{view === 'accounts' ? 'Administración / Usuarios registrados' : view === 'requests' ? route.requestScope === 'platform' ? 'Consultas de Vision360' : 'Solicitudes web' : view === 'jobs' ? route.jobId ? 'Trabajos / Detalle' : route.creating ? 'Trabajos / Nuevo trabajo' : 'Trabajos' : view === 'clients' ? 'Clientes' : `${route.group === 'individuals' ? 'Particulares' : 'Organizaciones'}${route.organizationId ? ' / Recorridos' : ''}`}</span>
+        {session?.user && activeStudio && <nav aria-label={t("Historial de navegación")} className="mb-6 flex flex-wrap items-center gap-2">
+          <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canBack} onClick={navigation.back}><Icon name="arrow" className="size-4 rotate-180" />{t("Atrás")}</button>
+          <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>{t("Adelante")}<Icon name="arrow" className="size-4" /></button>
+          <span className="ml-auto text-xs text-muted">{view === 'accounts' ? t("Administración / Usuarios registrados") : view === 'requests' ? route.requestScope === 'platform' ? t("Consultas de Vision360") : t("Solicitudes web") : view === 'jobs' ? route.jobId ? t("Trabajos / Detalle") : route.creating ? t("Trabajos / Nuevo trabajo") : t("Trabajos") : view === 'clients' ? t("Clientes") : `${route.group === 'individuals' ? t("Particulares") : t("Organizaciones")}${route.organizationId ? ' / Recorridos' : ''}`}</span>
         </nav>}
-        {session?.user && activeStudio?.is_owner && <PlanReminder key={`${session.user.id}-${activeStudio.id}`} workspaceId={activeStudio.id} refreshKey={securityOpen} onOpen={() => { setAccountTab('plan'); setSecurityOpen(true) }} />}
-        {error && <p role="alert">{error}</p>}
-        {!session && !error && <p role="status">Cargando sesión…</p>}
-        {!session && error && <button onClick={() => { setError(''); refreshSession() }}>Reintentar conexión</button>}
+        {session?.user && activeStudio?.is_owner && <PlanReminder key={`recordatorio-${session.user.id}-${activeStudio.id}`} workspaceId={activeStudio.id} refreshKey={securityOpen} onOpen={() => { setAccountTab('plan'); setSecurityOpen(true) }} />}
+        {error && <p role="alert">{t(error)}</p>}
+        {!session && !error && <p role="status">{t("Cargando sesión…")}</p>}
+        {!session && error && <button onClick={() => { setError(''); refreshSession() }}>{t("Reintentar conexión")}</button>}
         {session && (session.user ? activeStudio ? <div key={`${session.user.id}-${activeStudio.id}`}>
-          {view === 'requests' && staff && <div className="row-actions"><button className="btn-quiet" onClick={() => goRoute({ view: 'requests', requestScope: route.requestScope === 'platform' ? 'studio' : 'platform' })}>{route.requestScope === 'platform' ? 'Solicitudes de mi estudio' : 'Consultas de Vision360'}</button></div>}
+          {view === 'requests' && staff && <div className="row-actions"><button className="btn-quiet" onClick={() => goRoute({ view: 'requests', requestScope: route.requestScope === 'platform' ? 'studio' : 'platform' })}>{route.requestScope === 'platform' ? t("Solicitudes de mi estudio") : t("Consultas de Vision360")}</button></div>}
           {view === 'requests' && route.requestScope === 'studio' && activeStudio.is_owner && <RequestPageLink workspace={activeStudio} onChanged={(workspace) => setStudioState((current) => current ? { ...current, rows: current.rows.map((row) => row.id === workspace.id ? workspace : row) } : null)} />}
-          {view === 'accounts' ? staff === true ? <RegisteredAccounts query={route.query} kind={route.kind} offset={route.offset} onFilter={(query, kind) => navigation.navigate({ ...route, query, kind, offset: 0 })} onPage={offset => navigation.navigate({ ...route, offset })} onExpired={refreshSession} /> : <p role={staff === null ? 'status' : 'alert'}>{staff === null ? 'Verificando acceso…' : 'Acceso reservado a administración de Vision360.'}</p> : view === 'requests' && !(route.requestScope === 'platform' ? staff : activeStudio.is_owner) ? <p role={staff === null ? 'status' : 'alert'}>{staff === null ? 'Verificando acceso…' : route.requestScope === 'platform' ? 'Las consultas de Vision360 están reservadas a la administración de la plataforma.' : 'Sólo el titular del estudio puede gestionar sus solicitudes.'}</p> : view === 'clients' ? <ClientsPanel workspaceId={activeStudio.id} query={route.query} kind={route.kind} onFilterChange={(query, kind) => navigation.navigate({ ...route, query, kind }, { replace: true, keepScroll: true })} key={session.user.id} onOpen={openClient} onJobs={clientJobs} onRemoved={(id) => { if (activeOrganizationId === id) setActiveOrganizationId('') }} onExpired={refreshSession} /> : view === 'jobs' || view === 'requests' ? <JobsPanel workspaceId={activeStudio.id} key={`${session.user.id}-${view}-${route.requestScope}`} initialCreate={route.creating} staff={staff === true} mode={view === 'requests' ? 'requests' : 'work'} requestWorkspaceId={route.requestScope === 'studio' ? activeStudio.id : undefined} initialRequestId={route.requestId} onOpenWork={(job) => goRoute({ view: 'jobs', jobId: job.id, organizationId: job.organization_id || '', step: 'visit' })} initialJobId={route.jobId} initialStep={route.step} initialFilter={route.status} initialOffset={route.offset} initialOrganizationId={route.organizationId} onOrganizationChange={setActiveOrganizationId} onRouteChange={(changes, replace = false) => navigation.navigate({ ...route, ...changes }, { replace, force: replace, keepScroll: replace })} onExpired={refreshSession} onNavigate={navigateOrganization} />
+          {view === 'accounts' ? staff === true ? <RegisteredAccounts query={route.query} kind={route.kind} offset={route.offset} onFilter={(query, kind) => navigation.navigate({ ...route, query, kind, offset: 0 })} onPage={offset => navigation.navigate({ ...route, offset })} onExpired={refreshSession} /> : <p role={staff === null ? 'status' : 'alert'}>{staff === null ? t("Verificando acceso…") : t("Acceso reservado a administración de Vision360.")}</p> : view === 'requests' && !(route.requestScope === 'platform' ? staff : activeStudio.is_owner) ? <p role={staff === null ? 'status' : 'alert'}>{staff === null ? t("Verificando acceso…") : route.requestScope === 'platform' ? t("Las consultas de Vision360 están reservadas a la administración de la plataforma.") : t("Sólo el titular del estudio puede gestionar sus solicitudes.")}</p> : view === 'clients' ? <ClientsPanel workspaceId={activeStudio.id} query={route.query} kind={route.kind} onFilterChange={(query, kind) => navigation.navigate({ ...route, query, kind }, { replace: true, keepScroll: true })} key={session.user.id} onOpen={openClient} onJobs={clientJobs} onRemoved={(id) => { if (activeOrganizationId === id) setActiveOrganizationId('') }} onExpired={refreshSession} /> : view === 'jobs' || view === 'requests' ? <JobsPanel workspaceId={activeStudio.id} key={`${session.user.id}-${view}-${route.requestScope}`} initialCreate={route.creating} staff={staff === true} mode={view === 'requests' ? 'requests' : 'work'} requestWorkspaceId={route.requestScope === 'studio' ? activeStudio.id : undefined} initialRequestId={route.requestId} onOpenWork={(job) => goRoute({ view: 'jobs', jobId: job.id, organizationId: job.organization_id || '', step: 'visit' })} initialJobId={route.jobId} initialStep={route.step} initialFilter={route.status} initialOffset={route.offset} initialOrganizationId={route.organizationId} onOrganizationChange={setActiveOrganizationId} onRouteChange={(changes, replace = false) => navigation.navigate({ ...route, ...changes }, { replace, force: replace, keepScroll: replace })} onExpired={refreshSession} onNavigate={navigateOrganization} />
               : <OrganizationsPanel workspaceId={activeStudio.id} canCreateClients={activeStudio.is_owner} key={`${session.user.id}-${route.group}-${route.organizationId}-${route.tab}`} group={route.tab === 'tours' ? route.group : 'all'} onNewWork={newWork} initialOrganizationId={route.organizationId} initialTab={route.tab} initialTourId={route.tourId} autoSelect={false} onOpenOrganization={(id) => navigation.navigate({ ...route, organizationId: id, tourId: '' })} onDirectory={() => navigation.navigate({ ...route, organizationId: '', tourId: '', tab: 'tours' })} onTourChange={(id) => navigation.navigate({ ...route, tourId: id })} onOrganizationChange={setActiveOrganizationId} onSectionChange={(tab) => navigation.navigate({ ...route, tourId: '', tab: tab === 'properties' || tab === 'members' ? tab : 'tours' })} onExpired={refreshSession} />}
-        </div> : studioError ? <div role="alert"><p>{studioError}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>Reintentar estudio</button></div> : <p role="status">Abriendo tu estudio…</p> : <AuthForm onSession={handleSession} selectedPlan={route.selectedPlan} initialMode={route.selectedPlan || new URLSearchParams(window.location.search).get('registro') === '1' ? 'register' : 'login'} />)}
+        </div> : studioError ? <div role="alert"><p>{t(studioError)}</p><button className="mt-3" onClick={() => setStudioVersion((value) => value + 1)}>{t("Reintentar estudio")}</button></div> : <p role="status">{t("Abriendo tu estudio…")}</p> : <AuthForm onSession={handleSession} selectedPlan={route.selectedPlan} initialMode={route.selectedPlan || new URLSearchParams(window.location.search).get('registro') === '1' ? 'register' : 'login'} />)}
       </main>
     </div>
     {securityOpen && session?.user && <MyAccount user={session.user} onClose={closeAccount} initialTab={route.selectedPlan ? 'plan' : accountTab} selectedPlan={route.selectedPlan} onSession={setSession} onLogout={signOut} onUser={user => setSession(current => current ? { ...current, user } : current)} />}

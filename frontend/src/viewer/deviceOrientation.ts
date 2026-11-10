@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { Coordinates } from './types'
 
 export type MotionState = { mode: 'off' | 'waiting' | 'active'; message: string }
@@ -6,8 +7,8 @@ const normalize = (angle: number) => ((angle + 180) % 360 + 360) % 360 - 180
 const clampPitch = (pitch: number) => Math.max(-85, Math.min(85, pitch))
 
 export function motionAvailability() {
-  if (!window.isSecureContext) return 'Para mirar con el celular, abrí el recorrido desde un enlace HTTPS.'
-  if (!window.DeviceOrientationEvent) return 'Este navegador no ofrece acceso a los sensores. Podés mirar arrastrando la imagen.'
+  if (!window.isSecureContext) return t("Para mirar con el celular, abrí el recorrido desde un enlace HTTPS.")
+  if (!window.DeviceOrientationEvent) return t("Este navegador no ofrece acceso a los sensores. Podés mirar arrastrando la imagen.")
   return ''
 }
 
@@ -73,7 +74,7 @@ export function createMotionControl(options: {
     if (!baseline) {
       baseline = { phone: point, view }
       window.clearTimeout(timeout); timeout = undefined
-      options.onState({ mode: 'active', message: 'Mové el celular para mirar. Arrastrar la imagen vuelve al control manual.' })
+      options.onState({ mode: 'active', message: t("Mové el celular para mirar. Arrastrar la imagen vuelve al control manual.") })
     }
     target = { yaw: normalize(baseline.view.yaw + normalize(point.yaw - baseline.phone.yaw)),
       pitch: clampPitch(baseline.view.pitch + point.pitch - baseline.phone.pitch) }
@@ -90,20 +91,20 @@ export function createMotionControl(options: {
       const unavailable = motionAvailability()
       if (unavailable) { options.onState({ mode: 'off', message: unavailable }); return }
       const request = generation
-      options.onState({ mode: 'waiting', message: 'Si el teléfono pide permiso de movimiento, elegí Permitir.' })
+      options.onState({ mode: 'waiting', message: t("Si el teléfono pide permiso de movimiento, elegí Permitir.") })
       try {
         const api = window.DeviceOrientationEvent as OrientationAPI
         if (api.requestPermission && await api.requestPermission() !== 'granted') {
-          if (!disposed && request === generation) stop('No se habilitó el permiso de movimiento. Podés seguir usando el control táctil.')
+          if (!disposed && request === generation) stop(t("No se habilitó el permiso de movimiento. Podés seguir usando el control táctil."))
           return
         }
         if (disposed || request !== generation) return
         enabled = true; suspended = false
         window.addEventListener('deviceorientation', receive)
-        options.onState({ mode: 'waiting', message: 'Apuntá el celular hacia adelante y movelo suavemente…' })
-        timeout = window.setTimeout(() => stop('No recibimos datos del sensor. Revisá los permisos del navegador o seguí mirando con el dedo.'), 6000)
+        options.onState({ mode: 'waiting', message: t("Apuntá el celular hacia adelante y movelo suavemente…") })
+        timeout = window.setTimeout(() => stop(t("No recibimos datos del sensor. Revisá los permisos del navegador o seguí mirando con el dedo.")), 6000)
       } catch {
-        if (!disposed && request === generation) stop('El navegador no permitió usar el movimiento. Revisá sus permisos o usá el control táctil.')
+        if (!disposed && request === generation) stop(t("El navegador no permitió usar el movimiento. Revisá sus permisos o usá el control táctil."))
       }
     },
     stop, recenter,

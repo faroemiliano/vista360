@@ -1,3 +1,4 @@
+import { t, translateError } from '../i18n'
 import type { components } from './schema'
 
 export type User = components['schemas']['UserResponse']
@@ -32,13 +33,13 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, c
     response = await fetch(`${base}/api/v1${path}`, {
       method, headers, credentials, body: body === undefined ? undefined : JSON.stringify(body),
     })
-  } catch { throw new ApiError(0, 'No se pudo conectar con la API. Verificá que el backend esté iniciado.') }
+  } catch { throw new ApiError(0, t("No se pudo conectar con la API. Verificá que el backend esté iniciado.")) }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     const detail = data.detail
     throw new ApiError(response.status, typeof detail === 'string' ? detail
-      : Array.isArray(detail) ? detail.map((item: { msg: string }) => item.msg).join('. ')
-      : 'No se pudo completar la operación.')
+      : Array.isArray(detail) ? detail.map((item: { msg: string }) => translateError(item.msg)).join('. ')
+      : t("No se pudo completar la operación."))
   }
   return response.status === 204 ? undefined as T : response.json() as Promise<T>
 }
@@ -114,7 +115,7 @@ export const assetsApi = {
 export async function uploadPanorama(tour: string, scene: string, file: File,
   onProgress: (percent: number) => void, signal: AbortSignal): Promise<AssetState> {
   if (file.type !== 'image/jpeg' || file.size === 0 || file.size > 50 * 1024 * 1024) {
-    throw new Error('Seleccioná un JPEG de hasta 50 MiB.')
+    throw new Error(t("Seleccioná un JPEG de hasta 50 MiB."))
   }
   await getSession()
   const target = await request<components['schemas']['UploadTarget']>(`/tours/${tour}/scenes/${scene}/uploads`,
@@ -133,14 +134,14 @@ export async function uploadPanorama(tour: string, scene: string, file: File,
     xhr.onload = () => {
       cleanup()
       if (xhr.status >= 200 && xhr.status < 300) { resolve(); return }
-      let detail = 'No se pudo recibir el archivo.'
+      let detail = t("No se pudo recibir el archivo.")
       try { const data = JSON.parse(xhr.responseText); if (typeof data.detail === 'string') detail = data.detail } catch { /* Sin JSON */ }
       reject(new ApiError(xhr.status, detail))
     }
-    xhr.onerror = () => { cleanup(); reject(new Error('No se pudo subir la imagen. Revisá la conexión y CORS.')) }
-    xhr.onabort = () => { cleanup(); reject(new Error('Carga cancelada.')) }
+    xhr.onerror = () => { cleanup(); reject(new Error(t("No se pudo subir la imagen. Revisá la conexión y CORS."))) }
+    xhr.onabort = () => { cleanup(); reject(new Error(t("Carga cancelada."))) }
     signal.addEventListener('abort', cancel, { once: true })
-    if (signal.aborted) { cleanup(); reject(new Error('Carga cancelada.')); return }
+    if (signal.aborted) { cleanup(); reject(new Error(t("Carga cancelada."))); return }
     xhr.send(file)
   })
   return request<AssetState>(`/assets/${target.asset_id}/complete`, 'POST')
@@ -154,7 +155,7 @@ export async function uploadAvatar(file: File): Promise<User> {
   })
   if (!response.ok) {
     const result = await response.json().catch(() => ({}))
-    throw new ApiError(response.status, typeof result.detail === 'string' ? result.detail : 'No se pudo guardar la foto.')
+    throw new ApiError(response.status, typeof result.detail === 'string' ? result.detail : t("No se pudo guardar la foto."))
   }
   return response.json()
 }

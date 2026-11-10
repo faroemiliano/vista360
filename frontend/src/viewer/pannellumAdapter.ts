@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import 'pannellum'
 import 'pannellum/build/pannellum.css'
 import type {
@@ -15,7 +16,7 @@ export function selectSource(sources: readonly PanoramaSource[], maxTextureSize:
 function textureLimit(): number {
   const canvas = document.createElement('canvas')
   const gl = canvas.getContext('webgl')
-  if (!gl) throw new Error('Este navegador no tiene WebGL disponible.')
+  if (!gl) throw new Error(t("Este navegador no tiene WebGL disponible."))
   const limit = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number
   gl.getExtension('WEBGL_lose_context')?.loseContext()
   return limit
@@ -165,7 +166,7 @@ export function createPannellumAdapter(
     const source = selectSource(scene.sources, maxTextureSize)
     if (!source) {
       loading = false; clearViewer()
-      callbacks.onError('No hay una imagen compatible con el límite de textura del dispositivo.')
+      callbacks.onError(t("No hay una imagen compatible con el límite de textura del dispositivo."))
       return
     }
     const abort = new AbortController()
@@ -178,7 +179,7 @@ export function createPannellumAdapter(
       const response = await fetch(source.url, {
         mode: 'cors', credentials: source.credentials || 'omit', signal: abort.signal,
       })
-      if (!response.ok) throw new Error('No se pudo descargar la panorámica.')
+      if (!response.ok) throw new Error(t("No se pudo descargar la panorámica."))
       const blob = await response.blob()
       objectUrl = URL.createObjectURL(blob)
       const image = new Image()
@@ -187,7 +188,7 @@ export function createPannellumAdapter(
       if (destroyed || current !== generation) return
       if (image.naturalWidth !== source.width || image.naturalHeight !== source.height
         || image.naturalWidth !== image.naturalHeight * 2) {
-        throw new Error('La panorámica debe ser completa, 2:1 y tener las dimensiones declaradas.')
+        throw new Error(t("La panorámica debe ser completa, 2:1 y tener las dimensiones declaradas."))
       }
       // Serializar el cambio nativo: Pannellum ignora loadScene si aún está cargando.
       await renderPending
@@ -251,7 +252,7 @@ export function createPannellumAdapter(
         clearViewer()
         if (!destroyed && current === generation) {
           loading = false
-          callbacks.onError('No se pudo renderizar la panorámica. Probá con la resolución menor.')
+          callbacks.onError(t("No se pudo renderizar la panorámica. Probá con la resolución menor."))
         }
       })
       viewer.loadScene(scene.id)
@@ -261,10 +262,10 @@ export function createPannellumAdapter(
         loading = false
         clearViewer()
         const message = error instanceof TypeError
-          ? 'No se pudo descargar la panorámica. Revisá la conexión y los permisos CORS del servidor de imágenes.'
+          ? t("No se pudo descargar la panorámica. Revisá la conexión y los permisos CORS del servidor de imágenes.")
           : error instanceof DOMException
-            ? 'No se pudo decodificar la panorámica. Revisá el formato del archivo.'
-            : error instanceof Error ? error.message : 'No se pudo cargar la panorámica.'
+            ? t("No se pudo decodificar la panorámica. Revisá el formato del archivo.")
+            : error instanceof Error ? error.message : t("No se pudo cargar la panorámica.")
         callbacks.onError(message)
       }
     } finally {

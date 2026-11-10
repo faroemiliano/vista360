@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { publicPlan } from '../features/subscriptions/selection'
@@ -19,27 +20,27 @@ const uuid = (value: string | null) => value && /^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[
 function readRoute(): StudioRoute {
   const url = new URL(window.location.href)
   const parts = url.pathname.split('/').filter(Boolean)
-  const view = parts[1] === 'usuarios' ? 'accounts' : parts[1] === 'solicitudes' ? 'requests' : parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
+  const view = parts[1] === 'usuarios' ? 'accounts' : parts[1] === 'solicitudes' ? 'requests' : parts[1] === t("clientes") ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
   const step = url.searchParams.get('paso')
   const tab = url.searchParams.get('vista')
   const offset = Number(url.searchParams.get('pagina') || 0)
   return { ...defaultRoute, selectedPlan: publicPlan(url.searchParams.get('plan')), view, requestScope: url.searchParams.get('origen') === 'vision360' || (url.searchParams.has('solicitud') && !url.searchParams.has('estudio')) ? 'platform' : 'studio', requestId: view === 'requests' ? uuid(url.searchParams.get('solicitud')) : '', group: parts[1] === 'particulares' ? 'individuals' : 'companies',
-    studioId: uuid(url.searchParams.get('estudio')), organizationId: uuid(url.searchParams.get('cliente')),
+    studioId: uuid(url.searchParams.get('estudio')), organizationId: uuid(url.searchParams.get(t("cliente"))),
     jobId: view === 'jobs' ? uuid(parts[2] || null) : '',
     step: workSteps.some(([id]) => id === step) ? step as WorkStep : 'visit',
     creating: view === 'jobs' && url.searchParams.get('nuevo') === '1',
     tab: tab === 'properties' || tab === 'members' ? tab : 'tours',
-    tourId: view === 'organizations' ? uuid(url.searchParams.get('recorrido')) : '',
+    tourId: view === 'organizations' ? uuid(url.searchParams.get(t("recorrido"))) : '',
     query: url.searchParams.get('buscar') || '', kind: ['individual', 'organization', 'company'].includes(url.searchParams.get('tipo') || '') ? url.searchParams.get('tipo')! : 'all',
     status: url.searchParams.get('estado') || '', offset: Number.isSafeInteger(offset) && offset >= 0 ? offset * 50 : 0,
   }
 }
 export function routeUrl(route: StudioRoute) {
-  const section = route.view === 'accounts' ? 'usuarios' : route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
+  const section = route.view === 'accounts' ? 'usuarios' : route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? t("clientes") : route.group === 'individuals' ? 'particulares' : 'organizaciones'
   const query = new URLSearchParams()
   if (route.selectedPlan) query.set('plan', route.selectedPlan)
   if (route.studioId) query.set('estudio', route.studioId)
-  if (route.organizationId) query.set('cliente', route.organizationId)
+  if (route.organizationId) query.set(t("cliente"), route.organizationId)
   if (route.view === 'requests') {
     if (route.requestScope === 'platform') query.set('origen', 'vision360')
     if (route.requestId) query.set('solicitud', route.requestId)
@@ -50,7 +51,7 @@ export function routeUrl(route: StudioRoute) {
     if (route.offset) query.set('pagina', String(route.offset / 50))
   } else if (route.view === 'organizations') {
     if (route.tab !== 'tours') query.set('vista', route.tab)
-    if (route.tourId) query.set('recorrido', route.tourId)
+    if (route.tourId) query.set(t("recorrido"), route.tourId)
   } else {
     if (route.query) query.set('buscar', route.query)
     if (route.kind !== 'all') query.set('tipo', route.kind)
@@ -101,7 +102,7 @@ export function useStudioNavigation() {
   const register = useCallback((guard: Guard) => { guards.current.add(guard); return () => { guards.current.delete(guard) } }, [])
   const canLeave = useCallback(() => {
     if (![...guards.current].some((guard) => guard())) return true
-    if (!window.confirm('¿Descartar los cambios sin guardar y cambiar de página?')) return false
+    if (!window.confirm(t("¿Descartar los cambios sin guardar y cambiar de página?"))) return false
     for (const guard of guards.current) guard(true)
     return true
   }, [])

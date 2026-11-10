@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { apiResourceUrl, assetsApi, hotspotsApi, scenesApi, toursApi } from '../../api/client'
 import type { HotspotInput, Panorama, SavedHotspot, Scene, Tour } from '../../api/client'
@@ -49,7 +50,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
             setDraft(existing ? { id: existing.id, type: 'navigation', label: existing.label, target: back.target, text: '', yaw: existing.yaw, pitch: existing.pitch }
               : { type: 'navigation', label: back.label, target: back.target, text: '', yaw: 0, pitch: 0, needsPosition: true })
             pendingReturn.current = null
-            setMessage(existing ? 'Ya existe una vuelta. Podés editar este punto.' : 'Ubicá la vuelta en esta foto y guardá el punto.')
+            setMessage(existing ? t("Ya existe una vuelta. Podés editar este punto.") : t("Ubicá la vuelta en esta foto y guardá el punto."))
           }
         })
         .catch((cause: Error) => { if (active) setError(cause.message) })
@@ -59,7 +60,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
 
   function navigate(id: string) {
     if (busy) return false
-    if (draft && !window.confirm('¿Descartar los cambios del punto sin guardar?')) return false
+    if (draft && !window.confirm(t("¿Descartar los cambios del punto sin guardar?"))) return false
     setActiveId(id); setDraft(null); setMessage(''); setReturnOffer(null)
     return true
   }
@@ -67,84 +68,84 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
     if (busy) return
     setBusy(true); setError(''); setMessage('')
     try { await action(); setMessage(success) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar.') }
+    catch (cause) { setError(cause instanceof Error ? cause.message : t("No se pudo guardar.")) }
     finally { setBusy(false) }
   }
   function pick(point: Coordinates) {
     if (busy) return
     setDraft((current) => ({ id: current?.id, type: current?.type || 'navigation', label: current?.label || '',
       target: current?.target || scenes.find((item) => item.id !== activeId)?.id || '', text: current?.text || '', ...point, needsPosition: false }))
-    setMessage('Punto seleccionado. Completá el formulario y guardá.')
+    setMessage(t("Punto seleccionado. Completá el formulario y guardá."))
   }
   function close() {
-    if (!draft || window.confirm('¿Descartar los cambios del punto sin guardar?')) onClose()
+    if (!draft || window.confirm(t("¿Descartar los cambios del punto sin guardar?"))) onClose()
   }
   const pointsList = <div className="mt-5 rounded-xl border border-line p-4">    {data && <>
-      <h4 className="mb-3">{preview ? 'Puntos de este ambiente' : 'Conexiones guardadas'}</h4>
-      {data.hotspots.length === 0 && <p>No hay puntos todavía.</p>}
+      <h4 className="mb-3">{preview ? t("Puntos de este ambiente") : t("Conexiones guardadas")}</h4>
+      {data.hotspots.length === 0 && <p>{t("No hay puntos todavía.")}</p>}
       <ul className="saved-hotspots">{data.hotspots.map((point) => <li key={point.id}>
         <strong>{point.label}</strong>{' · '}{point.type === 'navigation'
-          ? `${scene?.name} → ${scenes.find((item) => item.id === point.target_scene_id)?.name || 'ambiente'}` : 'Información'}
+          ? `${scene?.name} → ${scenes.find((item) => item.id === point.target_scene_id)?.name || 'ambiente'}` : t("Información")}
         <div className="row-actions">
-          {point.type === 'navigation' && <button disabled={busy} onClick={() => navigate(point.target_scene_id!)}>Ir: {point.label}</button>}
+          {point.type === 'navigation' && <button disabled={busy} onClick={() => navigate(point.target_scene_id!)}>{t("Ir:")} {point.label}</button>}
           {!preview && <>
             <button disabled={busy} onClick={() => {
-              if (draft && !window.confirm('¿Descartar los cambios del punto sin guardar?')) return
+              if (draft && !window.confirm(t("¿Descartar los cambios del punto sin guardar?"))) return
               setReturnOffer(null); setDraft({ id: point.id, type: point.type, label: point.label, target: point.target_scene_id || '',
                 text: point.content?.text || '', yaw: point.yaw, pitch: point.pitch })
-            }}>Editar punto {point.label}</button>
+            }}>{t("Editar punto")} {point.label}</button>
             <button disabled={busy} onClick={() => {
-              if (window.confirm(`¿Eliminar el punto ${point.label}?`)) void act(async () => {
+              if (window.confirm(t("¿Eliminar el punto {0}?", [point.label]))) void act(async () => {
                 await hotspotsApi.remove(tour.id, scene!.id, point.id)
                 setDraft(null); setVersion((value) => value + 1)
-              }, 'Punto eliminado.')
-            }}>Eliminar punto {point.label}</button>
+              }, t("Punto eliminado."))
+            }}>{t("Eliminar punto")} {point.label}</button>
           </>}
         </div>
         {preview && point.type === 'info' && <p>{point.content!.text}</p>}
       </li>)}</ul>
     </>}
 </div>
-  return <section id="guia" className="tour-editor" aria-label={preview ? 'Previsualización privada' : 'Editor del recorrido'}>
+  return <section id="guia" className="tour-editor" aria-label={preview ? t("Previsualización privada") : t("Editor del recorrido")}>
     <div className="row-actions">
-      <div><p className="eyebrow mb-2">{tour.title}</p><h3 className="text-2xl">{preview ? 'Previsualización privada' : 'Editor del recorrido'}</h3></div>
-      <button className="btn-quiet" disabled={busy} onClick={close}>Cerrar {preview ? 'previsualización' : 'editor'} <span aria-hidden="true">×</span></button>
+      <div><p className="eyebrow mb-2">{tour.title}</p><h3 className="text-2xl">{preview ? t("Previsualización privada") : t("Editor del recorrido")}</h3></div>
+      <button className="btn-quiet" disabled={busy} onClick={close}>{t("Cerrar")} {preview ? t("previsualización") : 'editor'} <span aria-hidden="true">×</span></button>
     </div>
-    <p>{preview ? 'Estás viendo el borrador. Sólo vos podés acceder con tu sesión.' : 'Girá para mirar. Activá «Ubicar punto» y tocá la imagen para crear una conexión o información.'}</p>
-    <nav className="row-actions" aria-label="Ambientes del recorrido">{scenes.map((item) => <button
+    <p>{preview ? t("Estás viendo el borrador. Sólo vos podés acceder con tu sesión.") : t("Girá para mirar. Activá «Ubicar punto» y tocá la imagen para crear una conexión o información.")}</p>
+    <nav className="row-actions" aria-label={t("Ambientes del recorrido")}>{scenes.map((item) => <button
       key={item.id} aria-current={activeId === item.id ? 'true' : undefined} disabled={busy}
-      onClick={() => navigate(item.id)}>{item.name}{!item.panorama_asset_id ? ' (sin panorama)' : ''}</button>)}</nav>
-    <h4>Ambiente actual: {scene?.name || 'Ambiente eliminado'}</h4>
+      onClick={() => navigate(item.id)}>{item.name}{!item.panorama_asset_id ? t(" (sin panorama)") : ''}</button>)}</nav>
+    <h4>{t("Ambiente actual:")} {scene?.name || t("Ambiente eliminado")}</h4>
     {!preview && scene && <div className="row-actions">
-      {tour.start_scene_id === scene.id ? <span className="badge badge-ready">Ambiente inicial</span> : <button
+      {tour.start_scene_id === scene.id ? <span className="badge badge-ready">{t("Ambiente inicial")}</span> : <button
         disabled={busy || Boolean(draft)} onClick={() => void act(async () => {
           await toursApi.startScene(tour.id, scene.id)
           await onRefresh()
-        }, `El recorrido comenzará en ${scene.name}.${tour.status === 'published' ? ' Volvé a publicar para actualizar el enlace compartido.' : ''}`)}
-      >Usar {scene.name} como inicial</button>}
-      {draft && tour.start_scene_id !== scene.id && <p className="text-xs text-muted">Guardá o cancelá el punto antes de cambiar el ambiente inicial.</p>}
+        }, t("El recorrido comenzará en {0}.{1}", [scene.name, tour.status === 'published' ? ' Volvé a publicar para actualizar el enlace compartido.' : '']))}
+      >{t("Usar")} {scene.name}{' '}{t("como inicial")}</button>}
+      {draft && tour.start_scene_id !== scene.id && <p className="text-xs text-muted">{t("Guardá o cancelá el punto antes de cambiar el ambiente inicial.")}</p>}
     </div>}
-    {error && <p role="alert">{error}</p>}
-    {message && <p role="status">{message}</p>}
-    {!scene?.panorama_asset_id && <p>Este ambiente todavía no tiene una panorámica validada. Cargala desde la lista de ambientes.</p>}
-    {error && !data && <button onClick={() => setVersion((value) => value + 1)}>Reintentar ambiente</button>}
+    {error && <p role="alert">{t(error)}</p>}
+    {message && <p role="status">{t(message)}</p>}
+    {!scene?.panorama_asset_id && <p>{t("Este ambiente todavía no tiene una panorámica validada. Cargala desde la lista de ambientes.")}</p>}
+    {error && !data && <button onClick={() => setVersion((value) => value + 1)}>{t("Reintentar ambiente")}</button>}
     <div className={preview ? '' : 'grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]'}><div className="relative min-w-0">
-    {scene?.panorama_asset_id && !data && !error && <p className="viewer-switching-message" role="status">Cargando {scene.name}…</p>}
+    {scene?.panorama_asset_id && !data && !error && <p className="viewer-switching-message" role="status">{t("Cargando")} {scene.name}…</p>}
     {scene?.panorama_asset_id && panoramaScene && <PanoramaViewer scene={panoramaScene} onNavigate={navigate} experimentalTools={false}
       onPick={!preview && data ? pick : undefined}
       onSaveView={!preview && data ? (view) => {
-        if (draft && !window.confirm('¿Descartar el punto sin guardar y guardar la vista inicial?')) return
+        if (draft && !window.confirm(t("¿Descartar el punto sin guardar y guardar la vista inicial?"))) return
         void act(async () => {
         await scenesApi.update(tour.id, scene!.id, { name: scene!.name, initial_yaw: view.yaw,
           initial_pitch: view.pitch, initial_hfov: view.hfov })
         await onRefresh()
-      }, 'Vista inicial guardada.') } : undefined} />}
+      }, t("Vista inicial guardada.")) } : undefined} />}
     {preview && pointsList}
-    </div>{!preview && <aside className="order-first min-w-0 xl:sticky xl:top-6 xl:order-last">{returnOffer && <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-5"><h4>Prepará también la vuelta</h4><p className="muted my-3">Abrí {scenes.find((item) => item.id === returnOffer.to)?.name} y elegí desde dónde volver.</p><button onClick={() => {
-      const back = returnOffer; pendingReturn.current = { sceneId: back.to, target: back.from, label: `Volver a ${scenes.find((item) => item.id === back.from)?.name || 'ambiente anterior'}` }; navigate(back.to)
-    }}>Crear también la vuelta</button></div>}
+    </div>{!preview && <aside className="order-first min-w-0 xl:sticky xl:top-6 xl:order-last">{returnOffer && <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-5"><h4>{t("Prepará también la vuelta")}</h4><p className="muted my-3">{t("Abrí")} {scenes.find((item) => item.id === returnOffer.to)?.name}{' '}{t("y elegí desde dónde volver.")}</p><button onClick={() => {
+      const back = returnOffer; pendingReturn.current = { sceneId: back.to, target: back.from, label: t("Volver a {0}", [scenes.find((item) => item.id === back.from)?.name || 'ambiente anterior']) }; navigate(back.to)
+    }}>{t("Crear también la vuelta")}</button></div>}
     {!draft && pointsList}
-    {!draft && !returnOffer && <div className="rounded-xl border border-dashed border-line bg-surface-950 p-5"><Icon name="link" className="mb-4 size-7 text-accent" /><h4>Crear una conexión</h4><p className="muted mt-3">En el visor, activá «Ubicar punto» y tocá el lugar por donde pasarías al siguiente ambiente.</p></div>}
+    {!draft && !returnOffer && <div className="rounded-xl border border-dashed border-line bg-surface-950 p-5"><Icon name="link" className="mb-4 size-7 text-accent" /><h4>{t("Crear una conexión")}</h4><p className="muted mt-3">{t("En el visor, activá «Ubicar punto» y tocá el lugar por donde pasarías al siguiente ambiente.")}</p></div>}
     {draft && <form className="hotspot-form !mt-0" onSubmit={(event) => {
       event.preventDefault()
       if (draft.needsPosition) return
@@ -156,25 +157,25 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
         else await hotspotsApi.create(tour.id, scene!.id, input)
         setReturnOffer(draft.type === 'navigation' ? { from: scene!.id, to: draft.target } : null)
         setDraft(null); setVersion((value) => value + 1)
-      }, 'Punto guardado.')
+      }, t("Punto guardado."))
     }}>
-      <p className="eyebrow !text-accent">Conectá la visita</p><h4>{draft.id ? 'Editar punto' : 'Nuevo punto'}</h4>
-      {draft.needsPosition && <p role="status" className="my-3 text-sm text-accent">Primero activá «Ubicar punto» y tocá la puerta de regreso en la foto, o usá «Nuevo punto en el centro».</p>}
+      <p className="eyebrow !text-accent">{t("Conectá la visita")}</p><h4>{draft.id ? t("Editar punto") : t("Nuevo punto")}</h4>
+      {draft.needsPosition && <p role="status" className="my-3 text-sm text-accent">{t("Primero activá «Ubicar punto» y tocá la puerta de regreso en la foto, o usá «Nuevo punto en el centro».")}</p>}
       <fieldset disabled={busy}>
-        <label>Tipo de punto<select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as Draft['type'] })}>
-          <option value="navigation">Ir a otro ambiente</option><option value="info">Información</option>
+        <label>{t("Tipo de punto")}<select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as Draft['type'] })}>
+          <option value="navigation">{t("Ir a otro ambiente")}</option><option value="info">{t("Información")}</option>
         </select></label>
-        <label>Etiqueta del punto<input required maxLength={120} value={draft.label} onChange={(event) => setDraft({ ...draft, label: event.target.value })} /></label>
-        {draft.type === 'navigation' ? <label>Ambiente de destino<select required value={draft.target} onChange={(event) => setDraft({ ...draft, target: event.target.value })}>
-          <option value="">Elegí un ambiente</option>{scenes.filter((item) => item.id !== activeId).map((item) => <option key={item.id} value={item.id}>{item.name}{!item.panorama_asset_id ? ' (sin panorama)' : ''}</option>)}
-        </select></label> : <label>Texto informativo<textarea required maxLength={2000} value={draft.text} onChange={(event) => setDraft({ ...draft, text: event.target.value })} /></label>}
-        <details className="mb-4 rounded-lg border border-line bg-surface-900 p-3"><summary>Ajustar coordenadas manualmente</summary><div className="angle-fields mt-4 sm:grid-cols-1">
-          <label>Yaw del punto (°)<input type="number" required min={-180} max={179.999999} step="any" value={draft.yaw} onChange={(event) => setDraft({ ...draft, yaw: Number(event.target.value), needsPosition: false })} /></label>
-          <label>Pitch del punto (°)<input type="number" required min={-90} max={90} step="any" value={draft.pitch} onChange={(event) => setDraft({ ...draft, pitch: Number(event.target.value), needsPosition: false })} /></label>
+        <label>{t("Etiqueta del punto")}<input required maxLength={120} value={draft.label} onChange={(event) => setDraft({ ...draft, label: event.target.value })} /></label>
+        {draft.type === 'navigation' ? <label>{t("Ambiente de destino")}<select required value={draft.target} onChange={(event) => setDraft({ ...draft, target: event.target.value })}>
+          <option value="">{t("Elegí un ambiente")}</option>{scenes.filter((item) => item.id !== activeId).map((item) => <option key={item.id} value={item.id}>{item.name}{!item.panorama_asset_id ? t(" (sin panorama)") : ''}</option>)}
+        </select></label> : <label>{t("Texto informativo")}<textarea required maxLength={2000} value={draft.text} onChange={(event) => setDraft({ ...draft, text: event.target.value })} /></label>}
+        <details className="mb-4 rounded-lg border border-line bg-surface-900 p-3"><summary>{t("Ajustar coordenadas manualmente")}</summary><div className="angle-fields mt-4 sm:grid-cols-1">
+          <label>{t("Yaw del punto (°)")}<input type="number" required min={-180} max={179.999999} step="any" value={draft.yaw} onChange={(event) => setDraft({ ...draft, yaw: Number(event.target.value), needsPosition: false })} /></label>
+          <label>{t("Pitch del punto (°)")}<input type="number" required min={-90} max={90} step="any" value={draft.pitch} onChange={(event) => setDraft({ ...draft, pitch: Number(event.target.value), needsPosition: false })} /></label>
         </div></details>
-        <p>Para cambiar la ubicación, activá «Ubicar punto» y tocá otra posición. La conexión de vuelta se crea desde el ambiente de destino.</p>
-        <button className="btn-primary" type="submit" disabled={draft.needsPosition}>Guardar punto</button>{' '}
-        <button type="button" onClick={() => setDraft(null)}>Cancelar punto</button>
+        <p>{t("Para cambiar la ubicación, activá «Ubicar punto» y tocá otra posición. La conexión de vuelta se crea desde el ambiente de destino.")}</p>
+        <button className="btn-primary" type="submit" disabled={draft.needsPosition}>{t("Guardar punto")}</button>{' '}
+        <button type="button" onClick={() => setDraft(null)}>{t("Cancelar punto")}</button>
       </fieldset>
     </form>}{draft && pointsList}</aside>}</div>
   </section>
