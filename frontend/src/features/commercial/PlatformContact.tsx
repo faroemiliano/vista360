@@ -25,7 +25,7 @@ export function PlatformContact() {
       <a href="mailto:farixio.tech@gmail.com" className="mt-5 inline-flex min-h-11 items-center break-all text-sm text-accent underline underline-offset-4">farixio.tech@gmail.com</a>
     </div>
     {receipt ? <div className="card p-6 sm:p-8" role="status">
-      <h3>{t("Tu consulta quedó registrada.")}</h3><p className="muted mt-3">{t("Emiliano recibirá el aviso por email para responderte. También podés escribirle por WhatsApp.")}</p>
+      <h3>{t("Tu consulta quedó registrada.")}</h3><p className="muted mt-3">{t("Nuestro equipo recibirá tu consulta y se pondrá en contacto con vos a la brevedad. También podés comunicarte con nosotros por WhatsApp.")}</p>
       <p className="mt-4 break-all text-xs text-subtle">{t("Referencia:")} {receipt}</p>
       <button className="mt-5" onClick={() => { submission.current = crypto.randomUUID(); setReceipt(null) }}>{t("Enviar otra consulta")}</button>
     </div> : <form className="card min-w-0 p-5 sm:p-8" aria-label={t("Consultar sobre Vision360")} onSubmit={async event => {
