@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.auth.models import User
+from app.modules.assets.models import ProcessingJob
 from app.modules.auth.security import now
 from app.modules.subscriptions.models import Subscription
 from app.modules.subscriptions.schemas import PlanCode
@@ -19,6 +20,48 @@ from app.modules.studio.router import administrator
 from app.modules.workspaces.models import Workspace
 
 router = APIRouter(tags=['platform'])
+
+
+class PlatformInquiry(BaseModel):
+    id: UUID
+    email: str
+    phone: str
+    message: str
+    created_at: datetime
+
+
+class PlatformInbox(BaseModel):
+    items: list[PlatformInquiry]
+    total: int
+    offset: int
+    limit: int
+
+
+@router.get('/admin/platform-contacts', response_model=PlatformInbox)
+def platform_contacts(
+    q: str = Query(default='', max_length=160),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    actor: User = Depends(administrator),
+):
+    # Se conservan las consultas existentes, incluso si el aviso por email falló.
+    # Sólo se exponen datos del formulario, nunca el payload o detalles del worker.
+    contact = ProcessingJob.details['platform_contact']
+    query = select(ProcessingJob).where(
+        ProcessingJob.kind == 'notify_service',
+        ProcessingJob.details.has_key('platform_contact'),
+    )
+    if term := q.strip():
+        query = query.where(or_(*(contact[field].astext.icontains(term, autoescape=True)
+                                 for field in ('email', 'phone', 'message'))))
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    jobs = db.scalars(query.order_by(ProcessingJob.created_at.desc(), ProcessingJob.id.desc()).offset(offset).limit(limit))
+    return PlatformInbox(total=total, offset=offset, limit=limit, items=[
+        PlatformInquiry(id=job.id, created_at=job.created_at, **{
+            field: job.details['platform_contact'][field] for field in ('email', 'phone', 'message')
+        }) for job in jobs
+    ])
 
 
 class AccountPlan(BaseModel):

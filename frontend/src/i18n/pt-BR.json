@@ -1192,5 +1192,19 @@
   "Ej. 11 2345-6789": "Ex.: 11 2345-6789",
   "casa-con-jardin": "casa-com-jardim",
   "Ej. -34.6037": "Ex.: -34.6037",
-  "Ej. -58.3816": "Ex.: -58.3816"
+  "Ej. -58.3816": "Ex.: -58.3816",
+  "Consultas del sistema": "Consultas sobre o sistema",
+  "No se pudieron consultar los mensajes.": "Não foi possível consultar as mensagens.",
+  "Mensajes enviados desde el formulario de la página de inicio. Abrí una consulta para ver el mensaje y los datos de contacto.": "Mensagens enviadas pelo formulário da página inicial. Abra uma consulta para ver a mensagem e os dados de contato.",
+  "Buscar consultas del sistema": "Buscar consultas sobre o sistema",
+  "Buscar consulta": "Buscar consulta",
+  "Email, teléfono o mensaje": "E-mail, telefone ou mensagem",
+  "Consultando mensajes…": "Consultando mensagens…",
+  "Consultas encontradas: {0}": "Consultas encontradas: {0}",
+  "No hay consultas para esta búsqueda o página.": "Não há consultas para esta busca ou página.",
+  "Llamar": "Ligar",
+  "Responder por email": "Responder por e-mail",
+  "Paginación de consultas": "Paginação de consultas",
+  "Actualizar": "Atualizar",
+  "Consulta": "Consulta"
 }

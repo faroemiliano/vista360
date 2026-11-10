@@ -10,6 +10,8 @@ export type WorkJob = components['schemas']['WorkResponse']
 export type BusinessWorkspace = components['schemas']['WorkspaceResponse']
 const inbox = (workspaceId?: string) => workspaceId ? `/workspaces/${workspaceId}/service-requests` : '/admin/service-requests'
 export const businessApi = {
+  platformContacts: (q: string, offset: number) => request<components['schemas']['PlatformInbox']>(
+    `/admin/platform-contacts?${new URLSearchParams({ q, offset: String(offset), limit: '50' })}`),
   registeredAccounts: (q: string, kind: 'all' | 'individual' | 'company', offset: number) => {
     const params = new URLSearchParams({ q, kind, offset: String(offset), limit: '50' })
     return request<components['schemas']['AccountDirectory']>(`/admin/accounts?${params}`)
