@@ -2,6 +2,7 @@ import { t, useLanguage } from '../i18n'
 import { lazy, Suspense } from 'react'
 import { AccountActionPage } from '../features/auth/AccountActionPage'
 import { Workspace } from './Workspace'
+import { FloatingWhatsApp } from '../components/FloatingWhatsApp'
 import { ViewerDemo } from '../viewer/ViewerDemo'
 import { PublicTour } from '../features/tours/PublicTour'
 import { StudioRequestPage } from '../features/commercial/StudioRequestPage'
@@ -9,6 +10,10 @@ const Landing = lazy(() => import('../features/commercial/Landing').then(module 
 
 export function App() {
   useLanguage()
+  return <><CurrentPage /><FloatingWhatsApp /></>
+}
+
+function CurrentPage() {
   if (window.location.pathname === '/cuenta/email') return <AccountActionPage reset={false} changeEmail />
   if (['/cuenta/verificar', '/cuenta/restablecer'].includes(window.location.pathname)) return <AccountActionPage reset={window.location.pathname === '/cuenta/restablecer'} />
   if (window.location.pathname.startsWith('/solicitar/')) return <StudioRequestPage token={window.location.pathname.slice(11)} />

@@ -5,7 +5,7 @@ import { BrandMark } from '../../components/BrandMark'
 import { CaptureVisual } from '../../components/CaptureVisual'
 import { Icon } from '../../components/Icon'
 import { Plans } from './Plans'
-import { PlatformContact, FloatingWhatsApp } from './PlatformContact'
+import { PlatformContact } from './PlatformContact'
 
 const steps = [
   { title: 'Capturá', text: 'Tomá panorámicas completas de cada espacio.', icon: 'camera' as const },
@@ -55,7 +55,6 @@ export function Landing() {
       <Plans />
       <PlatformContact />
     </main>
-    <FloatingWhatsApp />
     <footer className="border-t border-line/60 px-5 pt-8 pb-24"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5"><a href="/inicio" className="home-brand flex items-center gap-3 text-sm font-semibold"><BrandMark dynamic className="size-8" />Vision360</a><span className="text-xs text-muted">{t("Espacios reales, experiencias virtuales.")}</span><a href="/studio" className="text-xs text-accent">{t("Ingresar al estudio →")}</a></div></footer>
   </div>
 }
