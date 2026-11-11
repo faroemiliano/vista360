@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, ForeignKeyConstraint, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
 
 STATES = "'SOLICITADO','PRESUPUESTADO','CONFIRMADO','EN_PRODUCCION','EN_REVISION','PUBLICADO','FINALIZADO','CANCELADO'"
@@ -37,6 +38,7 @@ class ServiceRequest(Base):
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivered_version_id: Mapped[UUID | None] = mapped_column()
     work_revision: Mapped[int] = mapped_column(default=0, server_default="0")
+    delivery_document: Mapped[dict | None] = mapped_column(JSONB)
     origin: Mapped[str] = mapped_column(String(12), default="web", server_default="web")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

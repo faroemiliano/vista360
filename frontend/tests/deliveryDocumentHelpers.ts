@@ -1,0 +1,67 @@
+import { expect } from '@playwright/test'
+import type { Page, TestInfo } from '@playwright/test'
+
+export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link: string, maps: string) {
+  const summary = page.locator('summary').filter({ hasText: /^PDF de entrega$/ })
+  await summary.click()
+  await expect(page.getByRole('button', { name: 'Ver PDF de entrega', exact: true })).toBeDisabled()
+  const form = page.getByRole('form', { name: 'Datos del PDF de entrega', exact: true })
+  const conditions = 'Alojamiento incluido: 6 meses desde la entrega.\nUna ronda de ajustes de textos y conexiones durante los primeros 7 días.\nNuevas fotografías y renovaciones se cotizan por separado.'
+  await form.getByLabel('Estudio o fotógrafo responsable', { exact: true }).fill('Emiliano Fotografía 360°')
+  await form.getByLabel('Contacto para el cliente', { exact: true }).fill('estudio@example.com · +54 9 11 2345 6789')
+  await form.getByLabel('Condiciones de entrega', { exact: true }).fill(conditions)
+  page.once('dialog', dialog => dialog.dismiss())
+  await page.getByRole('group', { name: 'Pasos del trabajo', exact: true }).getByRole('button', { name: '2 Visita', exact: true }).click()
+  await expect(form.getByLabel('Condiciones de entrega', { exact: true })).toHaveValue(conditions)
+  await form.getByRole('button', { name: 'Guardar datos del PDF', exact: true }).click()
+  await expect(page.getByText('Datos del documento guardados. Ya podés ver el PDF.', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(summary).toBeVisible()
+  if (!(await summary.evaluate(element => (element.parentElement as HTMLDetailsElement).open))) await summary.click()
+  await expect(form.getByLabel('Condiciones de entrega', { exact: true })).toHaveValue(conditions)
+  await page.getByRole('button', { name: 'Ver PDF de entrega', exact: true }).click()
+  const preview = page.getByRole('dialog', { name: 'Vista previa del PDF de entrega', exact: true })
+  await expect(preview.getByRole('link', { name: 'Abrir recorrido 360°', exact: true })).toHaveAttribute('href', link)
+  await expect(preview.getByRole('link', { name: 'Ver indicaciones en Google Maps', exact: true })).toHaveAttribute('href', maps)
+  await expect(preview.getByText(conditions, { exact: true })).toBeVisible()
+  await expect(preview.getByText('Ingresar por la puerta lateral', { exact: true })).toHaveCount(0)
+  await expect(preview.getByRole('button', { name: 'Imprimir / Guardar PDF', exact: true })).toBeEnabled()
+  await expect.poll(() => preview.getByRole('img').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(512)
+  await page.addScriptTag({ path: 'node_modules/jsqr/dist/jsQR.js' })
+  const decoded = await preview.getByRole('img').evaluate(image => {
+    const img = image as HTMLImageElement
+    const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight
+    const context = canvas.getContext('2d')!; context.drawImage(img, 0, 0)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+    return (window as unknown as { jsQR: (pixels: Uint8ClampedArray, width: number, height: number) => { data: string } | null }).jsQR(pixels.data, pixels.width, pixels.height)?.data
+  })
+  expect(decoded).toBe(link)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath('pdf-entrega-vista-previa.png') })
+  await page.evaluate(() => { window.print = () => { document.body.dataset.printRequested = 'true' } })
+  await preview.getByRole('button', { name: 'Imprimir / Guardar PDF', exact: true }).click()
+  await expect(page.locator('body')).toHaveAttribute('data-print-requested', 'true')
+  if (testInfo.project.name === 'chromium') {
+    const pdf = await page.pdf({ path: testInfo.outputPath('ejemplo-entrega.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true })
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-')
+    expect(pdf.toString('latin1')).toContain(link)
+    expect(pdf.toString('latin1')).toContain(maps)
+    await page.emulateMedia({ media: 'print' })
+    await expect(page.locator('#root')).toBeHidden()
+    await expect(preview.getByRole('article')).toBeVisible()
+    await page.screenshot({ path: testInfo.outputPath('pdf-entrega-impresion.png'), fullPage: true })
+    await page.emulateMedia({ media: 'screen' })
+  }
+  await preview.getByRole('button', { name: 'Cerrar vista previa', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Ver PDF de entrega', exact: true })).toBeFocused()
+  await page.getByRole('combobox', { name: 'Idioma', exact: true }).selectOption('pt-BR')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR')
+  await page.getByRole('button', { name: 'Ver PDF de entrega', exact: true }).click()
+  const portuguese = page.getByRole('dialog', { name: 'Prévia do PDF de entrega', exact: true })
+  await expect(portuguese.getByRole('heading', { name: 'Condições de entrega', exact: true })).toBeVisible()
+  await expect(portuguese.getByText(conditions, { exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(portuguese).toHaveCount(0)
+  await page.getByRole('combobox', { name: 'Idioma', exact: true }).selectOption('es')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es')
+}

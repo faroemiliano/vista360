@@ -1026,6 +1026,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Delivery Document */
+        put: operations["save_delivery_document_api_v1_organizations__organization_id__jobs__request_id__delivery_document_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/studios/{token}/service-requests": {
         parameters: {
             query?: never;
@@ -1546,6 +1563,26 @@ export interface components {
         DeletionImpact: {
             /** Incoming Connections */
             incoming_connections: number;
+        };
+        /** DeliveryDocumentInput */
+        DeliveryDocumentInput: {
+            /** Studio Name */
+            studio_name: string;
+            /** Contact */
+            contact: string;
+            /** Conditions */
+            conditions: string;
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** DeliveryDocumentSettings */
+        DeliveryDocumentSettings: {
+            /** Studio Name */
+            studio_name: string;
+            /** Contact */
+            contact: string;
+            /** Conditions */
+            conditions: string;
         };
         /** DeliveryInput */
         DeliveryInput: {
@@ -2744,6 +2781,8 @@ export interface components {
             public_path: string | null;
             /** Has Unpublished Changes */
             has_unpublished_changes: boolean;
+            delivery_document?: components["schemas"]["DeliveryDocumentSettings"] | null;
+            delivery_location?: components["schemas"]["PublicLocation"] | null;
         };
         /** WorkspaceInput */
         WorkspaceInput: {
@@ -5193,6 +5232,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DeliveryInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_delivery_document_api_v1_organizations__organization_id__jobs__request_id__delivery_document_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organization_id: string;
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryDocumentInput"];
             };
         };
         responses: {

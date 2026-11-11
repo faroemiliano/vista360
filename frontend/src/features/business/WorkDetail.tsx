@@ -1,10 +1,12 @@
 import { t, dateLocale } from '../../i18n'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { businessApi } from '../../api/business'
 import type { Organization, WorkJob } from '../../api/business'
 import type { components } from '../../api/schema'
 import type { WorkStep } from '../../components/WorkSteps'
 import { statusName, statuses } from './workflow'
+
+const DeliveryDocumentForm = lazy(() => import('./DeliveryDocument').then(module => ({ default: module.DeliveryDocumentForm })))
 
 function localDate(value: string | null) {
   if (!value) return ''
@@ -64,6 +66,7 @@ export function WorkDetail({ job, organization, onChanged, onEditor, onNavigate,
           {link ? <><label className="mt-5">{t("Enlace de entrega")}<input readOnly value={link} onFocus={(event) => event.currentTarget.select()} /></label><div className="row-actions"><a className="text-sm text-accent underline" href={link} target="_blank" rel="noopener noreferrer">{t("Abrir recorrido público")}</a><button disabled={busy} onClick={() => void act(async () => { if (!navigator.clipboard) throw new Error(t("Seleccioná el campo y copiá el enlace manualmente.")); await navigator.clipboard.writeText(link); setMessage(t("Enlace copiado. Enviáselo al cliente por tu canal habitual.")) })}>{t("Copiar enlace de entrega")}</button></div>{local && <p className="field-hint">{t("Este enlace es local. Podés simular la entrega aquí; enviarlo a clientes por Internet requiere desplegar la app.")}</p>}</> : <p className="muted mt-3">{t("El recorrido no tiene una publicación activa. Abrí el editor y publicalo para obtener el enlace.")}</p>}
           {job.has_unpublished_changes && <p className="my-4 text-sm text-amber-200">{t("Hay cambios sin publicar. El enlace conserva la versión anterior; publicá los cambios antes de registrar la entrega.")}</p>}
           {job.delivered_at && <p className="muted mt-4">{t("Registrada el")} {new Date(job.delivered_at).toLocaleString(dateLocale())}. {link ? t("El enlace sigue activo.") : t("El enlace ya no está activo; el registro de entrega se conserva.")}</p>}
+          {link && <Suspense fallback={<p role="status">{t('Cargando')}</p>}><DeliveryDocumentForm key={job.id} job={job} clientName={organization.name} writable={writable} blocked={busy || hasUnsavedChanges} onChanged={onChanged} /></Suspense>}
           {writable && !closed && link && !job.has_unpublished_changes && job.status !== 'PUBLICADO' && <button className="btn-primary mt-5" disabled={busy} onClick={() => void act(async () => {
             onChanged(await businessApi.workStatus(organization.id, job.id, { expected_status: job.status, status: 'PUBLICADO', note: t("Recorrido revisado y listo para entregar.") })); setMessage(t("Trabajo listo para registrar la entrega."))
           })}>{t("Marcar como listo para entregar")}</button>}

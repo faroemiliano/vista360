@@ -10,7 +10,7 @@ from app.modules.studio import service, work_service, notifications, contact
 from app.modules.organizations.service import organization_access
 from app.modules.studio.models import ServiceEvent, ServiceRequest
 from app.modules.studio.schemas import (AssignWorkInput, DeliveryInput, EventResponse, ServiceInput,
-    ServiceReceipt, ServiceResponse, TransitionInput, WorkCreate, WorkDetails, WorkResponse, Status)
+    ServiceReceipt, ServiceResponse, TransitionInput, WorkCreate, WorkDetails, WorkResponse, Status, DeliveryDocumentInput)
 
 router = APIRouter(tags=["studio"])
 
@@ -111,6 +111,12 @@ def job_events(organization_id: UUID, request_id: UUID, db: Session = Depends(ge
 @router.post('/organizations/{organization_id}/jobs/{request_id}/delivery', response_model=WorkResponse, dependencies=[Depends(require_csrf)])
 def delivery(organization_id: UUID, request_id: UUID, data: DeliveryInput, db: Session = Depends(get_db), user: User = Depends(current_user)):
     return work_service.deliver(db, user, organization_id, request_id, data)
+
+
+@router.put('/organizations/{organization_id}/jobs/{request_id}/delivery-document', response_model=WorkResponse, dependencies=[Depends(require_csrf)])
+def save_delivery_document(organization_id: UUID, request_id: UUID, data: DeliveryDocumentInput,
+                           db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return work_service.save_delivery_document(db, user, organization_id, request_id, data)
 
 
 @router.post('/public/studios/{token}/service-requests', response_model=ServiceReceipt, status_code=201, dependencies=[Depends(require_csrf)])

@@ -1,0 +1,45 @@
+.delivery-document-portal { position: fixed; inset: 0; z-index: 100; overflow: auto; background: #0b1223ee; padding: 24px 16px; }
+.delivery-document-toolbar { max-width: 860px; margin: 0 auto 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; color: #eef4ff; }
+.delivery-document-toolbar p { font-size: 12px; line-height: 1.6; max-width: 460px; margin-top: 6px; }
+.delivery-document-paper { box-sizing: border-box; max-width: 794px; margin: auto; padding: 42px; background: #fff; color: #17313a; font: 14px/1.6 Arial, Helvetica, sans-serif; box-shadow: 0 16px 60px #0005; overflow-wrap: anywhere; }
+.delivery-document-paper * { box-sizing: border-box; }
+.delivery-document-paper p { margin: 0; }
+.delivery-document-paper h1 { color: #142e37; font: bold 32px/1.15 Arial, Helvetica, sans-serif; margin: 12px 0; letter-spacing: -.8px; }
+.delivery-document-paper h2 { color: #17313a; font: bold 18px/1.3 Arial, Helvetica, sans-serif; margin: 5px 0 12px; break-after: avoid; }
+.delivery-document-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; border-bottom: 2px solid #16828c; }
+.delivery-document-brand { display: flex; align-items: center; gap: 12px; }
+.delivery-document-mark { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 54px; height: 54px; border: 2px solid #16828c; border-radius: 50%; font-weight: bold; font-size: 16px; color: #12717a; }
+.delivery-document-eyebrow { color: #337e84; font-size: 10px; letter-spacing: 1.8px; font-weight: bold; }
+.delivery-document-studio { font-size: 16px; font-weight: bold; }
+.delivery-document-tag { color: #48626c; font-size: 12px; }
+.delivery-document-intro { padding: 28px 0 24px; }
+.delivery-document-date { color: #61717b; font-size: 11px; margin-top: 8px !important; }
+.delivery-document-visit { display: grid; grid-template-columns: minmax(0, 1fr) 145px; gap: 24px; align-items: center; border: 1px solid #b8d5d9; border-radius: 12px; padding: 20px; break-inside: avoid; }
+.delivery-document-number { color: #16828c; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+.delivery-document-action { display: inline-block; margin-top: 12px; color: #08717d; font-weight: bold; text-decoration: underline; }
+.delivery-document-url { display: block; margin-top: 8px; font-size: 10px; color: #526771; text-decoration: none; }
+.delivery-document-qr img { display: block; width: 145px; height: 145px; }
+.delivery-document-location, .delivery-document-conditions { margin-top: 24px; }
+.delivery-document-location { break-inside: avoid; }
+.delivery-document-location p:not(.delivery-document-number) { font-size: 12px; }
+.delivery-document-conditions p:not(.delivery-document-number) { white-space: pre-wrap; font-size: 12px; orphans: 3; widows: 3; }
+.delivery-document-contact { margin-top: 26px; padding-top: 18px; border-top: 1px solid #d6e2e5; break-inside: avoid; }
+.delivery-document-contact h2 { font-size: 14px; margin-bottom: 6px; }
+.delivery-document-contact p { white-space: pre-wrap; font-size: 12px; }
+.delivery-document-paper footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid #d6e2e5; font-size: 9px; color: #61717b; }
+.delivery-document-paper footer p + p { margin-top: 6px; }
+@media screen and (max-width: 600px) {
+  .delivery-document-paper { padding: 22px; font-size: 13px; }
+  .delivery-document-paper h1 { font-size: 26px; }
+  .delivery-document-visit { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; }
+  .delivery-document-qr { justify-self: center; }
+  .delivery-document-tag { display: none; }
+}
+@page { size: A4; margin: 16mm; }
+@media print {
+  body:has(.delivery-document-portal) { background: white !important; overflow: visible !important; height: auto !important; }
+  body:has(.delivery-document-portal) > :not(.delivery-document-portal) { display: none !important; }
+  .delivery-document-portal { position: static !important; overflow: visible !important; padding: 0 !important; background: white !important; }
+  .delivery-document-toolbar { display: none !important; }
+  .delivery-document-paper { max-width: none; width: 100%; padding: 0; margin: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

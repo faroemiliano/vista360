@@ -25,7 +25,8 @@ def response(db, item):
         'title': tour.title, 'client_id': client.id if client else None, 'client_name': client.name if client else None, 'client_deleted': bool(client and client.deleted_at),
         'property_id': prop.id if prop else None,
         'public_path': f'/tour/{tour.slug}' if tour.status == 'published' and publication and publication.status == 'active' else None,
-        'has_unpublished_changes': bool(publication and publication.revision != tour.revision)})
+        'has_unpublished_changes': bool(publication and publication.revision != tour.revision),
+        'delivery_location': publication.document.get('public_location') if publication and publication.status == 'active' and tour.status == 'published' else None})
 
 
 def access(db, user, org_id, request_id, write=False):
@@ -137,6 +138,17 @@ def require_publication(db, item):
     if publication.revision != tour.revision:
         raise HTTPException(409, 'Hay cambios sin publicar. Publicalos antes de registrar la entrega')
     return tour
+
+
+def save_delivery_document(db, user, org_id, request_id, data):
+    item = access(db, user, org_id, request_id, write=True)
+    revision(item, data.expected_revision)
+    item.delivery_document = data.model_dump(exclude={'expected_revision'})
+    item.work_revision += 1
+    db.add(ServiceEvent(request_id=item.id, actor_id=user.id, previous_status=item.status, status=item.status,
+                        note='Se actualizaron los datos y condiciones del documento de entrega.'))
+    db.commit()
+    return response(db, item)
 
 
 def deliver(db, user, org_id, request_id, data):

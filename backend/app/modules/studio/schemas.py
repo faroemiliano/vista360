@@ -4,6 +4,7 @@ from typing import Literal
 from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.modules.properties.schemas import PropertyKind
+from app.modules.tours.schemas import PublicLocation
 
 Status = Literal["SOLICITADO", "PRESUPUESTADO", "CONFIRMADO", "EN_PRODUCCION", "EN_REVISION", "PUBLICADO", "FINALIZADO", "CANCELADO"]
 
@@ -110,6 +111,17 @@ class DeliveryInput(BaseModel):
     note: str = Field(min_length=1, max_length=2000)
 
 
+class DeliveryDocumentSettings(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    studio_name: str = Field(min_length=1, max_length=160)
+    contact: str = Field(min_length=1, max_length=300)
+    conditions: str = Field(min_length=1, max_length=5000)
+
+
+class DeliveryDocumentInput(DeliveryDocumentSettings):
+    expected_revision: int = Field(ge=0)
+
+
 class WorkResponse(ServiceResponse):
     title: str
     client_id: UUID | None
@@ -123,3 +135,5 @@ class WorkResponse(ServiceResponse):
     work_revision: int
     public_path: str | None
     has_unpublished_changes: bool
+    delivery_document: DeliveryDocumentSettings | None = None
+    delivery_location: PublicLocation | None = None

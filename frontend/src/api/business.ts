@@ -58,4 +58,5 @@ export const businessApi = {
   workStatus: (org: string, id: string, data: components['schemas']['TransitionInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/status`, 'PUT', data),
   workEvents: (org: string, id: string) => request<components['schemas']['EventResponse'][]>(`/organizations/${org}/jobs/${id}/events`),
   deliverWork: (org: string, id: string, data: components['schemas']['DeliveryInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/delivery`, 'POST', data),
+  saveDeliveryDocument: (org: string, id: string, data: components['schemas']['DeliveryDocumentInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/delivery-document`, 'PUT', data),
 }
