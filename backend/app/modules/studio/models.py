@@ -24,7 +24,7 @@ class ServiceRequest(Base):
     fingerprint: Mapped[str] = mapped_column(String(64))
     name: Mapped[str] = mapped_column(String(160))
     email: Mapped[str] = mapped_column(String(254))
-    whatsapp: Mapped[str] = mapped_column(String(20))
+    whatsapp: Mapped[str] = mapped_column(String(50))
     property_kind: Mapped[str] = mapped_column(String(32))
     locality: Mapped[str] = mapped_column(String(160))
     area_m2: Mapped[float] = mapped_column()

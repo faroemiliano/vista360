@@ -98,3 +98,12 @@ Eliminar organizaciones o particulares también conserva los trabajos. Los propi
 Verificación de esta actualización: build aprobado, 80 pruebas de backend y 14 casos del panel en escritorio/móvil aprobados. Los datos reales se conservaron.
 
 Clientes es ahora una lista unificada de las fichas creadas desde Organizaciones y Particulares. No tiene alta independiente. Desde la cartera se abren sus recorridos o trabajos y se puede eliminar la misma ficha, conservando el historial. Los contactos del pedido se completan desde Nuevo trabajo. Ver [la explicación de identidad y datos históricos](UX.md#clientes-una-sola-identidad-por-contratante).
+
+
+### Contacto desde la ficha del cliente
+
+Nuevo trabajo solicita únicamente título, tipo de espacio, localidad, superficie, ambientes y detalle del pedido. Nombre, email y teléfono provienen de la ficha del particular u organización; en empresas se usa el responsable si está informado. La localidad se precarga y sigue siendo editable para cada inmueble. Para corregir el contacto se edita la ficha del cliente, sin volver a cargarlo por trabajo. Email y teléfono opcionales no bloquean la creación.
+
+La API manual acepta `use_customer_profile: true` y obtiene el contacto desde la organización autorizada en el servidor, sin confiar en datos de contacto enviados por el navegador. Cada trabajo conserva una copia histórica del contacto al crearse; los siguientes usan la ficha actualizada. Los contactos internos con los mismos datos se reutilizan dentro de ese cliente, sin duplicarlos por trabajo. Los formularios públicos mantienen sus datos y validaciones originales, y convertir una solicitud conserva el contacto que la envió. Los enlaces existentes de cliente/propiedad/recorrido continúan disponibles en la API por compatibilidad, aunque no se ofrecen en este formulario.
+
+La migración `0019_work_contact_profile` amplía los teléfonos de trabajos y contactos internos a 50 caracteres para conservar el formato ya permitido en la ficha, sin recortes. Aplicar con `alembic upgrade head` antes de iniciar el backend actualizado (el arranque de Docker ya ejecuta las migraciones).

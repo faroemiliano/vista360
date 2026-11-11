@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Literal
 from uuid import UUID, uuid4
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from app.modules.properties.schemas import PropertyKind
 from app.modules.tours.schemas import PublicLocation
 
@@ -86,9 +86,30 @@ class AssignWorkInput(WorkLinkInput):
     organization_id: UUID
 
 
-class WorkCreate(ServiceInput, WorkLinkInput):
+class WorkCreate(WorkLinkInput):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, allow_inf_nan=False)
+    property_kind: PropertyKind
+    locality: str = Field(min_length=2, max_length=160)
+    area_m2: float = Field(gt=0, le=10000000)
+    rooms: int = Field(ge=1, le=10000)
+    message: str = Field(default="", max_length=5000)
     submission_id: UUID = Field(default_factory=uuid4)
     consent: Literal[True] = True
+    website: str = Field(default="", max_length=0)
+    use_customer_profile: bool = False
+    name: str | None = Field(default=None, min_length=2, max_length=160)
+    email: EmailStr | None = Field(default=None, max_length=254)
+    whatsapp: str | None = Field(default=None, max_length=50)
+
+    @model_validator(mode='after')
+    def validate_manual_contact(self):
+        # Los clientes antiguos de la API conservan la validación del formulario.
+        # El flujo nuevo obtiene el contacto de la ficha autorizada en el servidor.
+        if not self.use_customer_profile:
+            contact = ServiceInput.model_validate(self.model_dump(exclude={
+                'title', 'client_id', 'property_id', 'tour_id', 'use_customer_profile'}))
+            self.whatsapp = contact.whatsapp
+        return self
 
 
 class WorkDetails(BaseModel):

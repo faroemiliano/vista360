@@ -66,8 +66,6 @@ test('historial conserva secciones filtros trabajos y pasos y protege cambios si
   await page.goBack()
   await expect(page).toHaveURL(formUrl)
   await expect(page.getByLabel('Nombre del trabajo', { exact: true })).toHaveValue(title)
-  await page.getByLabel('Email de contacto', { exact: true }).fill('history-customer@example.com')
-  await page.getByLabel('WhatsApp de contacto', { exact: true }).fill('+54 911 12345678')
   await page.getByLabel('Localidad del trabajo', { exact: true }).fill('Buenos Aires')
   await page.getByLabel('Superficie aproximada (m²)', { exact: true }).fill('80')
   await page.getByLabel('Cantidad de ambientes', { exact: true }).fill('3')

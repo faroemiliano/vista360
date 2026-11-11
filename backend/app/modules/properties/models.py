@@ -12,7 +12,7 @@ class Client(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     name: Mapped[str] = mapped_column(String(160))
     email: Mapped[str | None] = mapped_column(String(254))
-    phone: Mapped[str] = mapped_column(String(40), default="")
+    phone: Mapped[str] = mapped_column(String(50), default="")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

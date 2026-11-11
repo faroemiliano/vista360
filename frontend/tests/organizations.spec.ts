@@ -88,10 +88,15 @@ test('organizaciones y particulares agrupan sus recorridos y crean trabajos en e
   await expect(page.getByText('Crear recorrido sin trabajo', { exact: true })).toHaveCount(0)
   async function createWork(title: string, customer: string) {
     await page.getByRole('button', { name: 'Nuevo trabajo', exact: true }).click()
-    await expect(page.getByLabel('Nombre del contacto', { exact: true })).toHaveValue(customer)
+    await expect(page.getByRole('form', { name: 'Preparar trabajo', exact: true }).getByText(customer, { exact: true }).first()).toBeVisible()
+    await expect(page.getByLabel('Nombre del contacto', { exact: true })).toHaveCount(0)
+    await expect(page.getByLabel('Contacto guardado', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('Usar una propiedad o recorrido existente', { exact: true })).toHaveCount(0)
     await page.getByLabel('Nombre del trabajo', { exact: true }).fill(title)
-    await page.getByLabel('Email de contacto', { exact: true }).fill('directory-customer@example.com')
-    await page.getByLabel('WhatsApp de contacto', { exact: true }).fill('+54 911 12345678')
+    if (customer === person) {
+      await expect(page.getByText('directory-customer@example.com', { exact: true })).toBeVisible()
+      await expect(page.getByLabel('Localidad del trabajo', { exact: true })).toHaveValue('Buenos Aires')
+    }
     await page.getByLabel('Localidad del trabajo', { exact: true }).fill('Buenos Aires')
     await page.getByLabel('Superficie aproximada (m²)', { exact: true }).fill('80')
     await page.getByLabel('Cantidad de ambientes', { exact: true }).fill('3')
@@ -105,6 +110,9 @@ test('organizaciones y particulares agrupan sus recorridos y crean trabajos en e
   await navigate(page, 'Particulares')
   await expect(page.getByRole('button', { name: `Abrir organización ${company}`, exact: true })).toHaveCount(0)
   await page.getByLabel('Nombre del particular', { exact: true }).fill(person)
+  await page.getByLabel('Email', { exact: true }).fill('directory-customer@example.com')
+  await page.getByLabel('Teléfono', { exact: true }).fill('+54 911 12345678')
+  await page.getByLabel('Localidad', { exact: true }).fill('Buenos Aires')
   await page.getByRole('button', { name: 'Crear particular', exact: true }).click()
   await expect(page.getByRole('status')).toContainText(`${person} se creó correctamente`)
   await expect(page.getByLabel('Nombre del particular', { exact: true })).toHaveValue('')

@@ -2655,20 +2655,6 @@ export interface components {
             /** Tour Id */
             tour_id?: string | null;
             /**
-             * Submission Id
-             * Format: uuid
-             */
-            submission_id?: string;
-            /** Name */
-            name: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Whatsapp */
-            whatsapp: string;
-            /**
              * Property Kind
              * @enum {string}
              */
@@ -2685,6 +2671,11 @@ export interface components {
              */
             message: string;
             /**
+             * Submission Id
+             * Format: uuid
+             */
+            submission_id?: string;
+            /**
              * Consent
              * @default true
              * @constant
@@ -2695,6 +2686,17 @@ export interface components {
              * @default
              */
             website: string;
+            /**
+             * Use Customer Profile
+             * @default false
+             */
+            use_customer_profile: boolean;
+            /** Name */
+            name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
         };
         /** WorkDetails */
         WorkDetails: {

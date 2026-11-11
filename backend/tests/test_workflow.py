@@ -53,6 +53,47 @@ def test_job_atomic_creation_reuse_and_idempotency(clients, database):
     assert owner.mutate('PUT', f"/organizations/{org['id']}/tours/{job['tour_id']}/property", {'property_id': None}).status_code == 409
 
 
+@pytest.mark.parametrize('kind', ['individual', 'company'])
+def test_new_work_uses_customer_profile_and_preserves_history(clients, database, kind):
+    owner = clients(); owner.register()
+    org = organization(owner, 'Emilio Disi', kind)
+    profile = {'name': org['name'], 'contact_name': 'Ana Responsable', 'email': 'emilio@example.com',
+               'phone': '+54 (11) 1234-5678 interno 234 atención comercial', 'locality': 'Buenos Aires'}
+    assert owner.mutate('PUT', f"/organizations/{org['id']}", profile).status_code == 200
+    payload = {key: value for key, value in service_payload().items() if key not in ('name', 'email', 'whatsapp')}
+    payload.update(title='Casa de Emilio', use_customer_profile=True)
+    base = f"/organizations/{org['id']}/jobs"
+    result = owner.mutate('POST', base, payload)
+    assert result.status_code == 201, result.text
+    first = result.json()
+    assert first['name'] == ('Emilio Disi' if kind == 'individual' else 'Ana Responsable')
+    assert first['email'] == profile['email'] and first['whatsapp'] == profile['phone']
+    assert first['client_name'] == first['name']
+    # Un segundo trabajo utiliza el contacto interno existente, sin duplicarlo.
+    second = owner.mutate('POST', base, {**payload, 'submission_id': str(uuid4())}).json()
+    assert second['client_id'] == first['client_id'] and second['property_id'] != first['property_id']
+    assert owner.mutate('PUT', f"/organizations/{org['id']}", {**profile, 'email': 'nuevo@example.com'}).status_code == 200
+    # Reintentar no crea otro trabajo ni altera el contacto histórico.
+    assert owner.mutate('POST', base, payload).json()['id'] == first['id']
+    assert owner.get(base + '/' + first['id']).json()['email'] == 'emilio@example.com'
+    third = owner.mutate('POST', base, {**payload, 'submission_id': str(uuid4()), 'email': 'ignorado@example.com'}).json()
+    assert third['email'] == 'nuevo@example.com' and third['client_id'] != first['client_id']
+    outsider = clients(); outsider.register('other-profile@example.com')
+    assert outsider.mutate('POST', base, {**payload, 'submission_id': str(uuid4())}).status_code == 404
+
+
+def test_profile_work_accepts_missing_optional_contact_without_relaxing_public_form(clients):
+    owner = clients(); owner.register()
+    org = organization(owner, 'E', 'individual')
+    payload = {key: value for key, value in service_payload().items() if key not in ('name', 'email', 'whatsapp')}
+    base = f"/organizations/{org['id']}/jobs"
+    result = owner.mutate('POST', base, {**payload, 'title': 'Casa', 'use_customer_profile': True})
+    assert result.status_code == 201, result.text
+    assert result.json()['name'] == 'E' and result.json()['email'] == '' and result.json()['whatsapp'] == ''
+    assert owner.mutate('POST', base, {**payload, 'title': 'Sin contacto'}).status_code == 422
+    assert clients().mutate('POST', '/service-requests', payload).status_code == 422
+
+
 def test_job_permissions_revocation_and_fk_isolation(clients, database, monkeypatch):
     owner = clients(); owner.register()
     viewer = clients(); viewer.register('reader-work@example.com')

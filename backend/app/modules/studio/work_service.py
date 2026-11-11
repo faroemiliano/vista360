@@ -59,7 +59,12 @@ def attach(db, user, org_id, item, data):
     if not tour and db.scalar(select(func.count()).select_from(Tour).where(Tour.organization_id == org.id)) >= org.tour_limit:
         raise HTTPException(409, 'Se alcanzó el límite de recorridos de la organización')
     if not client:
-        client = Client(organization_id=org.id, name=item.name, email=item.email, phone=item.whatsapp)
+        client = db.scalar(select(Client).where(
+            Client.organization_id == org.id, Client.deleted_at.is_(None),
+            Client.name == item.name, Client.email == (item.email or None),
+            Client.phone == item.whatsapp).order_by(Client.created_at, Client.id).limit(1))
+    if not client:
+        client = Client(organization_id=org.id, name=item.name, email=item.email or None, phone=item.whatsapp)
         db.add(client); db.flush()
     if not prop:
         prop = Property(organization_id=org.id, client_id=client.id, title=data.title, kind=item.property_kind,
@@ -77,7 +82,7 @@ def attach(db, user, org_id, item, data):
 
 
 def create(db, user, org_id, data):
-    organization_access(db, user, org_id, write=True, lock=True)
+    org, _ = organization_access(db, user, org_id, write=True, lock=True)
     digest = hashlib.sha256((str(org_id) + data.model_dump_json(exclude={'consent', 'website'})).encode()).hexdigest()
     previous = db.scalar(select(ServiceRequest).where(ServiceRequest.submission_id == data.submission_id))
     if previous:
@@ -85,6 +90,9 @@ def create(db, user, org_id, data):
             raise HTTPException(409, 'La referencia ya corresponde a otro trabajo')
         return response(db, previous)
     payload = data.model_dump(include={'name', 'email', 'whatsapp', 'property_kind', 'locality', 'area_m2', 'rooms', 'message'})
+    if data.use_customer_profile:
+        payload.update(name=(org.contact_name if org.kind != 'individual' else None) or org.name,
+                       email=org.email or '', whatsapp=org.phone or '')
     # La referencia de captura manual es interna y aleatoria, independiente del formulario público.
     item = ServiceRequest(**payload, submission_id=data.submission_id, fingerprint=digest, origin='manual', status='SOLICITADO', work_revision=0)
     db.add(item)
