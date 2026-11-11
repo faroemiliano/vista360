@@ -158,7 +158,7 @@ export function Workspace() {
         <LanguageSwitcher />
         {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><button className="btn-quiet min-w-0 !px-2" aria-label={t("Mi cuenta")} onClick={() => { setAccountTab('profile'); setSecurityOpen(true) }}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">{t("Mi cuenta")}</span></span></button><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>{t("Cerrar sesión")}</span></button></div>}
       </header>
-      <main tabIndex={-1} className="max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
+      <main tabIndex={-1} className="studio-main max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
         {session?.user && activeStudio && <nav aria-label={t("Historial de navegación")} className="mb-6 flex flex-wrap items-center gap-2">
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canBack} onClick={navigation.back}><Icon name="arrow" className="size-4 rotate-180" />{t("Atrás")}</button>
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>{t("Adelante")}<Icon name="arrow" className="size-4" /></button>

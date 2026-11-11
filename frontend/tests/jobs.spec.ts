@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { navigate } from './navigationHelpers'
 import { checkDeliveryDocument } from './deliveryDocumentHelpers'
+import { chooseHotspotPosition } from './hotspotPlacementHelpers'
 
 test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin login del cliente', async ({ page, browser }, testInfo) => {
   test.skip(process.env.TEST_API !== '1', 'Requiere PostgreSQL y API temporal')
@@ -66,10 +67,19 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await expect(editor.getByText('Ambiente inicial', { exact: true })).toBeVisible()
   await expect(editor.locator('.viewer-frame')).toHaveAttribute('data-status', 'ready')
   await editor.locator('.panorama canvas').evaluate((canvas) => canvas.setAttribute('data-persistente', 'true'))
-  await editor.getByRole('button', { name: 'Nuevo punto en el centro', exact: true }).click()
+  const selectedPoint = await chooseHotspotPosition(page, editor, testInfo)
   await editor.getByLabel('Etiqueta del punto', { exact: true }).fill('Ir a Cocina')
   await editor.getByRole('combobox', { name: 'Ambiente de destino', exact: true }).selectOption({ label: 'Cocina' })
+  const creatingPoint = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/hotspots'))
   await editor.getByRole('button', { name: 'Guardar punto', exact: true }).click()
+  const pointRequest = await creatingPoint
+  expect(pointRequest.postDataJSON().yaw).toBeCloseTo(selectedPoint.yaw, 6)
+  expect(pointRequest.postDataJSON().pitch).toBeCloseTo(selectedPoint.pitch, 6)
+  await expect(editor.getByRole('img', { name: 'Ubicación del punto sin guardar', exact: true })).toHaveCount(0)
+  const savedPoints = await (await page.request.get(pointRequest.url())).json()
+  expect(savedPoints).toHaveLength(1)
+  expect(savedPoints[0].yaw).toBeCloseTo(selectedPoint.yaw, 6)
+  expect(savedPoints[0].pitch).toBeCloseTo(selectedPoint.pitch, 6)
   await editor.getByRole('button', { name: 'Crear también la vuelta', exact: true }).click()
   await expect(editor.getByLabel('Etiqueta del punto', { exact: true })).toHaveValue('Volver a Living')
   await expect(editor.getByRole('button', { name: 'Usar Cocina como inicial', exact: true })).toBeDisabled()
@@ -81,6 +91,13 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await expect(editor.locator('canvas[data-persistente="true"]')).toHaveCount(1)
   await editor.getByRole('button', { name: 'Cerrar editor', exact: true }).click()
   await page.getByRole('button', { name: 'Conectar Living', exact: true }).click()
+  await editor.getByRole('button', { name: 'Editar punto Ir a Cocina', exact: true }).click()
+  await expect(editor.getByRole('img', { name: 'Ubicación del punto sin guardar', exact: true })).toBeVisible()
+  await expect(editor.getByRole('button', { name: 'Ir a Cocina', exact: true })).toHaveCount(0)
+  await editor.getByRole('button', { name: 'Nuevo punto en el centro', exact: true }).click()
+  await editor.getByRole('button', { name: 'Cancelar punto', exact: true }).click()
+  await expect(editor.getByRole('img', { name: 'Ubicación del punto sin guardar', exact: true })).toHaveCount(0)
+  await expect(editor.getByRole('button', { name: 'Ir a Cocina', exact: true })).toBeVisible()
   await editor.getByRole('button', { name: 'Editar punto Ir a Cocina', exact: true }).click()
   await editor.getByLabel('Etiqueta del punto', { exact: true }).fill('Entrar a cocina')
   await editor.getByRole('button', { name: 'Guardar punto', exact: true }).click()
@@ -101,6 +118,7 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await page.getByRole('button', { name: 'Previsualizar recorrido', exact: true }).click()
   const preview = page.getByRole('region', { name: 'Previsualización privada', exact: true })
   await expect(preview.locator('.viewer-frame')).toHaveAttribute('data-status', 'ready')
+  await expect(preview.locator('.tour-hotspot--preview')).toHaveCount(0)
   await expect(preview.locator('.saved-hotspots')).toContainText('Entrar a cocina')
   await preview.getByRole('navigation', { name: 'Ambientes del recorrido' }).getByRole('button', { name: 'Cocina', exact: true }).click()
   await expect(preview.locator('.saved-hotspots')).toContainText('Volver a Living')

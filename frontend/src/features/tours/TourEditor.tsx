@@ -75,7 +75,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
     if (busy) return
     setDraft((current) => ({ id: current?.id, type: current?.type || 'navigation', label: current?.label || '',
       target: current?.target || scenes.find((item) => item.id !== activeId)?.id || '', text: current?.text || '', ...point, needsPosition: false }))
-    setMessage(t("Punto seleccionado. Completá el formulario y guardá."))
+    setMessage(t('Ubicación seleccionada. Podés tocar otro lugar para mover la marca antes de guardar.'))
   }
   function close() {
     if (!draft || window.confirm(t("¿Descartar los cambios del punto sin guardar?"))) onClose()
@@ -133,6 +133,8 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
     {scene?.panorama_asset_id && !data && !error && <p className="viewer-switching-message" role="status">{t("Cargando")} {scene.name}…</p>}
     {scene?.panorama_asset_id && panoramaScene && <PanoramaViewer scene={panoramaScene} onNavigate={navigate} experimentalTools={false}
       onPick={!preview && data ? pick : undefined}
+      previewPoint={!preview && draft && !draft.needsPosition && panoramaScene.id === activeId ? { yaw: draft.yaw, pitch: draft.pitch } : null}
+      editingHotspotId={!preview ? draft?.id : undefined}
       onSaveView={!preview && data ? (view) => {
         if (draft && !window.confirm(t("¿Descartar el punto sin guardar y guardar la vista inicial?"))) return
         void act(async () => {
@@ -141,7 +143,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
         await onRefresh()
       }, t("Vista inicial guardada.")) } : undefined} />}
     {preview && pointsList}
-    </div>{!preview && <aside className="order-first min-w-0 xl:sticky xl:top-6 xl:order-last">{returnOffer && <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-5"><h4>{t("Prepará también la vuelta")}</h4><p className="muted my-3">{t("Abrí")} {scenes.find((item) => item.id === returnOffer.to)?.name}{' '}{t("y elegí desde dónde volver.")}</p><button onClick={() => {
+    </div>{!preview && <aside className="min-w-0 xl:sticky xl:top-6">{returnOffer && <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-5"><h4>{t("Prepará también la vuelta")}</h4><p className="muted my-3">{t("Abrí")} {scenes.find((item) => item.id === returnOffer.to)?.name}{' '}{t("y elegí desde dónde volver.")}</p><button onClick={() => {
       const back = returnOffer; pendingReturn.current = { sceneId: back.to, target: back.from, label: t("Volver a {0}", [scenes.find((item) => item.id === back.from)?.name || 'ambiente anterior']) }; navigate(back.to)
     }}>{t("Crear también la vuelta")}</button></div>}
     {!draft && pointsList}
@@ -173,7 +175,7 @@ export function TourEditor({ tour, scenes, initialSceneId, preview, onRefresh, o
           <label>{t("Yaw del punto (°)")}<input type="number" required min={-180} max={179.999999} step="any" value={draft.yaw} onChange={(event) => setDraft({ ...draft, yaw: Number(event.target.value), needsPosition: false })} /></label>
           <label>{t("Pitch del punto (°)")}<input type="number" required min={-90} max={90} step="any" value={draft.pitch} onChange={(event) => setDraft({ ...draft, pitch: Number(event.target.value), needsPosition: false })} /></label>
         </div></details>
-        <p>{t("Para cambiar la ubicación, activá «Ubicar punto» y tocá otra posición. La conexión de vuelta se crea desde el ambiente de destino.")}</p>
+        <p>{t('La marca «Sin guardar» muestra la ubicación elegida. Tocá otro lugar para moverla y usá «Guardar punto» para confirmar.')}</p>
         <button className="btn-primary" type="submit" disabled={draft.needsPosition}>{t("Guardar punto")}</button>{' '}
         <button type="button" onClick={() => setDraft(null)}>{t("Cancelar punto")}</button>
       </fieldset>

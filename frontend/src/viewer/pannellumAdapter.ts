@@ -38,6 +38,9 @@ export function createPannellumAdapter(
   let walkAnimation: Animation | null = null
   let fadeTimer: number | null = null
   let picking = false
+  let sceneHotspots: readonly Hotspot[] = []
+  let hiddenHotspot: Hotspot | null = null
+  const previewId = 'vision360-unsaved-point'
   let pointer: { id: number; x: number; y: number; moved: boolean } | null = null
   const pointers = new Set<number>()
   const observer = new ResizeObserver(() => viewer?.resize())
@@ -105,6 +108,8 @@ export function createPannellumAdapter(
     walk = null
     finishRender?.(); finishRender = null
     activeSceneId = null
+    sceneHotspots = []
+    hiddenHotspot = null
     if (!viewer) return
     viewer.off('load')
     viewer.off('error')
@@ -152,6 +157,35 @@ export function createPannellumAdapter(
         element.replaceChildren(button)
       },
     }
+  }
+
+  function setPreviewPoint(point: Coordinates | null, replacingId?: string) {
+    if (!viewer?.isLoaded()) return
+    viewer.removeHotSpot(previewId)
+    if (hiddenHotspot && (!point || hiddenHotspot.id !== replacingId)) {
+      viewer.addHotSpot(hotspotConfig(hiddenHotspot))
+      hiddenHotspot = null
+    }
+    if (!point || loading) return
+    if (replacingId && !hiddenHotspot) {
+      hiddenHotspot = sceneHotspots.find(hotspot => hotspot.id === replacingId) || null
+      if (hiddenHotspot) viewer.removeHotSpot(hiddenHotspot.id)
+    }
+    viewer.addHotSpot({
+      id: previewId, yaw: point.yaw, pitch: point.pitch, type: 'info', cssClass: 'tour-hotspot--preview',
+      createTooltipFunc(element) {
+        element.setAttribute('role', 'img')
+        element.setAttribute('aria-label', t('Ubicación del punto sin guardar'))
+        const marker = document.createElement('span')
+        marker.className = 'tour-preview-marker'
+        marker.setAttribute('aria-hidden', 'true')
+        const label = document.createElement('span')
+        label.className = 'tour-preview-label'
+        label.setAttribute('aria-hidden', 'true')
+        label.textContent = t('Sin guardar')
+        element.replaceChildren(marker, label)
+      },
+    })
   }
 
   async function loadScene(scene: PanoramaScene) {
@@ -222,6 +256,8 @@ export function createPannellumAdapter(
       viewer.on('load', () => {
         viewer?.setUpdate(false)
         activeSceneId = scene.id
+        sceneHotspots = scene.hotspots
+        hiddenHotspot = null
         if (previousSceneId && previousSceneId !== scene.id) viewer?.removeScene(previousSceneId)
         const fade = container.querySelector<HTMLElement>('.pnlm-fade-img')
         if (current === generation && departure && fade && fadeDuration) {
@@ -282,6 +318,7 @@ export function createPannellumAdapter(
       if (viewer?.isLoaded()) viewer.setHfov(Math.max(50, Math.min(110, viewer.getHfov() + delta)), false)
     },
     setPicking: (enabled) => { picking = enabled; pointerCancel() },
+    setPreviewPoint,
     addHotspot: (hotspot) => {
       if (viewer?.isLoaded()) {
         viewer.removeHotSpot(hotspot.id)

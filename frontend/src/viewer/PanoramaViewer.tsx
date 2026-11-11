@@ -1,4 +1,4 @@
-import { t } from '../i18n'
+import { t, useLanguage } from '../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { createPannellumAdapter } from './pannellumAdapter'
 import type { Coordinates, PanoramaAdapter, PanoramaScene, ViewerCallbacks, ViewerDiagnostics } from './types'
@@ -11,9 +11,13 @@ interface Props {
   experimentalTools?: boolean
   onPick?: (coordinates: Coordinates) => void
   onSaveView?: (view: Coordinates & { hfov: number }) => void
+  previewPoint?: Coordinates | null
+  editingHotspotId?: string
 }
 
-export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, onPick, onSaveView }: Props) {
+export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, onPick, onSaveView, previewPoint, editingHotspotId }: Props) {
+  const language = useLanguage()
+  const hasPreviewPoint = Boolean(previewPoint)
   const container = useRef<HTMLDivElement>(null)
   const adapter = useRef<PanoramaAdapter | null>(null)
   const motion = useRef<ReturnType<typeof createMotionControl> | null>(null)
@@ -61,6 +65,12 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
 
   useEffect(() => { void adapter.current?.loadScene(scene) }, [scene, attempt])
   useEffect(() => { adapter.current?.setPicking(picking) }, [picking, attempt])
+  useEffect(() => {
+    if (previewPoint !== undefined) setPicking(hasPreviewPoint)
+  }, [hasPreviewPoint])
+  useEffect(() => {
+    adapter.current?.setPreviewPoint(status === 'ready' && previewPoint ? previewPoint : null, editingHotspotId)
+  }, [previewPoint?.yaw, previewPoint?.pitch, editingHotspotId, status, attempt, language])
 
   return (
     <section className="viewer-section" aria-label={t("Panorama de {0}", [scene.name])}>
@@ -98,7 +108,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
         {onPick && <button disabled={status !== 'ready'} onClick={() => {
           motion.current?.stop()
           const view = adapter.current?.getView()
-          if (view) onPick({ yaw: view.yaw, pitch: view.pitch })
+          if (view) { setPicking(true); onPick({ yaw: view.yaw, pitch: view.pitch }) }
         }}>{t("Nuevo punto en el centro")}</button>}
         {onSaveView && <button disabled={status !== 'ready'} onClick={() => {
           const view = adapter.current?.getView()
@@ -119,7 +129,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
       </div>
       </div>
       <p className="viewer-hint">{t("Arrastrá para mirar alrededor. Usá Acercar y Alejar para ajustar el zoom, o Vista amplia para ver más del ambiente.")}{onSaveView && t(" Para conservar ese encuadre, pulsá Guardar vista actual como inicial.")}</p>
-      {picking && <p role="status">{t("Tocá un punto sin arrastrar para obtener sus coordenadas.")}</p>}
+      {picking && <p role="status">{onPick ? hasPreviewPoint ? t('Tocá otro lugar para mover la marca. Guardá el punto para confirmar su ubicación.') : t('Tocá la foto sin arrastrar para elegir dónde colocar el punto.') : t("Tocá un punto sin arrastrar para obtener sus coordenadas.")}</p>}
       {experimentalTools && <output data-testid="coordinates" aria-live="polite">
         {coordinates ? t("Yaw {0}° · Pitch {1}°", [coordinates.yaw.toFixed(2), coordinates.pitch.toFixed(2)]) : t("Sin punto seleccionado.")}
       </output>}

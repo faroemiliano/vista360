@@ -1244,5 +1244,11 @@
   "Ver indicaciones en Google Maps": "Ver direções no Google Maps",
   "Contacto y consultas": "Contato e consultas",
   "El recorrido se abre en Internet. Este documento conserva el enlace y las condiciones; no contiene una copia del recorrido.": "O tour abre na Internet. Este documento mantém o link e as condições; não contém uma cópia do tour.",
-  "Documento generado el": "Documento gerado em"
+  "Documento generado el": "Documento gerado em",
+  "Ubicación del punto sin guardar": "Posição do ponto ainda não salvo",
+  "Sin guardar": "Não salvo",
+  "Tocá otro lugar para mover la marca. Guardá el punto para confirmar su ubicación.": "Toque em outro lugar para mover a marca. Salve o ponto para confirmar sua posição.",
+  "Tocá la foto sin arrastrar para elegir dónde colocar el punto.": "Toque na foto sem arrastar para escolher onde colocar o ponto.",
+  "Ubicación seleccionada. Podés tocar otro lugar para mover la marca antes de guardar.": "Posição selecionada. Você pode tocar em outro lugar para mover a marca antes de salvar.",
+  "La marca «Sin guardar» muestra la ubicación elegida. Tocá otro lugar para moverla y usá «Guardar punto» para confirmar.": "A marca «Não salvo» mostra a posição escolhida. Toque em outro lugar para movê-la e use «Salvar ponto» para confirmar."
 }

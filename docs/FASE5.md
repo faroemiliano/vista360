@@ -8,11 +8,11 @@ Con PostgreSQL, API y frontend activos, abrir http://localhost:5174 e ingresar. 
 
 1. Crear dos ambientes, por ejemplo Living y Cocina. Cargar una panorámica válida en cada uno; para probar se puede usar el mismo JPEG.
 2. Pulsar **Conectar Living**. Arrastrar para mirar y ajustar zoom. **Guardar vista actual como inicial** persiste yaw, pitch y campo de visión.
-3. Activar **Ubicar punto** y tocar la imagen sin arrastrar. También se puede usar **Nuevo punto en el centro**, accesible con teclado.
+3. Activar **Ubicar punto** y tocar la imagen sin arrastrar. Aparece una cruz ámbar con la etiqueta **Sin guardar**, proyectada sobre el lugar elegido. Tocar otra posición mueve esa misma marca sin guardar ni crear puntos adicionales. También se puede usar **Nuevo punto en el centro**, accesible con teclado.
 4. Elegir **Ir a otro ambiente**, escribir una etiqueta como «Ir a Cocina» y seleccionar Cocina. Pulsar **Guardar punto**.
 5. Tocar la flecha sobre el panorama o usar el botón de la lista para entrar en Cocina. Crear allí otro punto hacia Living para permitir volver.
 6. Para agregar información, elegir **Información** y escribir título/texto. Todo se muestra como texto plano, sin HTML.
-7. Los puntos se pueden editar, reubicar tocando otra posición o eliminar desde la lista. Cancelar no guarda nada; cambiar ambiente o cerrar con un formulario pendiente requiere descartar sus cambios.
+7. Los puntos se pueden editar, reubicar tocando otra posición o eliminar desde la lista. Durante la edición se muestra la marca provisional en lugar del punto guardado que se está modificando. Cancelar restaura el original sin guardar cambios; **Guardar punto** confirma la última ubicación y sustituye la cruz por el punto definitivo. Arrastrar sigue girando el panorama y no reubica la marca. Cambiar ambiente o cerrar con un formulario pendiente requiere descartar sus cambios.
 8. Cerrar el editor y pulsar **Previsualizar recorrido**. Comienza por el ambiente inicial del tour y permite navegar por puntos o lista. Recargar y volver a abrir conserva las conexiones y la orientación.
 
 Cada enlace es direccional. Una escena sin panorama sigue visible en la lista con su estado y no intenta descargar una imagen inexistente. La previsualización requiere la sesión del propietario y no genera una URL compartible. Guardar borrador todavía no publica nada.
