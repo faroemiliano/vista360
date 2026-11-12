@@ -27,7 +27,7 @@
   h1, h2, h3, h4, button { overflow-wrap: anywhere; }
   h1, h2, h3, h4 { text-wrap: balance; }
   p { @apply leading-relaxed; }
-  button { @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface-900 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-accent/50 hover:bg-surface-850 disabled:cursor-not-allowed disabled:opacity-45; max-width: 100%; }
+  button, .nav-action { @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface-900 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-accent/50 hover:bg-surface-850 disabled:cursor-not-allowed disabled:opacity-45; max-width: 100%; }
   button:focus-visible, a:focus-visible, summary:focus-visible { @apply outline-2 outline-offset-4 outline-accent; }
   input, textarea, select { @apply block min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface-950 px-3.5 py-3 text-sm text-ink outline-none transition-colors placeholder:text-subtle focus:border-accent focus:ring-3 focus:ring-accent/10; font: inherit; }
   input[readonly] { @apply bg-canvas text-muted; }
@@ -91,7 +91,7 @@
   .public-tour-header h2 { @apply mt-0.5 text-xs font-normal text-muted sm:text-sm; }
   .public-tour > p { @apply mt-3 text-muted; }
   .studio-sidebar { border-right: 1px solid #293b5570; background: linear-gradient(180deg, #0a1323, #070c17); }
-  .studio-sidebar button[aria-current="page"] { box-shadow: inset 2px 0 #7ceaff; }
+  .studio-sidebar [aria-current="page"] { box-shadow: inset 2px 0 #7ceaff; }
   .studio-header { background: #0b1322d9; backdrop-filter: blur(16px); }
   .section-heading { @apply flex items-center gap-3; }
   .section-heading::before { content: ''; width: 1.5rem; height: 1px; background: #7ceaff; box-shadow: 0 0 8px #7ceaff60; }

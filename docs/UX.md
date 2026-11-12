@@ -1,6 +1,6 @@
 # Flujo guiado para operar el servicio
 
-El panel abre en Trabajos tanto desde `/` como desde `/studio`. La navegación principal tiene cuatro entradas: Trabajos, Organizaciones, Particulares y Clientes. En móvil se usa el mismo menú desplegable. Configuración y su pantalla de accesos al flujo anterior están retiradas temporalmente, incluida la bandeja Solicitudes Studio. Se conservan los módulos, APIs y datos; el formulario público sigue registrando solicitudes. Los permisos y la separación por organización siguen siendo los existentes.
+El panel abre en Trabajos tanto desde `/` como desde `/studio`. La navegación principal incluye Trabajos, Organizaciones, Particulares y Clientes. Solicitudes web aparece para titulares del estudio y administradores de la plataforma; estos últimos también ven Usuarios registrados y Consultas del sistema. En móvil se usa el mismo menú desplegable. Configuración y su pantalla de accesos al flujo anterior están retiradas temporalmente. Los permisos y la separación entre estudios y clientes se mantienen.
 
 ## Un trabajo, seis pasos
 
@@ -94,3 +94,29 @@ Los formularios de alta de cliente y trabajo, nombre del estudio, propiedad, col
 Se usa History API y el estado existente de React, sin dependencias nuevas ni cambios de backend o base de datos. Las URLs del frontend necesitan el fallback habitual de SPA al desplegarse. Configuración continúa retirada.
 
 Validación de navegación: TypeScript y compilación de producción aprobados. Los seis casos de Clientes, directorios y estudios pasaron en escritorio y móvil. Los dos casos del servicio completo pasaron tras actualizar la expectativa de recarga (62,17 s). La verificación final de historial en escritorio y móvil pasó en 31,23 s: Atrás/Adelante, filtros, recarga de trabajos y pasos, protección y descarte de borradores, cambio de cliente desde un recorrido y retorno al cliente después de guardar un trabajo, sin reabrir el formulario enviado. Las nuevas rutas locales de Trabajos, Organizaciones y Clientes respondieron 200. Las pruebas usaron PostgreSQL y almacenamiento temporales; no se modificaron datos reales ni se agregaron dependencias.
+
+
+## Fichas, Mi cuenta y organización de rutas
+
+Las fichas tienen dirección propia: `/studio/clientes/{id}?estudio={id}`. Se abren desde Clientes, Organizaciones, Particulares y **Datos → Abrir cliente** dentro de un trabajo. Este último acceso abre la ficha concreta del contratante. Recargar o compartir esa dirección con un integrante autorizado conserva la ficha, sin ampliar sus permisos. Volver a la lista conserva los filtros de Clientes si se abrió desde esa cartera. Una ficha inexistente o ajena al estudio muestra un error, sin datos de otro cliente.
+
+Mi cuenta mantiene su presentación en diálogo, con direcciones independientes: `/studio/mi-cuenta/perfil`, `/studio/mi-cuenta/seguridad` y `/studio/mi-cuenta/plan`, todas con el estudio en la query. Atrás, Adelante y recargar conservan la pestaña. Cerrar vuelve a la sección desde la que se abrió; cuando se ingresó directamente a Mi cuenta, vuelve a Trabajos. Cambiar de pestaña o salir con datos de perfil pendientes pide confirmación. La selección de un plan desde el inicio sigue abriendo Mi plan y conserva la intención comercial, sin activar un plan pago.
+
+El menú, los accesos a fichas, recorridos/trabajos del cliente y las pestañas de Mi cuenta son enlaces con `href`. Un clic normal usa la navegación interna con protección de cambios pendientes; Cmd/Ctrl+clic, clic central y el menú del navegador mantienen la apertura nativa. Guardar, eliminar, mover el visor y otras acciones continúan siendo botones.
+
+Las direcciones no reconocidas muestran **Página no encontrada** con un enlace de regreso. En el contenedor, una página desconocida solicitada como HTML recibe el documento de la aplicación con estado HTTP 404; API y archivos privados o ausentes conservan su respuesta de error. Las direcciones internas bajo `/studio` mantienen el fallback de SPA y resuelven el error en el cliente. Los enlaces públicos `/tour/{slug}` y `/embed/{slug}` conservan sus destinos.
+
+La responsabilidad de cada archivo queda separada:
+
+- `frontend/src/app/routes.ts`: rutas, validación del path, lectura y generación de URLs y elección de páginas públicas.
+- `frontend/src/app/navigation.tsx`: historial, scroll, foco y protección de cambios sin guardar.
+- `frontend/src/app/StudioLink.tsx`: enlaces internos y navegación con clic normal o modificado.
+- `frontend/src/app/StudioSidebar.tsx`: menú de secciones y estado activo.
+- `frontend/src/app/StudioContent.tsx`: pantalla del panel según ruta y permisos; administración se carga bajo demanda.
+- `frontend/src/app/Workspace.tsx`: sesión, estudio activo y composición del panel.
+- `frontend/src/features/business/ClientProfilePage.tsx`: resolución de fichas dentro del estudio autorizado.
+
+Sin dependencias nuevas ni migraciones para esta mejora.
+
+
+Validación de esta mejora: compilación de producción, TypeScript y catálogo de 1276 traducciones aprobados; 7 pruebas del servidor de despliegue y 36 casos seleccionados de navegador aprobados en lotes, entre Chrome de escritorio y Pixel 7 emulado. Incluyen fichas y permisos entre cuentas, historial y descarte de cambios, enlaces en otra pestaña, rutas desconocidas, trabajo completo hasta publicación/entrega, planes, administración, portugués y seguridad con verificación obligatoria. Se actualizaron las expectativas de recarga de Mi cuenta: la URL restaura el diálogo en la pestaña que estaba abierta. Las pruebas usan PostgreSQL y almacenamiento temporales.

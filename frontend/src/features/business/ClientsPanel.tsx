@@ -2,16 +2,14 @@ import { t, dateLocale } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { businessApi } from '../../api/business'
 import type { Organization } from '../../api/business'
-import { ClientProfile } from './ClientProfile'
+import { StudioLink } from '../../app/StudioLink'
 import { ApiError } from '../../api/client'
 
-export function ClientsPanel({ workspaceId, query, kind, onFilterChange, onOpen, onJobs, onRemoved, onExpired }: {
+export function ClientsPanel({ workspaceId, query, kind, onFilterChange, onRemoved, onExpired }: {
   query: string; kind: string; onFilterChange: (query: string, kind: string) => void;
   workspaceId: string;
-  onOpen: (client: Organization) => void; onJobs: (id: string) => void;
   onRemoved: (id: string) => void; onExpired: () => void
 }) {
-  const [profile, setProfile] = useState<Organization | null>(null)
   const [clients, setClients] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -41,7 +39,6 @@ export function ClientsPanel({ workspaceId, query, kind, onFilterChange, onOpen,
     } catch (cause) { setError(cause instanceof Error ? cause.message : t("No se pudo eliminar al cliente.")) }
     finally { setBusy(false) }
   }
-  if (profile) return <ClientProfile key={profile.id} client={profile} onClose={() => setProfile(null)} onSaved={(saved) => { setProfile(saved); setClients((rows) => rows.map((row) => row.id === saved.id ? saved : row)) }} />
   return <section>
     <p className="eyebrow mb-3">{t("Tu cartera")}</p><h2 className="text-3xl">{t("Clientes")}</h2>
     <p className="muted my-4">{t("Todas tus organizaciones y particulares en una sola lista. Registrá los nuevos desde esas secciones del menú.")}</p>
@@ -67,10 +64,10 @@ export function ClientsPanel({ workspaceId, query, kind, onFilterChange, onOpen,
             <td className="whitespace-nowrap px-4 py-2 text-muted">{client.kind === 'individual' ? t("Particular") : t("Organización")}</td>
             <td className="px-4 py-2 text-xs text-muted"><span className="block">{client.email || '—'}</span><span className="block">{client.phone || '—'}</span></td>
             <td className="px-4 py-2 text-muted">{client.locality || '—'}</td>
-            <td className="px-4 py-2"><div className="flex justify-end gap-2 whitespace-nowrap [&>button]:min-h-9 [&>button]:px-3 [&>button]:py-1.5 [&>button]:text-xs">
-              <button aria-label={t("Ver ficha de {0}", [client.name])} disabled={busy} onClick={() => setProfile(client)}>{t("Ver ficha")}</button>
-              <button aria-label={t("Ver recorridos de {0}", [client.name])} onClick={() => onOpen(client)}>{t("Ver recorridos")}</button>
-              <button aria-label={t("Ver trabajos de {0}", [client.name])} onClick={() => onJobs(client.id)}>{t("Ver trabajos")}</button>
+            <td className="px-4 py-2"><div className="flex justify-end gap-2 whitespace-nowrap [&>*]:min-h-9 [&>*]:px-3 [&>*]:py-1.5 [&>*]:text-xs">
+              <StudioLink className="nav-action" to={{ view: 'clients', profileId: client.id }} aria-label={t("Ver ficha de {0}", [client.name])}>{t("Ver ficha")}</StudioLink>
+              <StudioLink className="nav-action" reset to={{ view: 'organizations', organizationId: client.id, group: client.kind === 'individual' ? 'individuals' : 'companies' }} aria-label={t("Ver recorridos de {0}", [client.name])}>{t("Ver recorridos")}</StudioLink>
+              <StudioLink className="nav-action" reset to={{ view: 'jobs', organizationId: client.id }} aria-label={t("Ver trabajos de {0}", [client.name])}>{t("Ver trabajos")}</StudioLink>
               {client.role === 'owner' && <button className="danger" aria-label={t("Eliminar cliente {0}", [client.name])} disabled={busy} onClick={() => void remove(client)}>{t("Eliminar")}</button>}
             </div></td>
           </tr>)}</tbody>

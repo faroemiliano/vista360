@@ -69,7 +69,7 @@ test('estudios independientes conservan su cartera y comparten sólo clientes au
     await expect(second.getByRole('button', { name: 'Editar estudio', exact: true })).toHaveCount(0)
     await navigate(second, 'Organizaciones')
     await expect(second.getByRole('button', { name: 'Crear organización', exact: true })).toHaveCount(0)
-    await second.getByRole('button', { name: 'Abrir organización Remax', exact: true }).click()
+    await second.getByRole('link', { name: 'Abrir organización Remax', exact: true }).click()
     await expect(second.getByRole('button', { name: 'Nuevo trabajo', exact: true })).toHaveCount(0)
     await second.getByLabel('Estudio activo', { exact: true }).selectOption({ label: `${secondStudio} · propio` })
     await navigate(second, 'Gestionar clientes')

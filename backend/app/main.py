@@ -93,9 +93,15 @@ def create_app() -> FastAPI:
             return FileResponse(frontend / 'favicon.svg')
 
         @app.get('/{path:path}', include_in_schema=False)
-        def frontend_page(path: str):
-            if path in ('', 'inicio', 'studio') or path.startswith(('studio/', 'tour/', 'embed/', 'solicitar/', 'cuenta/')):
+        def frontend_page(path: str, request: Request):
+            if path in ('', 'inicio', 'studio', 'visor') or path.startswith(('studio/', 'tour/', 'embed/', 'solicitar/', 'cuenta/')):
                 return FileResponse(frontend / 'index.html', headers={'Cache-Control': 'no-cache'})
+            # Una dirección de página desconocida muestra el 404 de la SPA.
+            # Las rutas de API, archivos y recursos privados conservan su 404 JSON.
+            if ('text/html' in request.headers.get('accept', '')
+                    and path.split('/')[0] not in ('api', 'assets', 'backend', 'frontend', 'Dockerfile')
+                    and not any('.' in part for part in path.split('/'))):
+                return FileResponse(frontend / 'index.html', status_code=404, headers={'Cache-Control': 'no-cache'})
             raise HTTPException(404, 'Página no encontrada')
 
     return app

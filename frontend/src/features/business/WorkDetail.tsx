@@ -1,3 +1,4 @@
+import { StudioLink } from '../../app/StudioLink'
 import { t, dateLocale } from '../../i18n'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { businessApi } from '../../api/business'
@@ -14,12 +15,11 @@ function localDate(value: string | null) {
   const date = new Date(value)
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
-export function WorkDetail({ job, organization, onChanged, onEditor, onNavigate, step, onStepChange, onDirtyChange, hasUnsavedChanges }: {
+export function WorkDetail({ job, organization, onChanged, onEditor, step, onStepChange, onDirtyChange, hasUnsavedChanges }: {
   hasUnsavedChanges: boolean;
   onDirtyChange: (dirty: boolean) => void;
   step: WorkStep; onStepChange: (step: WorkStep) => void;
   job: WorkJob; organization: Organization; onChanged: (job: WorkJob) => void; onEditor: () => void;
-  onNavigate: (org: string, tab: string) => void
 }) {
   const [busy, setBusy] = useState(false)
   useEffect(() => () => onDirtyChange(false), [onDirtyChange])
@@ -49,7 +49,7 @@ export function WorkDetail({ job, organization, onChanged, onEditor, onNavigate,
     {error && <p role="alert">{t(error)}</p>}{message && <p role="status" className="my-4 text-sm text-accent">{t(message)}</p>}
     <div className="mx-auto max-w-3xl">
       <div className="space-y-6">
-        {step === 'data' && <section className="card p-5 sm:p-6"><p className="eyebrow mb-3">{t("Cliente y propiedad")}</p><h3>{t("Todo el proyecto, conectado")}</h3><p className="mt-3 font-semibold">{t("Cliente:")} {organization.name}</p><p className="muted mt-3 break-words">{t("Contacto del pedido:")} {[job.name, job.email, job.whatsapp].filter(Boolean).join(' · ')}</p><p className="muted mt-2">{job.property_kind} · {job.area_m2} m² · {job.rooms}{' '}{t("ambientes")}</p>{job.message && <p className="my-3 whitespace-pre-wrap text-sm">{job.message}</p>}<div className="row-actions">{!organization.deleted_at && <button onClick={() => onNavigate(organization.id, 'clients')}>{t("Abrir cliente")}</button>}{!organization.deleted_at && <button onClick={() => onNavigate(organization.id, 'properties')}>{t("Abrir propiedad")}</button>}</div><p className="field-hint">{t("El contacto y las notas son internos. No aparecen en el recorrido público.")}</p><button className="btn-primary mt-5" onClick={() => onStepChange('visit')}>{t("Continuar a visita")}</button></section>}
+        {step === 'data' && <section className="card p-5 sm:p-6"><p className="eyebrow mb-3">{t("Cliente y propiedad")}</p><h3>{t("Todo el proyecto, conectado")}</h3><p className="mt-3 font-semibold">{t("Cliente:")} {organization.name}</p><p className="muted mt-3 break-words">{t("Contacto del pedido:")} {[job.name, job.email, job.whatsapp].filter(Boolean).join(' · ')}</p><p className="muted mt-2">{job.property_kind} · {job.area_m2} m² · {job.rooms}{' '}{t("ambientes")}</p>{job.message && <p className="my-3 whitespace-pre-wrap text-sm">{job.message}</p>}<div className="row-actions">{!organization.deleted_at && <StudioLink className="nav-action" reset to={{ view: 'clients', profileId: organization.id }}>{t("Abrir cliente")}</StudioLink>}{!organization.deleted_at && <StudioLink className="nav-action" reset to={{ view: 'organizations', organizationId: organization.id, tab: 'properties', group: organization.kind === 'individual' ? 'individuals' : 'companies' }}>{t("Abrir propiedad")}</StudioLink>}</div><p className="field-hint">{t("El contacto y las notas son internos. No aparecen en el recorrido público.")}</p><button className="btn-primary mt-5" onClick={() => onStepChange('visit')}>{t("Continuar a visita")}</button></section>}
         {step === 'visit' && <section className="card p-5 sm:p-6"><p className="eyebrow mb-3">{t("Coordiná la captura y visita")}</p><h3>{t("Coordinación del trabajo")}</h3>
           <form key={`${job.id}-${job.work_revision}`} className="mt-5" onChange={() => onDirtyChange(true)} onSubmit={(event) => {
             event.preventDefault(); const data = new FormData(event.currentTarget)

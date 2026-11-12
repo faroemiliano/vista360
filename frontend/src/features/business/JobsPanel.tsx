@@ -1,3 +1,4 @@
+import { StudioLink } from '../../app/StudioLink'
 import { t, dateLocale } from '../../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { businessApi } from '../../api/business'
@@ -13,11 +14,11 @@ import { statusName, statuses } from './workflow'
 import { useNavigationDirty } from '../../app/navigation'
 import type { StudioRoute } from '../../app/navigation'
 
-export function JobsPanel({ workspaceId, onExpired, onNavigate, initialOrganizationId, onOrganizationChange, mode = 'work', requestWorkspaceId, initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
+export function JobsPanel({ workspaceId, onExpired, initialOrganizationId, onOrganizationChange, mode = 'work', requestWorkspaceId, initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
   initialJobId?: string; initialStep?: WorkStep; initialFilter?: string; initialOffset?: number;
   onRouteChange?: (changes: Partial<StudioRoute>, replace?: boolean) => boolean;
   workspaceId: string; initialCreate?: boolean;
-  staff: boolean; onExpired: () => void; onNavigate: (org: string, tab: string) => void;
+  staff: boolean; onExpired: () => void;
   initialOrganizationId?: string; onOrganizationChange?: (id: string) => void; mode?: 'work' | 'requests';
   requestWorkspaceId?: string; initialRequestId?: string; initialWorkJob?: WorkJob | null; onOpenWork?: (job: WorkJob) => void
 }) {
@@ -114,14 +115,14 @@ export function JobsPanel({ workspaceId, onExpired, onNavigate, initialOrganizat
     {(['photos', 'connections', 'review'] as WorkStep[]).includes(step) && selected.tour_id ? <>
       <ToursPanel key={selected.tour_id} organization={organization} initialTourId={selected.tour_id} onExpired={onExpired}
         onPublicationChange={async () => setSelected(await businessApi.work(orgId, selected.id))} guidedStep={step as TourStep} onStepChange={(next) => void go(next)} onDirtyChange={setUnsaved} />
-    </> : <WorkDetail hasUnsavedChanges={unsaved} onDirtyChange={setUnsaved} job={selected} organization={organization} step={step} onStepChange={(next) => void go(next)} onChanged={setSelected} onEditor={() => void go('photos')} onNavigate={onNavigate} />}
+    </> : <WorkDetail hasUnsavedChanges={unsaved} onDirtyChange={setUnsaved} job={selected} organization={organization} step={step} onStepChange={(next) => void go(next)} onChanged={setSelected} onEditor={() => void go('photos')} />}
   </section>
   return <section>
     <p className="eyebrow mb-3">{t("Tu servicio, de principio a fin")}</p><h2 className="text-3xl">{mode === 'requests' ? t("Solicitudes de digitalización") : t("Trabajos")}</h2><p className="muted mt-3">{mode === 'requests' ? t("Consultas de personas y empresas interesadas en tu servicio. No necesitan estar registradas como clientes.") : t("Organizá la visita, prepará el recorrido y entregá el enlace a la inmobiliaria.")}</p>
     {error && <p role="alert">{t(error)}</p>}
     {mode === 'work' && <div className="my-5 max-w-lg"><label>{t("Cliente del trabajo")}<select value={orgId} disabled={creating} onChange={(event) => { if (onRouteChange?.({ organizationId: event.target.value, offset: 0, jobId: '' }) === false) return; setOrgId(event.target.value); setOffset(0); setError('') }}><option value="" disabled>{t("Elegí un cliente")}</option>{organizations.map((org) => <option key={org.id} value={org.id}>{org.name}{org.deleted_at ? ' — eliminada' : ''}</option>)}</select></label></div>}
-    {(mode === 'work' || creating) && organization?.deleted_at && <div className="my-5 rounded-xl border border-line p-4"><p className="text-sm text-muted">{organization.name}{' '}{t("fue eliminada. Sus trabajos y recorridos siguen disponibles; para un trabajo nuevo elegí una organización activa.")}</p><button className="mt-3" onClick={() => onNavigate(organization.id, 'tours')}>{t("Ver recorridos conservados")}</button></div>}
-    {mode === 'work' && !organization && !loading && <div className="card p-6"><h3>{t("Registrá tu primer cliente")}</h3><p className="muted my-4">{t("Tu estudio ya está creado. Agregá la inmobiliaria o empresa que te contrata en Organizaciones, o una persona en Particulares. Después prepará su trabajo y entregale el enlace sin que necesite una cuenta.")}</p><button onClick={() => onNavigate('', 'tours')}>{t("Crear organización cliente")}</button></div>}
+    {(mode === 'work' || creating) && organization?.deleted_at && <div className="my-5 rounded-xl border border-line p-4"><p className="text-sm text-muted">{organization.name}{' '}{t("fue eliminada. Sus trabajos y recorridos siguen disponibles; para un trabajo nuevo elegí una organización activa.")}</p><StudioLink className="nav-action mt-3" reset to={{ view: 'organizations', organizationId: organization.id, group: organization.kind === 'individual' ? 'individuals' : 'companies' }}>{t("Ver recorridos conservados")}</StudioLink></div>}
+    {mode === 'work' && !organization && !loading && <div className="card p-6"><h3>{t("Registrá tu primer cliente")}</h3><p className="muted my-4">{t("Tu estudio ya está creado. Agregá la inmobiliaria o empresa que te contrata en Organizaciones, o una persona en Particulares. Después prepará su trabajo y entregale el enlace sin que necesite una cuenta.")}</p><StudioLink className="nav-action" reset to={{ view: 'organizations' }}>{t("Crear organización cliente")}</StudioLink></div>}
     {mode === 'requests' && creating && !organization && source && <RequestCustomer key={source.id} workspaceId={workspaceId} source={source} organizations={organizations} onSelected={(client) => {
       setOrganizations((rows) => rows.some((row) => row.id === client.id) ? rows : [...rows, client])
       setOrgId(client.id); setError('')

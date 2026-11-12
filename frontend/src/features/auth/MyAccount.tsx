@@ -2,19 +2,19 @@ import { t, dateLocale } from '../../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { getSession, request, uploadAvatar } from '../../api/client'
 import type { SessionState, User } from '../../api/client'
+import { StudioLink } from '../../app/StudioLink'
 import { useBlockNavigation } from '../../app/navigation'
 import { AccountAccess, EmailDeliveryHint } from './AccountSecurity'
 import type { PublicPlanCode } from '../subscriptions/selection'
 import { MyPlan } from '../subscriptions/MyPlan'
 import { UserAvatar } from './UserAvatar'
 
-export function MyAccount({ user, onClose, onUser, onSession, onLogout, initialTab = 'profile', selectedPlan }: {
-  initialTab?: 'profile' | 'access' | 'plan'; selectedPlan?: PublicPlanCode | '';
+export function MyAccount({ user, onClose, onUser, onSession, onLogout, tab, selectedPlan }: {
+  tab: 'profile' | 'access' | 'plan'; selectedPlan?: PublicPlanCode | '';
   user: User; onClose: () => void; onUser: (user: User) => void; onSession: (state: SessionState) => void; onLogout: () => Promise<void>
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const photo = useRef<HTMLInputElement>(null)
-  const [tab, setTab] = useState<'profile' | 'access' | 'plan'>(initialTab)
   const [name, setName] = useState(user.display_name || '')
   const [kind, setKind] = useState(user.account_kind || 'individual')
   const [phone, setPhone] = useState(user.phone || '')
@@ -25,7 +25,10 @@ export function MyAccount({ user, onClose, onUser, onSession, onLogout, initialT
   const [message, setMessage] = useState('')
   const dirty = name !== (user.display_name || '') || kind !== user.account_kind || phone !== (user.phone || '')
     || (kind === 'company' && company !== (user.company_name || ''))
-  useBlockNavigation(dirty)
+  useBlockNavigation(dirty, () => {
+    setName(user.display_name || ''); setKind(user.account_kind || 'individual'); setPhone(user.phone || ''); setCompany(user.company_name || '')
+  })
+  useEffect(() => { setError(''); setMessage('') }, [tab])
   useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close() }, [])
   const locked = busy || securityBusy
   function close() { if (!locked && (!dirty || window.confirm(t("¿Descartar los cambios sin guardar de Mi cuenta?")))) onClose() }
@@ -40,9 +43,7 @@ export function MyAccount({ user, onClose, onUser, onSession, onLogout, initialT
     <div className="flex items-center justify-between gap-3"><h2 id="mi-cuenta-titulo">{t("Mi cuenta")}</h2><button className="size-11 shrink-0 !p-2" disabled={locked} onClick={close} aria-label={t("Cerrar Mi cuenta")}><span aria-hidden="true">×</span></button></div>
     <p className="muted mt-2 text-sm">{t("Tu perfil y el acceso a Vision360.")}</p>
     <div className="my-5 flex flex-wrap gap-2" aria-label={t("Secciones de Mi cuenta")}>
-      <button aria-pressed={tab === 'profile'} disabled={locked} className={tab === 'profile' ? 'btn-primary' : ''} onClick={() => { setTab('profile'); setError(''); setMessage('') }}>{t("Datos de mi cuenta")}</button>
-      <button aria-pressed={tab === 'access'} disabled={locked} className={tab === 'access' ? 'btn-primary' : ''} onClick={() => { setTab('access'); setError(''); setMessage('') }}>{t("Email y contraseña")}</button>
-      <button aria-pressed={tab === 'plan'} disabled={locked} className={tab === 'plan' ? 'btn-primary' : ''} onClick={() => { setTab('plan'); setError(''); setMessage('') }}>{t("Mi plan")}</button>
+      {([['profile', t('Datos de mi cuenta')], ['access', t('Email y contraseña')], ['plan', t('Mi plan')]] as const).map(([id, label]) => <StudioLink key={id} to={{ accountTab: id }} aria-current={tab === id ? 'page' : undefined} aria-disabled={locked || undefined} className={`nav-action ${tab === id ? 'btn-primary' : ''}`} onClick={event => { if (locked) event.preventDefault() }}>{label}</StudioLink>)}
     </div>
     {tab === 'profile' ? <>
       <div className="mb-6 flex flex-wrap items-center gap-4">

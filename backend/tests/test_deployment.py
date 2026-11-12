@@ -42,7 +42,7 @@ def test_same_origin_frontend_deep_links_and_api_are_separate(clients, tmp_path,
     get_settings.cache_clear()
     try:
         client = clients()
-        for path in ['/', '/inicio', '/studio', '/studio/trabajos/ejemplo?paso=connections', '/tour/casa', '/embed/casa', '/solicitar/ejemplo', '/cuenta/verificar', '/cuenta/restablecer']:
+        for path in ['/', '/inicio', '/visor', '/studio', '/studio/clientes/00112233-4455-6677-8899-aabbccddeeff', '/studio/mi-cuenta/seguridad', '/studio/trabajos/ejemplo?paso=connections', '/tour/casa', '/embed/casa', '/solicitar/ejemplo', '/cuenta/verificar', '/cuenta/restablecer']:
             response = client.http.get(path)
             assert response.status_code == 200
             assert 'Vision360 demo' in response.text
@@ -53,9 +53,14 @@ def test_same_origin_frontend_deep_links_and_api_are_separate(clients, tmp_path,
         assert client.get('/auth/session').status_code == 200
         assert client.get('/tours').status_code == 401
         for path in ['/api/v1/missing', '/.env', '/Dockerfile', '/backend/.env', '/assets/missing.js']:
-            response = client.http.get(path)
+            response = client.http.get(path, headers={'Accept': 'text/html'})
             assert response.status_code == 404
             assert 'Vision360 demo' not in response.text
+        missing = client.http.get('/pagina-inexistente', headers={'Accept': 'text/html'})
+        assert missing.status_code == 404
+        assert 'Vision360 demo' in missing.text
+        assert missing.headers['cache-control'] == 'no-cache'
+        assert 'Vision360 demo' not in client.http.get('/pagina-inexistente').text
         client.register()
         assert client.get('/workspaces').status_code == 200
     finally:

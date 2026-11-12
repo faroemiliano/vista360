@@ -5,5 +5,5 @@ export async function navigate(page: Page, name: string) {
   const menu = page.getByRole('button', { name: 'Abrir menú', exact: true })
   if (await menu.isVisible()) await menu.click()
   const navigation = page.getByRole('navigation', { name: 'Navegación principal', exact: true })
-  await navigation.getByRole('button', { name, exact: true }).click()
+  await navigation.getByRole('link', { name, exact: true }).click()
 }

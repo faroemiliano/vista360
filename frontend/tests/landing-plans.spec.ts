@@ -24,7 +24,7 @@ test('planes del inicio llevan al registro y conservan la elección sin activar 
   await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
   await page.getByRole('button', { name: 'Registrarme', exact: true }).click()
   const account = page.getByRole('dialog', { name: 'Mi cuenta', exact: true })
-  await expect(account.getByRole('button', { name: 'Mi plan', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(account.getByRole('link', { name: 'Mi plan', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(account.getByText('Elegiste Profesional', { exact: true })).toBeVisible()
   await expect(account.getByText('Prueba', { exact: true })).toBeVisible()
   await expect(account.getByRole('link', { name: 'Consultar activación de Profesional', exact: true })).toBeVisible()
@@ -57,7 +57,7 @@ test('elección del inicio se conserva al ingresar con una cuenta existente', as
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
   const account = page.getByRole('dialog', { name: 'Mi cuenta', exact: true })
   await expect(account.getByText('Elegiste Profesional', { exact: true })).toBeVisible()
-  await expect(account.getByRole('button', { name: 'Mi plan', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(account.getByRole('link', { name: 'Mi plan', exact: true })).toHaveAttribute('aria-current', 'page')
 })
 
 

@@ -25,3 +25,6 @@ Se guarda en el almacenamiento privado ya configurado (local en desarrollo, S3/S
 ## Mi plan
 
 La pestaña **Mi plan** muestra la suscripción del estudio propio, vencimiento y uso estimado, con acceso a consultar una ampliación. Las activaciones se coordinan manualmente con administración; ver [Suscripciones](SUSCRIPCIONES.md).
+
+
+Las secciones tienen rutas propias: `/studio/mi-cuenta/perfil`, `/studio/mi-cuenta/seguridad` y `/studio/mi-cuenta/plan`, con el estudio activo en la query. El diálogo conserva la pestaña al recargar y responde a Atrás/Adelante. Los enlaces permiten abrir cada sección en otra pestaña. Los cambios de perfil sin guardar requieren confirmación antes de salir o cambiar de pestaña. Ver [rutas y navegación](UX.md#fichas-mi-cuenta-y-organización-de-rutas).

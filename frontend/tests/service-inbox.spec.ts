@@ -78,7 +78,7 @@ test('consulta histórica de Vision360 se conserva y se convierte en trabajo', a
     await other.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
     await other.getByRole('button', { name: 'Registrarme', exact: true }).click()
     await expect(other.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
-    await expect(other.getByRole('button', { name: 'Solicitudes web', exact: true, includeHidden: true })).toHaveCount(1)
+    await expect(other.getByRole('link', { name: 'Solicitudes web', exact: true, includeHidden: true })).toHaveCount(1)
     await other.goto(`/studio/solicitudes?solicitud=${id}`)
     await expect(other.getByRole('alert')).toContainText('reservadas a la administración')
     await expect(other.getByRole('heading', { name, exact: true })).toHaveCount(0)

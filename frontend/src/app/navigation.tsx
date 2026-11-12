@@ -1,64 +1,10 @@
 import { t } from '../i18n'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { publicPlan } from '../features/subscriptions/selection'
-import type { PublicPlanCode } from '../features/subscriptions/selection'
-import { workSteps } from '../components/WorkSteps'
-import type { WorkStep } from '../components/WorkSteps'
-
-export type StudioRoute = {
-  view: 'jobs' | 'organizations' | 'clients' | 'requests' | 'accounts' | 'contacts'; requestId: string; requestScope: 'studio' | 'platform'; group: 'companies' | 'individuals';
-  selectedPlan: PublicPlanCode | ''; studioId: string; organizationId: string; jobId: string; step: WorkStep;
-  creating: boolean; tab: 'tours' | 'properties' | 'members'; tourId: string;
-  query: string; kind: string; status: string; offset: number;
-}
-export const defaultRoute: StudioRoute = {
-  view: 'jobs', selectedPlan: '', requestId: '', requestScope: 'studio', group: 'companies', studioId: '', organizationId: '', jobId: '', step: 'visit',
-  creating: false, tab: 'tours', tourId: '', query: '', kind: 'all', status: '', offset: 0,
-}
-const uuid = (value: string | null) => value && /^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i.test(value) ? value : ''
-function readRoute(): StudioRoute {
-  const url = new URL(window.location.href)
-  const parts = url.pathname.split('/').filter(Boolean)
-  const view = parts[1] === 'consultas' ? 'contacts' : parts[1] === 'usuarios' ? 'accounts' : parts[1] === 'solicitudes' ? 'requests' : parts[1] === 'clientes' ? 'clients' : ['organizaciones', 'particulares'].includes(parts[1]) ? 'organizations' : 'jobs'
-  const step = url.searchParams.get('paso')
-  const tab = url.searchParams.get('vista')
-  const offset = Number(url.searchParams.get('pagina') || 0)
-  return { ...defaultRoute, selectedPlan: publicPlan(url.searchParams.get('plan')), view, requestScope: url.searchParams.get('origen') === 'vision360' || (url.searchParams.has('solicitud') && !url.searchParams.has('estudio')) ? 'platform' : 'studio', requestId: view === 'requests' ? uuid(url.searchParams.get('solicitud')) : '', group: parts[1] === 'particulares' ? 'individuals' : 'companies',
-    studioId: uuid(url.searchParams.get('estudio')), organizationId: uuid(url.searchParams.get('cliente')),
-    jobId: view === 'jobs' ? uuid(parts[2] || null) : '',
-    step: workSteps.some(([id]) => id === step) ? step as WorkStep : 'visit',
-    creating: view === 'jobs' && url.searchParams.get('nuevo') === '1',
-    tab: tab === 'properties' || tab === 'members' ? tab : 'tours',
-    tourId: view === 'organizations' ? uuid(url.searchParams.get('recorrido')) : '',
-    query: url.searchParams.get('buscar') || '', kind: ['individual', 'organization', 'company'].includes(url.searchParams.get('tipo') || '') ? url.searchParams.get('tipo')! : 'all',
-    status: url.searchParams.get('estado') || '', offset: Number.isSafeInteger(offset) && offset >= 0 ? offset * 50 : 0,
-  }
-}
-export function routeUrl(route: StudioRoute) {
-  const section = route.view === 'contacts' ? 'consultas' : route.view === 'accounts' ? 'usuarios' : route.view === 'requests' ? 'solicitudes' : route.view === 'jobs' ? 'trabajos' : route.view === 'clients' ? 'clientes' : route.group === 'individuals' ? 'particulares' : 'organizaciones'
-  const query = new URLSearchParams()
-  if (route.selectedPlan) query.set('plan', route.selectedPlan)
-  if (route.studioId) query.set('estudio', route.studioId)
-  if (route.organizationId) query.set('cliente', route.organizationId)
-  if (route.view === 'requests') {
-    if (route.requestScope === 'platform') query.set('origen', 'vision360')
-    if (route.requestId) query.set('solicitud', route.requestId)
-  } else if (route.view === 'jobs') {
-    if (route.jobId) query.set('paso', route.step)
-    else if (route.creating) query.set('nuevo', '1')
-    if (route.status) query.set('estado', route.status)
-    if (route.offset) query.set('pagina', String(route.offset / 50))
-  } else if (route.view === 'organizations') {
-    if (route.tab !== 'tours') query.set('vista', route.tab)
-    if (route.tourId) query.set('recorrido', route.tourId)
-  } else {
-    if (route.query) query.set('buscar', route.query)
-    if (route.kind !== 'all') query.set('tipo', route.kind)
-    if ((route.view === 'accounts' || route.view === 'contacts') && route.offset) query.set('pagina', String(route.offset / 50))
-  }
-  return `/studio/${section}${route.view === 'jobs' && route.jobId ? `/${route.jobId}` : ''}${query.size ? `?${query}` : ''}`
-}
+import { readRoute, routeUrl } from './routes'
+import type { StudioRoute } from './routes'
+export { defaultRoute, routeUrl } from './routes'
+export type { StudioRoute } from './routes'
 
 type Entry = { id: string; index: number; scroll: number }
 function entry(): Entry | undefined { return window.history.state?.vision360Navigation }

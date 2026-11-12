@@ -7,7 +7,8 @@ import type { components } from '../../api/schema'
 import { ToursPanel } from '../tours/ToursPanel'
 import { useNavigationDirty } from '../../app/navigation'
 
-import { ClientFields, ClientProfile, clientDetails } from './ClientProfile'
+import { StudioLink } from '../../app/StudioLink'
+import { ClientFields, clientDetails } from './ClientProfile'
 
 const roles = { get owner() { return t('Propietario') }, get admin() { return t('Administrador') }, get editor() { return t('Editor / fotógrafo') }, get viewer() { return t('Sólo lectura') } }
 export function OrganizationsPanel({ workspaceId, canCreateClients, onExpired, initialOrganizationId, initialTab = 'properties', autoSelect = false, onOrganizationChange, onSectionChange, group = 'all', onNewWork, initialTourId, onOpenOrganization, onDirectory, onTourChange }: {
@@ -18,9 +19,8 @@ export function OrganizationsPanel({ workspaceId, canCreateClients, onExpired, i
   onOrganizationChange?: (id: string) => void; onSectionChange?: (tab: string) => void
 }) {
   const entryResolved = useRef(false)
-  const [dirty, setDirty] = useNavigationDirty()
+  const [, setDirty] = useNavigationDirty()
   const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [profile, setProfile] = useState<Organization | null>(null)
   const [selected, setSelected] = useState<Organization | null>(null)
   const [tab, setTab] = useState(initialTab)
   const [propertyDraft, setPropertyDraft] = useState<Property | null>(null)
@@ -83,19 +83,14 @@ export function OrganizationsPanel({ workspaceId, canCreateClients, onExpired, i
       onOrganizationChange?.('')
     })
   }
-  function openProfile(org: Organization) {
-    if (dirty && !window.confirm(t("¿Descartar los cambios sin guardar y abrir la ficha?"))) return
-    setDirty(false); setProfile(org)
-  }
   const directoryTitle = group === 'individuals' ? t("Particulares") : t("Organizaciones")
   const sectionTitle = ({ properties: t("Propiedades"), members: t("Equipo"), tours: t("Recorridos") } as Record<string, string>)[tab] || t("Organizaciones y proyectos")
-  if (profile) return <ClientProfile key={profile.id} client={profile} onClose={() => setProfile(null)} onSaved={(saved) => { setProfile(saved); setOrganizations((rows) => rows.map((row) => row.id === saved.id ? saved : row)); if (selected?.id === saved.id) setSelected(saved) }} />
   return <section>
     <p className="eyebrow mb-3">{t("Vision360 Platform")}</p><h2 className="text-3xl">{selected || autoSelect ? sectionTitle : directoryTitle}</h2><p className="muted my-4">{selected ? t("Gestioná {0} de {1}.", [sectionTitle.toLowerCase(), selected.name]) : autoSelect ? t("Elegí una organización para abrir {0}.", [sectionTitle.toLowerCase()]) : group === 'individuals' ? t("Abrí una persona para ver sus recorridos o preparar un nuevo trabajo.") : t("Abrí una inmobiliaria o empresa para ver sus recorridos y trabajos.")}</p>
     {error && <p role="alert">{t(error)}</p>}
     {!selected && notice && <p role="status" className="mb-5 rounded-xl border border-accent/25 bg-accent/10 px-4 py-3 text-accent">{t(notice)}</p>}
     {!selected ? <div className={`grid items-start gap-6 ${canCreateClients ? 'lg:grid-cols-[1fr_22rem]' : ''}`}>
-      <div className="space-y-3">{loading && <p role="status">{t("Consultando tus organizaciones…")}</p>}{!loading && !visibleOrganizations.length && <p className="card p-6 text-sm text-muted">{t("Todavía no hay registros en esta sección. Agregá")} {group === 'individuals' ? t("un particular") : t("una organización")}{' '}{t("para reunir sus recorridos.")}</p>}{visibleOrganizations.map((org) => <article key={org.id} className="card flex flex-wrap items-center justify-between gap-4 p-5"><div><h3>{org.name}</h3><p className="muted mt-2">{org.kind === 'individual' ? t("Particular") : org.kind === 'photographer' ? t("Fotógrafo profesional") : org.kind === 'agency' ? t("Inmobiliaria") : org.kind === 'studio' ? t("Estudio") : t("Empresa")} · {roles[org.role]}</p></div><button aria-label={t("Ver ficha de {0}", [org.name])} disabled={busy} onClick={() => openProfile(org)}>{t("Ver ficha")}</button><button aria-label={`${org.kind === 'individual' ? t("Abrir particular") : t("Abrir organización")} ${org.name}`} onClick={() => { if (onOpenOrganization) onOpenOrganization(org.id); else { setSelected(org); setPropertyDraft(null) } }}>{t("Ver recorridos")}</button>{org.role === 'owner' && <button className="danger" aria-label={t("Eliminar {0} {1}", [org.kind === 'individual' ? 'particular' : t("organización"), org.name])} disabled={busy} onClick={() => void removeOrganization(org)}>{t("Eliminar")}</button>}</article>)}</div>
+      <div className="space-y-3">{loading && <p role="status">{t("Consultando tus organizaciones…")}</p>}{!loading && !visibleOrganizations.length && <p className="card p-6 text-sm text-muted">{t("Todavía no hay registros en esta sección. Agregá")} {group === 'individuals' ? t("un particular") : t("una organización")}{' '}{t("para reunir sus recorridos.")}</p>}{visibleOrganizations.map((org) => <article key={org.id} className="card flex flex-wrap items-center justify-between gap-4 p-5"><div><h3>{org.name}</h3><p className="muted mt-2">{org.kind === 'individual' ? t("Particular") : org.kind === 'photographer' ? t("Fotógrafo profesional") : org.kind === 'agency' ? t("Inmobiliaria") : org.kind === 'studio' ? t("Estudio") : t("Empresa")} · {roles[org.role]}</p></div><StudioLink className="nav-action" reset to={{ view: 'clients', profileId: org.id }} aria-label={t("Ver ficha de {0}", [org.name])}>{t("Ver ficha")}</StudioLink><StudioLink className="nav-action" reset to={{ view: 'organizations', organizationId: org.id, group: org.kind === 'individual' ? 'individuals' : 'companies' }} aria-label={`${org.kind === 'individual' ? t("Abrir particular") : t("Abrir organización")} ${org.name}`}>{t("Ver recorridos")}</StudioLink>{org.role === 'owner' && <button className="danger" aria-label={t("Eliminar {0} {1}", [org.kind === 'individual' ? 'particular' : t("organización"), org.name])} disabled={busy} onClick={() => void removeOrganization(org)}>{t("Eliminar")}</button>}</article>)}</div>
       {canCreateClients && <form className="card p-5" aria-label={group === 'individuals' ? t("Crear particular") : t("Crear organización")} onChange={() => setDirty(true)} onSubmit={(event) => {
         event.preventDefault(); const form = event.currentTarget; const data = new FormData(form)
         void act(async () => {

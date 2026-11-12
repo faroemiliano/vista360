@@ -103,7 +103,7 @@ test('organización registra cartera, reutiliza el editor y comparte con un cola
     await page.getByRole('button', { name: 'Guardar acceso', exact: true }).click()
     await expect(page.getByText(`reader-${stamp}@example.com`, { exact: true })).toBeVisible()
     await navigate(visitor, 'Organizaciones')
-    await visitor.getByRole('button', { name: `Abrir organización ${team}`, exact: true }).click()
+    await visitor.getByRole('link', { name: `Abrir organización ${team}`, exact: true }).click()
     await navigate(visitor, 'Gestionar recorridos')
     await visitor.getByRole('button', { name: 'Abrir Casa de prueba', exact: true }).click()
     await expect(visitor.getByRole('heading', { name: 'Previsualización privada', exact: true })).toBeVisible()

@@ -1272,5 +1272,7 @@
   "Salir de pantalla completa": "Sair da tela cheia",
   "Pantalla completa": "Tela cheia",
   "No se pudo abrir pantalla completa. Revisá los permisos de la página que contiene el recorrido.": "Não foi possível abrir em tela cheia. Verifique as permissões da página que contém o tour.",
-  "Ambiente": "Ambiente"
+  "Ambiente": "Ambiente",
+  "La dirección no corresponde a una página de Vision360. Revisá el enlace o volvé al inicio.": "O endereço não corresponde a uma página do Vision360. Confira o link ou volte ao início.",
+  "Volver al inicio": "Voltar ao início"
 }
