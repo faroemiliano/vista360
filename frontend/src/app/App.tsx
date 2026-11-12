@@ -10,7 +10,7 @@ const Landing = lazy(() => import('../features/commercial/Landing').then(module 
 
 export function App() {
   useLanguage()
-  return <><CurrentPage /><FloatingWhatsApp /></>
+  return <><CurrentPage />{!window.location.pathname.startsWith('/embed/') && <FloatingWhatsApp />}</>
 }
 
 function CurrentPage() {
@@ -19,5 +19,6 @@ function CurrentPage() {
   if (window.location.pathname.startsWith('/solicitar/')) return <StudioRequestPage token={window.location.pathname.slice(11)} />
   if (window.location.pathname === '/inicio') return <Suspense fallback={<p role="status">{t('Cargando')}</p>}><Landing /></Suspense>
   if (window.location.pathname.startsWith('/tour/')) return <PublicTour slug={window.location.pathname.slice(6)} />
+  if (window.location.pathname.startsWith('/embed/')) return <PublicTour slug={window.location.pathname.slice(7)} embedded />
   return window.location.pathname === '/visor' ? <ViewerDemo /> : <Workspace />
 }

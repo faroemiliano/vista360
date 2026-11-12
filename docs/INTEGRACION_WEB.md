@@ -1,0 +1,13 @@
+# Recorridos en la web del cliente
+
+Una vez publicado el recorrido, abrir **Trabajo → Entregar → Insertar en mi web**. También está disponible en Publicación dentro del editor. Copiar el código y enviarlo al equipo que administra la web del hotel o cliente. Debe pegarse en un bloque HTML que permita iframes. La opción **Ver vista previa web** muestra el recorrido dentro de un marco de ejemplo; no modifica la web real del cliente.
+
+El código carga `/embed/{slug}` desde el mismo dominio del enlace de entrega. Incluye título accesible, ancho adaptable, altura de 360 a 720 px, carga diferida y permisos de pantalla completa, acelerómetro y giroscopio. Los valores se escapan como atributos HTML. El dominio local no sirve como entrega por Internet: copiar el código desde la app desplegada. El equipo web puede ajustar la altura del iframe.
+
+La vista insertada muestra únicamente el recorrido público, con título, ambiente, selector de ambientes, controles del visor, idioma y ubicación si fue publicada. Omite el logo/enlace a Vision360, su WhatsApp flotante, las descripciones largas y la lista duplicada de puntos. Conserva los puntos sobre la foto y la información al abrirlos. La pantalla completa depende de la API y los permisos del navegador y de la página contenedora. El movimiento requiere HTTPS, sensores y autorización del usuario; si no está disponible, puede explorarse arrastrando la imagen.
+
+No necesita inicio de sesión ni cookies de cuenta. Usa exclusivamente la API pública y las variantes públicas de imágenes, con credenciales omitidas, igual que `/tour/{slug}`. No expone borradores, originales privados ni datos internos del trabajo. No cambia CORS para autorizar accesos privados desde la web del cliente. La ruta `/embed/` está permitida por el servidor del frontend de producción, incluida la recarga directa.
+
+La publicación es la misma que la del enlace público. Publicar cambios mantiene el código existente y las nuevas visitas reciben la versión actualizada; un visor ya abierto conserva la versión cargada hasta recargar. Despublicar impide nuevas cargas del recorrido, sin borrar la copia que alguien ya hubiera descargado. La integración no descarga un paquete autónomo y depende del alojamiento de Vision360; no fija plazos comerciales ni activa cobros. No agrega logo personalizado, botón de reservas, métricas ni selección de ambiente inicial por URL.
+
+Si el CMS elimina el iframe o su política de seguridad impide cargar el dominio de Vision360, el equipo web debe habilitarlo en el bloque o en `frame-src`. Pantalla completa y sensores pueden requerir permisos adicionales del sitio contenedor. Se conserva el enlace público como alternativa para compartir.

@@ -19,6 +19,8 @@ El panel `/studio` ahora comienza en **Trabajos**: solicitud o carga manual → 
 
 En **Entregar → PDF de entrega** se pueden guardar condiciones y contacto para el cliente, revisar un documento con enlace, QR y Google Maps, e imprimirlo o guardarlo como PDF desde el navegador. Requiere la migración aditiva `0018_delivery_document`. Ver [documento de entrega y alcance](docs/PDF_ENTREGA.md).
 
+En **Entregar → Insertar en mi web** se puede copiar un iframe y probar cómo se ve el recorrido dentro de la página del cliente. La ruta pública `/embed/{slug}` muestra el visor sin el logo ni el WhatsApp de Vision360 y mantiene la misma publicación y enlace al actualizar. También está disponible desde Publicación. Ver [integración web](docs/INTEGRACION_WEB.md).
+
 Proyecto incremental según [PLAN.md](PLAN.md): base de Fase 1, visor de Fase 2, identidad/administración de Fase 3, ingestión de Fase 4, editor de Fase 5 y publicación de Fase 6. React + TypeScript + Vite, FastAPI, SQLAlchemy, Alembic y PostgreSQL. Se pueden registrar usuarios y administrar recorridos en borrador y ambientes. La interfaz guiada usa Tailwind CSS; ver [docs/UI.md](docs/UI.md). Ver [Fase 2](docs/FASE2.md), [Fase 3](docs/FASE3.md), [Fase 4](docs/FASE4.md), [Fase 5](docs/FASE5.md) y [Fase 6](docs/FASE6.md).
 
 ## Requisitos

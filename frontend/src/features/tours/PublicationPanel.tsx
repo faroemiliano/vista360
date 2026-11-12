@@ -1,8 +1,9 @@
 import { t } from '../../i18n'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { publicationsApi } from '../../api/client'
 import type { PublicationState, Tour } from '../../api/client'
 import { Icon } from '../../components/Icon'
+const EmbedPanel = lazy(() => import('./EmbedPanel').then(module => ({ default: module.EmbedPanel })))
 
 export function PublicationPanel({ tour, onChanged }: { tour: Tour; onChanged: () => Promise<void> }) {
   const [state, setState] = useState<PublicationState | null>(null)
@@ -53,6 +54,7 @@ export function PublicationPanel({ tour, onChanged }: { tour: Tour; onChanged: (
           await navigator.clipboard.writeText(link); setMessage(t("Enlace copiado."))
         }) }}>{t("Copiar enlace")}</button>
         {local && <p>{t("Este enlace funciona en esta computadora. Para enviarlo y abrirlo desde Internet necesitamos desplegar la app.")}</p>}
+        <Suspense fallback={<p role="status">{t('Cargando')}</p>}><EmbedPanel key={link} link={link} title={tour.title} /></Suspense>
       </>}
       <div className="row-actions">
         <button disabled={busy || state.preparing || (state.status === 'published' && !state.has_changes)} onClick={() => void act(async () => {

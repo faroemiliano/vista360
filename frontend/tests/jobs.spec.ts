@@ -2,13 +2,14 @@ import { expect, test } from '@playwright/test'
 import { navigate } from './navigationHelpers'
 import { checkDeliveryDocument } from './deliveryDocumentHelpers'
 import { chooseHotspotPosition } from './hotspotPlacementHelpers'
+import { checkEmbedding } from './embedHelpers'
 
 test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin login del cliente', async ({ page, browser }, testInfo) => {
   test.skip(process.env.TEST_API !== '1', 'Requiere PostgreSQL y API temporal')
   test.setTimeout(120_000)
   page.setDefaultTimeout(10_000)
   const stamp = `${testInfo.project.name}-${Date.now()}`
-  const title = `Trabajo ${stamp}`
+  const title = `Trabajo "Hotel & Spa" ${stamp}`
   const steps = page.getByRole('group', { name: 'Pasos del trabajo', exact: true })
   await page.goto('/studio')
   await page.getByRole('button', { name: 'Crear una cuenta', exact: true }).click()
@@ -153,6 +154,7 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await expect(page.getByRole('heading', { name: 'Entrega registrada', exact: true })).toBeVisible()
   await expect(page.locator('.badge').first()).toHaveText('FINALIZADO')
   await checkDeliveryDocument(page, testInfo, publicLink, expectedMaps)
+  await checkEmbedding(page, testInfo, publicLink)
   await page.screenshot({ path: testInfo.outputPath('trabajo-entregado.png'), fullPage: true })
   await steps.getByRole('button', { name: '2 Visita', exact: true }).click()
   await expect(page.getByRole('textbox', { name: 'Notas operativas', exact: true })).toHaveValue('Ingresar por la puerta lateral')
