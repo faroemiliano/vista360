@@ -29,7 +29,7 @@ class LocalStorage:
                     raise ValueError("upload_too_large")
                 target.write(block)
 
-    def put(self, key: str, source: Path) -> None:
+    def put(self, key: str, source: Path, content_type: str = 'image/jpeg') -> None:
         target = self.path(key)
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(target.name + f".part-{uuid4().hex}")

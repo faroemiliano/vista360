@@ -143,6 +143,21 @@ class DeliveryDocumentInput(DeliveryDocumentSettings):
     expected_revision: int = Field(ge=0)
 
 
+class GenerateDeliveryFile(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    expected_revision: int = Field(ge=0)
+    expected_file_id: UUID | None = None
+    language: Literal['es', 'pt-BR'] = 'es'
+    timezone_offset_minutes: int = Field(default=0, ge=-840, le=840)
+
+
+class DeliveryFileResponse(BaseModel):
+    id: UUID
+    filename: str
+    size_bytes: int
+    created_at: datetime
+
+
 class WorkResponse(ServiceResponse):
     title: str
     client_id: UUID | None
@@ -157,4 +172,5 @@ class WorkResponse(ServiceResponse):
     public_path: str | None
     has_unpublished_changes: bool
     delivery_document: DeliveryDocumentSettings | None = None
+    delivery_file: DeliveryFileResponse | None = None
     delivery_location: PublicLocation | None = None

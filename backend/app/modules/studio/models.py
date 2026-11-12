@@ -39,6 +39,7 @@ class ServiceRequest(Base):
     delivered_version_id: Mapped[UUID | None] = mapped_column()
     work_revision: Mapped[int] = mapped_column(default=0, server_default="0")
     delivery_document: Mapped[dict | None] = mapped_column(JSONB)
+    delivery_file: Mapped[dict | None] = mapped_column(JSONB)
     origin: Mapped[str] = mapped_column(String(12), default="web", server_default="web")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

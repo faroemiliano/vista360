@@ -12,6 +12,7 @@ from app.modules.publications.models import Publication
 from app.modules.scenes.models import Scene
 from app.modules.tours.models import Tour
 from app.modules.workspaces.models import Workspace
+from app.modules.studio.models import ServiceRequest
 from app.modules.subscriptions.models import Subscription, SubscriptionEvent
 from app.modules.subscriptions.schemas import Plan, SubscriptionView, Usage
 
@@ -54,7 +55,9 @@ def usage(db, workspace):
     # Incluye borradores/cargas pendientes y versiones retenidas; no mide egreso ni basura por borrar.
     storage = db.scalar(select(func.coalesce(func.sum(Asset.size_bytes + 2 * DELIVERY_RESERVATION), 0)).where(
         Asset.tour_id.in_(ids), Asset.type == 'panorama_original', Asset.status != 'rejected'))
-    return Usage(published=published, preparing=reserved, storage_reserved_bytes=storage)
+    pdf_bytes = db.scalar(select(func.coalesce(func.sum(ServiceRequest.delivery_file['size_bytes'].as_integer()), 0)).where(
+        ServiceRequest.organization_id.in_(select(Organization.id).where(Organization.workspace_id == workspace.id))))
+    return Usage(published=published, preparing=reserved, storage_reserved_bytes=storage + pdf_bytes)
 
 
 def trial_available(db, workspace, row):

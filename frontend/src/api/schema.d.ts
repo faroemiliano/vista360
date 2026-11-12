@@ -1043,6 +1043,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Delivery File */
+        post: operations["generate_delivery_file_api_v1_organizations__organization_id__jobs__request_id__delivery_document_file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Delivery File */
+        get: operations["get_delivery_file_api_v1_organizations__organization_id__jobs__request_id__delivery_document_files__file_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/studios/{token}/service-requests": {
         parameters: {
             query?: never;
@@ -1584,6 +1618,23 @@ export interface components {
             /** Conditions */
             conditions: string;
         };
+        /** DeliveryFileResponse */
+        DeliveryFileResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Filename */
+            filename: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** DeliveryInput */
         DeliveryInput: {
             /** Expected Revision */
@@ -1652,6 +1703,24 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** GenerateDeliveryFile */
+        GenerateDeliveryFile: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Expected File Id */
+            expected_file_id?: string | null;
+            /**
+             * Language
+             * @default es
+             * @enum {string}
+             */
+            language: "es" | "pt-BR";
+            /**
+             * Timezone Offset Minutes
+             * @default 0
+             */
+            timezone_offset_minutes: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2784,6 +2853,7 @@ export interface components {
             /** Has Unpublished Changes */
             has_unpublished_changes: boolean;
             delivery_document?: components["schemas"]["DeliveryDocumentSettings"] | null;
+            delivery_file?: components["schemas"]["DeliveryFileResponse"] | null;
             delivery_location?: components["schemas"]["PublicLocation"] | null;
         };
         /** WorkspaceInput */
@@ -5280,6 +5350,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_delivery_file_api_v1_organizations__organization_id__jobs__request_id__delivery_document_file_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organization_id: string;
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateDeliveryFile"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_delivery_file_api_v1_organizations__organization_id__jobs__request_id__delivery_document_files__file_id__get: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                organization_id: string;
+                request_id: string;
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Archivo PDF de entrega guardado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
             /** @description Validation Error */

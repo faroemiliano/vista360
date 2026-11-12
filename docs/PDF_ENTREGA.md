@@ -1,37 +1,44 @@
-# Documento PDF de entrega
+# Archivo PDF de entrega
 
-En un trabajo con recorrido publicado, abrir **6 Entregar → PDF de entrega**. El estudio se completa con el nombre del estudio activo (se puede ajustar el nombre comercial para la entrega). Completar contacto que se compartirá y condiciones acordadas; guardar y pulsar **Ver PDF de entrega**. El documento contiene título del trabajo, cliente, enlace clickeable al recorrido, QR del mismo enlace, ubicación publicada con Google Maps cuando existe, condiciones, contacto y referencia del trabajo.
+En **Trabajos → 6 Entregar → PDF de entrega**, preparar los datos del documento: estudio/fotógrafo, contacto compartido y condiciones. Pulsar **Guardar datos del PDF** y después **Generar y guardar PDF**. El servidor genera un archivo PDF real y lo conserva en el almacenamiento privado configurado.
 
-El documento siempre muestra **Fecha de emisión**, correspondiente a la copia que se está generando. Si el trabajo ya tiene una entrega registrada, muestra también **Fecha de entrega** por separado. Generar una copia no registra ni modifica la entrega. El pie identifica la fecha de generación del documento.
+Una vez generado, la sección muestra una tarjeta con el nombre del archivo, su fecha de generación, tamaño y botones **Ver PDF** y **Descargar PDF**. Los datos quedan plegados en **Editar documento**. Recargar, cerrar sesión o volver a entrar no requiere generar el PDF otra vez: se descarga el mismo archivo guardado. El archivo descargado se puede enviar al cliente por el canal habitual; la dirección privada de descarga del panel requiere una sesión autorizada.
 
-**Imprimir / Guardar PDF** abre la impresión nativa del navegador: seleccionar Guardar como PDF, A4 y desactivar encabezados/pies del navegador. La vista previa adapta el contenido a celular; el documento impreso conserva su formato A4 y los textos largos fluyen a varias páginas. La disponibilidad del guardado y el nombre de las opciones dependen del navegador/dispositivo. No hay envío automático al cliente ni PDF almacenado en el servidor.
+## Datos, archivo y reemplazo
 
-## Datos y permisos
+Los datos del documento y el archivo son elementos distintos. Editar contacto o condiciones guarda los datos, pero no modifica el PDF existente. **Generar nuevo PDF** pide confirmación y reemplaza el archivo guardado por una copia nueva. Las copias descargadas anteriormente no cambian. Se conserva un archivo actual por trabajo; no se ofrece un historial de versiones del PDF.
 
-- `service_requests.delivery_document` guarda únicamente estudio, contacto para el cliente y condiciones en JSONB nullable. Los trabajos anteriores no reciben condiciones inventadas. Migración aditiva `0018_delivery_document`: `alembic upgrade head`.
-- `PUT /api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document` exige CSRF, permisos de escritura en el cliente y revisión vigente del trabajo. Incrementa `work_revision` y registra el cambio en su historial. Lectores pueden consultar una ficha ya preparada; no pueden modificarla. Se puede corregir el documento de un trabajo finalizado sin reabrirlo ni cambiar su fecha de entrega.
-- La ubicación sale del snapshot **publicado y activo**, conservando el destino anterior mientras haya cambios sin publicar. La URL mantiene la lógica de direcciones/Google Maps existente; no se exige latitud/longitud. Si falta ubicación se omite el bloque de Maps.
-- No se copian notas operativas, contacto privado del pedido, datos de acceso ni información de otros trabajos. El contacto que se comparte se escribe explícitamente en la ficha. Los datos del documento no se agregan al manifiesto público del recorrido.
-- El texto de condiciones es informativo: no implementa acuerdos firmados, cobros, recordatorios, renovación ni despublicación automática. Las condiciones deben corresponder a lo que realmente puede ofrecer el fotógrafo.
+Si falla la generación o el almacenamiento, el archivo anterior se conserva. La revisión del trabajo y el identificador del archivo esperado evitan que dos generaciones concurrentes reemplacen una copia más reciente. El objeto anterior se elimina del almacenamiento después de confirmar el nuevo registro; si esa limpieza falla, se registra el incidente para su revisión, sin impedir la descarga del archivo nuevo.
 
-Cambiar una publicación conservando el enlace actualiza lo que el destinatario abre desde el PDF. Cambiar condiciones, contacto o ubicación requiere generar y entregar otro PDF: los documentos ya descargados no se actualizan. El recorrido sigue necesitando Internet y alojamiento; el PDF no guarda las fotografías ni una copia navegable.
+Los trabajos anteriores conservan sus datos y condiciones. Como los PDF creados antes de esta mejora se imprimían desde el navegador y no se almacenaban, hay que pulsar **Generar y guardar PDF** una vez para que aparezca el archivo descargable dentro del trabajo.
 
-## Implementación y pruebas
+## Contenido y acceso
 
-La generación usa HTML/CSS de impresión y el QR existente; no agrega dependencias, llamadas a terceros ni servicios pagos. El módulo se carga sólo al entrar en Entrega. La interfaz y las etiquetas del documento están disponibles en español y portugués; los datos escritos por el usuario se conservan en su idioma original.
+El PDF contiene el título del trabajo, cliente, estudio emisor, fechas de emisión y entrega cuando corresponde, enlace público al recorrido, QR del mismo enlace, ubicación publicada con Google Maps cuando existe, condiciones, contacto y referencia del trabajo. El nombre incluye cliente, trabajo, fecha y una referencia corta, normalizando caracteres inadecuados para un archivo.
 
-Pruebas con PostgreSQL temporal verifican permisos, validaciones, conflictos de revisión, persistencia y ubicación de la versión publicada. Playwright recorre un trabajo real en escritorio y celular: guarda/recarga las condiciones, valida el QR, los enlaces, la vista previa y el diálogo de impresión; genera un PDF de prueba con enlaces activos y comprueba el cambio de idioma sin traducir condiciones del cliente.
+La fecha de emisión corresponde al archivo generado. La de entrega es la registrada en el trabajo. Generar o reemplazar el PDF no finaliza el trabajo ni modifica su entrega. El idioma de la interfaz al generar determina las etiquetas del archivo (español o portugués); los textos del cliente no se traducen y cambiar el idioma de la página no cambia un archivo ya guardado.
+
+La ubicación sale del snapshot publicado y activo. No se toman cambios de ubicación pendientes de publicar. No se exige latitud/longitud. No se incluyen notas operativas, el contacto privado del pedido ni credenciales. Los datos del documento y la ruta privada del PDF no se agregan al manifiesto público del recorrido.
+
+El PDF guardado sigue disponible aunque se despublique el recorrido o se quite al cliente de las listas activas. Eso no vuelve a publicar el recorrido: su enlace puede dejar de estar disponible. Para generar un archivo nuevo debe existir una publicación activa. El archivo contiene enlaces y condiciones, no las fotos ni una copia navegable del recorrido.
+
+## Implementación
+
+- Migración aditiva `0020_saved_delivery_pdf`: columna JSONB nullable en `service_requests`, sin modificar trabajos existentes. Actualizar con `alembic upgrade head` desde `backend`. El arranque habitual del contenedor aplica las migraciones.
+- `delivery_document` conserva estudio, contacto y condiciones. `delivery_file` conserva el identificador, nombre, fecha, tamaño y referencia interna del objeto privado. La API sólo expone nombre, fecha, tamaño e identificador, sin claves de almacenamiento.
+- `POST /api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document/file` exige sesión, CSRF, permisos de escritura y revisión vigente. Recibe la revisión, el archivo esperado y el idioma. Incrementa la revisión y registra el evento en el historial del trabajo.
+- `GET /api/v1/organizations/{organization_id}/jobs/{request_id}/delivery-document/files/{file_id}` consulta el archivo guardado. Con `?download=1`, lo entrega como adjunto. En ambos casos exige acceso al trabajo; los lectores autorizados pueden descargar, pero no generar. La revocación del acceso impide nuevas descargas.
+- La descarga devuelve `application/pdf`, una disposición segura y `no-store`. No entrega URLs públicas o permanentes del bucket. Un identificador reemplazado deja de resolver, evitando que una dirección antigua descargue silenciosamente un archivo diferente.
+- [ReportLab 5.1.0](https://pypi.org/project/reportlab/5.1.0/) genera el PDF y el QR en el backend. Se usan sus fuentes incluidas y se escapan los textos antes de componer el documento. No requiere navegador headless, llamadas externas ni un servicio de PDF pago.
+- Los objetos usan el almacenamiento privado existente: local en desarrollo y S3 compatible en producción. `Storage.put` admite el MIME PDF conservando JPEG como valor predeterminado para las fotos. Si el bucket privado restringe los tipos MIME permitidos, debe admitir `application/pdf`. El bucket público de imágenes no recibe estos archivos. Los PDF tienen un máximo de 2 MiB; su tamaño se suma al consumo del estudio y se comprueban los límites activos del plan antes de guardarlos.
+
+No hay envío automático, firma de acuerdos, vencimiento de alojamiento, cobros ni renovación automática en esta funcionalidad.
 
 
-## Identificación y nombre de archivo
+## Verificación de esta entrega
 
-Dentro de **PDF de entrega**, una ficha compacta muestra automáticamente el cliente, el título del trabajo, el estudio/fotógrafo responsable y la referencia completa del trabajo. Cliente, título y referencia salen del trabajo que se está consultando, sin volver a seleccionarlos ni escribirlos. El estudio usa el nombre activo al preparar un documento nuevo y conserva el responsable guardado para documentos ya preparados. Al guardar un cambio de responsable, la ficha y las próximas copias muestran el dato actualizado.
+Compilación de producción, TypeScript, tipos de API y catálogo español/portugués aprobados. Pasaron 76 pruebas de backend seleccionadas (PDF, datos de entrega, suscripciones, fotos, publicaciones, trabajos y despliegue) y los dos casos del trabajo completo en Chrome de escritorio y Pixel 7 emulado. Las pruebas usan PostgreSQL y almacenamiento temporales.
 
-El PDF contiene la misma identificación, además de las fechas de emisión y entrega cuando corresponde. La vista previa sugiere un nombre como `Entrega_Remax_Casa-Palermo_2026-11-12_a1b2c3d4.pdf`, con cliente, trabajo, fecha local de emisión y los primeros ocho caracteres de la referencia. Se normalizan los acentos y los caracteres que no convienen en un nombre de archivo; los nombres originales siguen intactos dentro del documento. La referencia completa permanece visible en el PDF.
+Se comprobaron el PDF binario guardado, el MIME para S3, la igualdad de bytes en descargas repetidas, persistencia después de recargar y editar condiciones, reemplazo confirmado y cancelado, concurrencia, fallo de almacenamiento conservando el archivo anterior, permisos/revocación, cuota, ubicación publicada y conservación después de despublicar o quitar al cliente. En el navegador se descargó el archivo real y se comprobó que los datos queden plegados. También se renderizó el PDF descargado y se decodificó su QR, que coincidió con el enlace de la visita.
 
-El título temporal de impresión usa ese nombre para que el navegador pueda proponerlo al guardar. El nombre final se puede elegir en el diálogo del navegador; no es una descarga directa con nombre obligatorio. Al cerrar la vista previa se restaura el título de la página.
-
-Los datos guardados siguen permitiendo volver a abrir la vista previa y generar otra copia. No se almacena un archivo PDF ni un historial de versiones del documento en el servidor. Esta mejora no requiere migraciones ni dependencias nuevas.
-
-
-Validación de identificación: build de producción, TypeScript y catálogo español/portugués aprobados. Las dos pruebas de permisos/persistencia del documento y los dos casos del trabajo completo en Chrome de escritorio y Pixel 7 emulado pasaron, con PostgreSQL y almacenamiento temporales. Se verificaron la ficha antes y después de recargar, el estudio precompletado y el responsable guardado, las fechas, el nombre sugerido con títulos que contienen comillas y símbolos, el título de impresión/restauración, el PDF generado, el QR y los enlaces al recorrido y Google Maps. También se revisaron la vista previa móvil y la impresión.
+La migración aditiva se aplicó al PostgreSQL local. En Render se aplicará con el arranque del contenedor al desplegar el commit. No se generaron ni reemplazaron archivos de trabajos reales durante las pruebas.

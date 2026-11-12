@@ -2,6 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from fastapi.responses import Response
 from app.db.session import get_db
 from app.modules.auth.models import User
 from app.modules.auth.security import current_user, require_csrf
@@ -10,7 +11,7 @@ from app.modules.studio import service, work_service, notifications, contact
 from app.modules.organizations.service import organization_access
 from app.modules.studio.models import ServiceEvent, ServiceRequest
 from app.modules.studio.schemas import (AssignWorkInput, DeliveryInput, EventResponse, ServiceInput,
-    ServiceReceipt, ServiceResponse, TransitionInput, WorkCreate, WorkDetails, WorkResponse, Status, DeliveryDocumentInput)
+    ServiceReceipt, ServiceResponse, TransitionInput, WorkCreate, WorkDetails, WorkResponse, Status, DeliveryDocumentInput, GenerateDeliveryFile)
 
 router = APIRouter(tags=["studio"])
 
@@ -117,6 +118,27 @@ def delivery(organization_id: UUID, request_id: UUID, data: DeliveryInput, db: S
 def save_delivery_document(organization_id: UUID, request_id: UUID, data: DeliveryDocumentInput,
                            db: Session = Depends(get_db), user: User = Depends(current_user)):
     return work_service.save_delivery_document(db, user, organization_id, request_id, data)
+
+
+@router.post('/organizations/{organization_id}/jobs/{request_id}/delivery-document/file', response_model=WorkResponse,
+             dependencies=[Depends(require_csrf)])
+def generate_delivery_file(organization_id: UUID, request_id: UUID, data: GenerateDeliveryFile, request: Request,
+                           db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.studio.delivery_pdf import generate
+    return generate(db, user, organization_id, request_id, data, request.headers.get('origin'))
+
+
+@router.get('/organizations/{organization_id}/jobs/{request_id}/delivery-document/files/{file_id}', response_class=Response,
+            responses={200: {'description': 'Archivo PDF de entrega guardado', 'content': {'application/pdf': {'schema': {'type': 'string', 'format': 'binary'}}}}})
+def get_delivery_file(organization_id: UUID, request_id: UUID, file_id: UUID, download: bool = False,
+                      db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.studio.delivery_pdf import read
+    saved, content = read(db, user, organization_id, request_id, file_id)
+    disposition = 'attachment' if download else 'inline'
+    return Response(content, media_type='application/pdf', headers={
+        'Content-Disposition': f'{disposition}; filename="{saved["filename"]}"',
+        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+    })
 
 
 @router.post('/public/studios/{token}/service-requests', response_model=ServiceReceipt, status_code=201, dependencies=[Depends(require_csrf)])

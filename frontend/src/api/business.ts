@@ -1,4 +1,4 @@
-import { getSession, request } from './client'
+import { apiResourceUrl, getSession, request } from './client'
 import type { components } from './schema'
 
 export type Organization = components['schemas']['OrganizationResponse']
@@ -58,5 +58,7 @@ export const businessApi = {
   workStatus: (org: string, id: string, data: components['schemas']['TransitionInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/status`, 'PUT', data),
   workEvents: (org: string, id: string) => request<components['schemas']['EventResponse'][]>(`/organizations/${org}/jobs/${id}/events`),
   deliverWork: (org: string, id: string, data: components['schemas']['DeliveryInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/delivery`, 'POST', data),
+  generateDeliveryFile: (org: string, id: string, data: components['schemas']['GenerateDeliveryFile']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/delivery-document/file`, 'POST', data),
+  deliveryFileUrl: (org: string, id: string, file: string, download = false) => apiResourceUrl(`/api/v1/organizations/${org}/jobs/${id}/delivery-document/files/${file}${download ? '?download=1' : ''}`),
   saveDeliveryDocument: (org: string, id: string, data: components['schemas']['DeliveryDocumentInput']) => request<WorkJob>(`/organizations/${org}/jobs/${id}/delivery-document`, 'PUT', data),
 }

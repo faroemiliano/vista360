@@ -34,9 +34,9 @@ class S3Storage:
         finally:
             body.close()
 
-    def put(self, key: str, source: Path) -> None:
+    def put(self, key: str, source: Path, content_type: str = 'image/jpeg') -> None:
         with source.open("rb") as body:
-            self.client.put_object(Bucket=self.bucket, Key=key, Body=body, ContentType="image/jpeg",
+            self.client.put_object(Bucket=self.bucket, Key=key, Body=body, ContentType=content_type,
                                    CacheControl="private, max-age=300")
 
     def delete(self, key: str) -> None:
