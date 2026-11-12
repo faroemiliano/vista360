@@ -1,11 +1,19 @@
 import { expect } from '@playwright/test'
 import type { Page, TestInfo } from '@playwright/test'
 
-export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link: string, maps: string) {
+export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link: string, maps: string, clientName: string, jobTitle: string) {
+  const jobId = new URL(page.url()).pathname.split('/').pop()!
+  const originalTitle = await page.title()
   const summary = page.locator('summary').filter({ hasText: /^PDF de entrega$/ })
   await summary.click()
   await expect(page.getByRole('button', { name: 'Ver PDF de entrega', exact: true })).toBeDisabled()
   const form = page.getByRole('form', { name: 'Datos del PDF de entrega', exact: true })
+  await expect(form.getByLabel('Estudio o fotógrafo responsable', { exact: true })).toHaveValue('Mi estudio')
+  const identity = page.locator('dl[aria-label="Identificación del documento"]')
+  await expect(identity.getByText(clientName, { exact: true })).toBeVisible()
+  await expect(identity.getByText(jobTitle, { exact: true })).toBeVisible()
+  await expect(identity.getByText(jobId, { exact: true })).toBeVisible()
+  await expect(identity.getByText('Mi estudio', { exact: true })).toBeVisible()
   const conditions = 'Alojamiento incluido: 6 meses desde la entrega.\nUna ronda de ajustes de textos y conexiones durante los primeros 7 días.\nNuevas fotografías y renovaciones se cotizan por separado.'
   await form.getByLabel('Estudio o fotógrafo responsable', { exact: true }).fill('Emiliano Fotografía 360°')
   await form.getByLabel('Contacto para el cliente', { exact: true }).fill('estudio@example.com · +54 9 11 2345 6789')
@@ -18,9 +26,21 @@ export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link
   await page.reload()
   await expect(summary).toBeVisible()
   if (!(await summary.evaluate(element => (element.parentElement as HTMLDetailsElement).open))) await summary.click()
+  await expect(identity.getByText('Emiliano Fotografía 360°', { exact: true })).toBeVisible()
   await expect(form.getByLabel('Condiciones de entrega', { exact: true })).toHaveValue(conditions)
   await page.getByRole('button', { name: 'Ver PDF de entrega', exact: true }).click()
   const preview = page.getByRole('dialog', { name: 'Vista previa del PDF de entrega', exact: true })
+  const printedIdentity = preview.locator('dl[aria-label="Identificación del documento"]')
+  await expect(printedIdentity.getByText(clientName, { exact: true })).toBeVisible()
+  await expect(printedIdentity.getByText(jobTitle, { exact: true })).toBeVisible()
+  await expect(printedIdentity.getByText(jobId, { exact: true })).toBeVisible()
+  await expect(printedIdentity.getByText('Emiliano Fotografía 360°', { exact: true })).toBeVisible()
+  await expect(printedIdentity.getByText('Fecha de emisión', { exact: true })).toBeVisible()
+  await expect(printedIdentity.getByText('Fecha de entrega', { exact: true })).toBeVisible()
+  const filename = (await preview.locator('[data-delivery-filename]').textContent())!
+  expect(filename).toMatch(/^Entrega_Estudio-(?:mobile-)?chromium-\d+_Trabajo-Hotel-Spa-(?:mobile-)?chromium-\d+_\d{4}-\d{2}-\d{2}_[a-f\d]{8}\.pdf$/)
+  expect(filename).toContain(`_${jobId.slice(0, 8)}.pdf`)
+  await expect(page).toHaveTitle(filename.slice(0, -4))
   await expect(preview.getByRole('link', { name: 'Abrir recorrido 360°', exact: true })).toHaveAttribute('href', link)
   await expect(preview.getByRole('link', { name: 'Ver indicaciones en Google Maps', exact: true })).toHaveAttribute('href', maps)
   await expect(preview.getByText(conditions, { exact: true })).toBeVisible()
@@ -42,7 +62,7 @@ export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link
   await preview.getByRole('button', { name: 'Imprimir / Guardar PDF', exact: true }).click()
   await expect(page.locator('body')).toHaveAttribute('data-print-requested', 'true')
   if (testInfo.project.name === 'chromium') {
-    const pdf = await page.pdf({ path: testInfo.outputPath('ejemplo-entrega.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true })
+    const pdf = await page.pdf({ path: testInfo.outputPath(filename), format: 'A4', printBackground: true, preferCSSPageSize: true })
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-')
     expect(pdf.toString('latin1')).toContain(link)
     expect(pdf.toString('latin1')).toContain(maps)
@@ -54,12 +74,16 @@ export async function checkDeliveryDocument(page: Page, testInfo: TestInfo, link
   }
   await preview.getByRole('button', { name: 'Cerrar vista previa', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Ver PDF de entrega', exact: true })).toBeFocused()
+  await expect(page).toHaveTitle(originalTitle)
   await page.getByRole('combobox', { name: 'Idioma', exact: true }).selectOption('pt-BR')
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR')
   await page.getByRole('button', { name: 'Ver PDF de entrega', exact: true }).click()
   const portuguese = page.getByRole('dialog', { name: 'Prévia do PDF de entrega', exact: true })
   await expect(portuguese.getByRole('heading', { name: 'Condições de entrega', exact: true })).toBeVisible()
   await expect(portuguese.getByText(conditions, { exact: true })).toBeVisible()
+  await expect(portuguese.locator('dl[aria-label="Identificação do documento"]').getByText(clientName, { exact: true })).toBeVisible()
+  await expect(portuguese.getByText('Data de emissão', { exact: true })).toBeVisible()
+  await expect(portuguese.getByText('Referência do trabalho', { exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(portuguese).toHaveCount(0)
   await page.getByRole('combobox', { name: 'Idioma', exact: true }).selectOption('es')

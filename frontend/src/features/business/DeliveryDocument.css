@@ -1,6 +1,6 @@
 .delivery-document-portal { position: fixed; inset: 0; z-index: 100; overflow: auto; background: #0b1223ee; padding: 24px 16px; }
 .delivery-document-toolbar { max-width: 860px; margin: 0 auto 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; color: #eef4ff; }
-.delivery-document-toolbar p { font-size: 12px; line-height: 1.6; max-width: 460px; margin-top: 6px; }
+.delivery-document-toolbar p { font-size: 12px; line-height: 1.6; max-width: 460px; margin-top: 6px; overflow-wrap: anywhere; }
 .delivery-document-paper { box-sizing: border-box; max-width: 794px; margin: auto; padding: 42px; background: #fff; color: #17313a; font: 14px/1.6 Arial, Helvetica, sans-serif; box-shadow: 0 16px 60px #0005; overflow-wrap: anywhere; }
 .delivery-document-paper * { box-sizing: border-box; }
 .delivery-document-paper p { margin: 0; }
@@ -13,7 +13,9 @@
 .delivery-document-studio { font-size: 16px; font-weight: bold; }
 .delivery-document-tag { color: #48626c; font-size: 12px; }
 .delivery-document-intro { padding: 28px 0 24px; }
-.delivery-document-date { color: #61717b; font-size: 11px; margin-top: 8px !important; }
+.delivery-document-identity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 18px 0 0; border-top: 1px solid #d6e2e5; padding-top: 16px; font-size: 11px; }
+.delivery-document-identity dt { color: #61717b; font-size: 10px; }
+.delivery-document-identity dd { margin: 3px 0 0; font-weight: bold; overflow-wrap: anywhere; }
 .delivery-document-visit { display: grid; grid-template-columns: minmax(0, 1fr) 145px; gap: 24px; align-items: center; border: 1px solid #b8d5d9; border-radius: 12px; padding: 20px; break-inside: avoid; }
 .delivery-document-number { color: #16828c; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
 .delivery-document-action { display: inline-block; margin-top: 12px; color: #08717d; font-weight: bold; text-decoration: underline; }
@@ -34,6 +36,7 @@
   .delivery-document-visit { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; }
   .delivery-document-qr { justify-self: center; }
   .delivery-document-tag { display: none; }
+  .delivery-document-identity { grid-template-columns: minmax(0, 1fr); }
 }
 @page { size: A4; margin: 16mm; }
 @media print {

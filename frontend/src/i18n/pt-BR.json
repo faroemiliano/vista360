@@ -1274,5 +1274,9 @@
   "No se pudo abrir pantalla completa. Revisá los permisos de la página que contiene el recorrido.": "Não foi possível abrir em tela cheia. Verifique as permissões da página que contém o tour.",
   "Ambiente": "Ambiente",
   "La dirección no corresponde a una página de Vision360. Revisá el enlace o volvé al inicio.": "O endereço não corresponde a uma página do Vision360. Confira o link ou volte ao início.",
-  "Volver al inicio": "Voltar ao início"
+  "Volver al inicio": "Voltar ao início",
+  "Identificación del documento": "Identificação do documento",
+  "Referencia del trabajo": "Referência do trabalho",
+  "Nombre de archivo sugerido": "Nome de arquivo sugerido",
+  "Los datos del documento quedan asociados a este trabajo. Podés volver a abrirlo y generar otra copia.": "Os dados do documento ficam associados a este trabalho. Você pode abri-lo novamente e gerar outra cópia."
 }

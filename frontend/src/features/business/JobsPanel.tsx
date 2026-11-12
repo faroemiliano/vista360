@@ -14,10 +14,10 @@ import { statusName, statuses } from './workflow'
 import { useNavigationDirty } from '../../app/navigation'
 import type { StudioRoute } from '../../app/navigation'
 
-export function JobsPanel({ workspaceId, onExpired, initialOrganizationId, onOrganizationChange, mode = 'work', requestWorkspaceId, initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
+export function JobsPanel({ workspaceId, studioName, onExpired, initialOrganizationId, onOrganizationChange, mode = 'work', requestWorkspaceId, initialRequestId, initialWorkJob, onOpenWork, initialCreate = false, initialJobId, initialStep, initialFilter = '', initialOffset = 0, onRouteChange }: {
   initialJobId?: string; initialStep?: WorkStep; initialFilter?: string; initialOffset?: number;
   onRouteChange?: (changes: Partial<StudioRoute>, replace?: boolean) => boolean;
-  workspaceId: string; initialCreate?: boolean;
+  workspaceId: string; studioName: string; initialCreate?: boolean;
   staff: boolean; onExpired: () => void;
   initialOrganizationId?: string; onOrganizationChange?: (id: string) => void; mode?: 'work' | 'requests';
   requestWorkspaceId?: string; initialRequestId?: string; initialWorkJob?: WorkJob | null; onOpenWork?: (job: WorkJob) => void
@@ -115,7 +115,7 @@ export function JobsPanel({ workspaceId, onExpired, initialOrganizationId, onOrg
     {(['photos', 'connections', 'review'] as WorkStep[]).includes(step) && selected.tour_id ? <>
       <ToursPanel key={selected.tour_id} organization={organization} initialTourId={selected.tour_id} onExpired={onExpired}
         onPublicationChange={async () => setSelected(await businessApi.work(orgId, selected.id))} guidedStep={step as TourStep} onStepChange={(next) => void go(next)} onDirtyChange={setUnsaved} />
-    </> : <WorkDetail hasUnsavedChanges={unsaved} onDirtyChange={setUnsaved} job={selected} organization={organization} step={step} onStepChange={(next) => void go(next)} onChanged={setSelected} onEditor={() => void go('photos')} />}
+    </> : <WorkDetail studioName={studioName} hasUnsavedChanges={unsaved} onDirtyChange={setUnsaved} job={selected} organization={organization} step={step} onStepChange={(next) => void go(next)} onChanged={setSelected} onEditor={() => void go('photos')} />}
   </section>
   return <section>
     <p className="eyebrow mb-3">{t("Tu servicio, de principio a fin")}</p><h2 className="text-3xl">{mode === 'requests' ? t("Solicitudes de digitalización") : t("Trabajos")}</h2><p className="muted mt-3">{mode === 'requests' ? t("Consultas de personas y empresas interesadas en tu servicio. No necesitan estar registradas como clientes.") : t("Organizá la visita, prepará el recorrido y entregá el enlace a la inmobiliaria.")}</p>

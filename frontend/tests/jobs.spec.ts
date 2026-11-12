@@ -153,7 +153,7 @@ test('trabajo manual guiado conecta ida y vuelta, publica y registra entrega sin
   await page.getByRole('button', { name: 'Registrar entrega y finalizar', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Entrega registrada', exact: true })).toBeVisible()
   await expect(page.locator('.badge').first()).toHaveText('FINALIZADO')
-  await checkDeliveryDocument(page, testInfo, publicLink, expectedMaps)
+  await checkDeliveryDocument(page, testInfo, publicLink, expectedMaps, `Estudio ${stamp}`, title)
   await checkEmbedding(page, testInfo, publicLink)
   await page.screenshot({ path: testInfo.outputPath('trabajo-entregado.png'), fullPage: true })
   await steps.getByRole('button', { name: '2 Visita', exact: true }).click()
