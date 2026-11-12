@@ -42,7 +42,7 @@ export interface ViewerCallbacks {
 }
 
 export interface PanoramaAdapter {
-  loadScene: (scene: PanoramaScene) => Promise<void>
+  loadScene: (scene: PanoramaScene, options?: { preferredWidth?: number; preserveView?: boolean }) => Promise<void>
   setView: (view: Coordinates & { hfov?: number }) => void
   getView: () => (Coordinates & { hfov: number }) | null
   zoom: (delta: number) => void

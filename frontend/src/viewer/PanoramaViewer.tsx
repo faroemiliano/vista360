@@ -23,6 +23,9 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
   const motion = useRef<ReturnType<typeof createMotionControl> | null>(null)
   const [motionState, setMotionState] = useState<MotionState>({ mode: 'off', message: '' })
   const [motionDevice] = useState(() => navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
+  const [quality, setQuality] = useState<'auto' | 'high'>('auto')
+  const preferredWidth = quality === 'auto' && motionDevice ? 2048 : undefined
+  const previousLoad = useRef<{ sceneId: string; quality: string } | null>(null)
   const [motionUnavailable] = useState(motionAvailability)
   const [loadStatus, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [readySceneId, setReadySceneId] = useState<string | null>(null)
@@ -63,7 +66,11 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
     return () => { motion.current?.destroy(); motion.current = null; adapter.current?.destroy(); adapter.current = null }
   }, [attempt])
 
-  useEffect(() => { void adapter.current?.loadScene(scene) }, [scene, attempt])
+  useEffect(() => {
+    const preserveView = previousLoad.current?.sceneId === scene.id && previousLoad.current.quality !== quality
+    previousLoad.current = { sceneId: scene.id, quality }
+    void adapter.current?.loadScene(scene, { preferredWidth, preserveView })
+  }, [scene, attempt, quality, preferredWidth])
   useEffect(() => { adapter.current?.setPicking(picking) }, [picking, attempt])
   useEffect(() => {
     if (previewPoint !== undefined) setPicking(hasPreviewPoint)
@@ -82,7 +89,7 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
           <div className="viewer-message" role="alert">
             <p>{t(error)}</p>
             <button onClick={() => {
-              if (adapter.current) void adapter.current.loadScene(scene)
+              if (adapter.current) void adapter.current.loadScene(scene, { preferredWidth })
               else setAttempt((value) => value + 1)
             }}>{t("Reintentar")}</button>
           </div>
@@ -90,6 +97,12 @@ export function PanoramaViewer({ scene, onNavigate, experimentalTools = true, on
       </div>
       <div className="viewer-controls">
       <div className="viewer-toolbar" aria-label={t("Controles del panorama")}>
+        {motionDevice && <label className="viewer-quality">{t('Calidad')}{' '}
+          <select aria-label={t('Calidad del panorama')} value={quality} disabled={status !== 'ready'} onChange={event => setQuality(event.target.value as 'auto' | 'high')}>
+            <option value="auto">{t('Fluida (recomendada)')}</option>
+            <option value="high">{t('Alta calidad')}</option>
+          </select>
+        </label>}
         {motionDevice && <>
           <button disabled={status !== 'ready' || Boolean(motionUnavailable) || motionState.mode === 'waiting'} aria-pressed={motionState.mode === 'active'} onClick={() => {
             if (motionState.mode === 'active') motion.current?.stop()

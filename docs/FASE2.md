@@ -56,7 +56,7 @@ Hotspots con botones accesibles y textos mediante `textContent`; no se inyecta H
 
 ## Tamaños y memoria
 
-El adaptador consulta `MAX_TEXTURE_SIZE` antes de descargar y escoge la fuente de mayor tamaño compatible, con máximo 4096 para esta prueba. Si el límite no permite 4096, usa 2048. Si ninguna variante es compatible, muestra un error. El contexto usado para consultar el límite se libera inmediatamente.
+El adaptador consulta `MAX_TEXTURE_SIZE` antes de descargar. En escritorio escoge la fuente de mayor tamaño compatible, con máximo 4096 para esta prueba. En celular comienza con la mayor variante compatible de hasta 2048 y permite elegir «Alta calidad». Si sólo hay variantes mayores, elige la menor compatible. Si ninguna variante es compatible, muestra un error. El contexto usado para consultar el límite se libera inmediatamente. Ver [rendimiento del visor en celular](VISOR_MOVIL.md).
 
 | Fuente | Píxeles | Buffer RGBA estimado |
 | --- | --- | --- |

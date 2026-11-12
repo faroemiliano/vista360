@@ -362,3 +362,54 @@ test('movimiento reducido omite acercamiento y entrada animada', async ({ page }
   expect(await page.evaluate(() => (window as unknown as { __transitionStates: string[] }).__transitionStates)).toEqual([])
   expect(await page.locator('.panorama-host').evaluate((host) => host.getAnimations().length)).toBe(0)
 })
+
+test('optimiza la foto según dispositivo y no vuelve a subirla a la GPU al mover la cámara', async ({ page, isMobile }) => {
+  await page.addInitScript(() => {
+    const state = { uploads: 0, viewer: null as any }
+    ;(window as any).__qualityTest = state
+    const upload = WebGLRenderingContext.prototype.texImage2D
+    WebGLRenderingContext.prototype.texImage2D = function (...args: any[]) {
+      state.uploads++
+      return (upload as any).apply(this, args)
+    }
+    let pannellum: any
+    Object.defineProperty(window, 'pannellum', { configurable: true, get: () => pannellum, set(value) {
+      const factory = value.viewer
+      value.viewer = (...args: any[]) => { state.viewer = factory(...args); return state.viewer }
+      pannellum = value
+    } })
+  })
+  const requests: string[] = []
+  page.on('request', request => { if (request.url().includes('/panoramas/')) requests.push(request.url()) })
+  await page.goto('/visor'); await ready(page)
+  // StrictMode cancela la primera carga al verificar el desmontaje inicial.
+  expect([...new Set(requests)]).toHaveLength(1)
+  expect(requests[0]).toContain(isMobile ? 'atrio-2048' : 'atrio-4096')
+  const quality = page.getByRole('combobox', { name: 'Calidad del panorama' })
+  if (isMobile) await expect(quality).toHaveValue('auto')
+  else await expect(quality).toHaveCount(0)
+  await page.locator('.panorama canvas').evaluate(canvas => { canvas.dataset.qualityCanvas = 'original' })
+  const uploads = await page.evaluate(() => (window as any).__qualityTest.uploads)
+  expect(uploads).toBeGreaterThan(0)
+  await page.evaluate(() => (window as any).__qualityTest.viewer.lookAt(12, 35, 90, false))
+  await expect.poll(() => page.evaluate(() => (window as any).__qualityTest.viewer.getYaw())).toBeCloseTo(35)
+  await page.getByRole('button', { name: 'Acercar', exact: true }).click()
+  await expect.poll(() => page.evaluate(() => (window as any).__qualityTest.viewer.getHfov())).toBeCloseTo(80)
+  expect(await page.evaluate(() => (window as any).__qualityTest.uploads)).toBe(uploads)
+  if (!isMobile) return
+  await quality.selectOption('high'); await ready(page)
+  expect(requests.at(-1)).toContain('atrio-4096')
+  await expect(page.locator('canvas[data-quality-canvas="original"]')).toHaveCount(1)
+  const preserved = await page.evaluate(() => {
+    const viewer = (window as any).__qualityTest.viewer
+    return [viewer.getYaw(), viewer.getPitch(), viewer.getHfov()]
+  })
+  expect(preserved[0]).toBeCloseTo(35)
+  expect(preserved[1]).toBeCloseTo(12)
+  expect(preserved[2]).toBeCloseTo(80)
+  await page.getByRole('button', { name: 'Sala de prueba', exact: true }).click(); await ready(page)
+  expect(requests.at(-1)).toContain('sala-4096')
+  await quality.selectOption('auto'); await ready(page)
+  expect(requests.at(-1)).toContain('sala-2048')
+  await expect(page.locator('canvas[data-quality-canvas="original"]')).toHaveCount(1)
+})

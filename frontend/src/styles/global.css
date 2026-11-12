@@ -180,6 +180,8 @@
 .viewer-frame[data-status="loading"] .panorama { pointer-events: none; }
 .viewer-toolbar { margin-block: .75rem; }
 .viewer-toolbar button { font-size: .75rem; }
+.viewer-quality { display: flex; align-items: center; gap: .375rem; flex-shrink: 0; font-size: .75rem; }
+.viewer-quality select { width: auto; max-width: 10rem; padding: .5rem; font-size: .75rem; }
 .viewer-hint, .scope-note { color: #a4b3cc; font-size: .8rem; }
 .information { margin-top: 1rem; padding: 1rem; background: #142035; border: 1px solid #7ceaff30; border-radius: .75rem; }
 .information button { margin-top: 1rem; }

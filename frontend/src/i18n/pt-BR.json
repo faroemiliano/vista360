@@ -1301,5 +1301,9 @@
   "Archivo PDF no encontrado": "Arquivo PDF não encontrado",
   "No se pudo abrir el PDF guardado. Intentá nuevamente": "Não foi possível abrir o PDF salvo. Tente novamente",
   "Falta configurar la dirección pública de la aplicación": "É necessário configurar o endereço público do aplicativo",
-  "Se generó y guardó el archivo PDF de entrega.": "O arquivo PDF de entrega foi gerado e salvo."
+  "Se generó y guardó el archivo PDF de entrega.": "O arquivo PDF de entrega foi gerado e salvo.",
+  "Calidad del panorama": "Qualidade do panorama",
+  "Fluida (recomendada)": "Fluida (recomendada)",
+  "Alta calidad": "Alta qualidade",
+  "Calidad": "Qualidade"
 }

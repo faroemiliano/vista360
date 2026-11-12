@@ -7,10 +7,11 @@ import type {
 
 const normalizeYaw = (yaw: number) => ((yaw + 180) % 360 + 360) % 360 - 180
 
-export function selectSource(sources: readonly PanoramaSource[], maxTextureSize: number) {
-  return [...sources]
+export function selectSource(sources: readonly PanoramaSource[], maxTextureSize: number, preferredWidth = maxTextureSize) {
+  const candidates = [...sources]
     .filter((source) => source.width <= maxTextureSize && source.height <= maxTextureSize)
-    .sort((a, b) => b.width - a.width)[0]
+    .sort((a, b) => b.width - a.width)
+  return candidates.find(source => source.width <= preferredWidth) ?? candidates.at(-1)
 }
 
 function textureLimit(): number {
@@ -188,8 +189,10 @@ export function createPannellumAdapter(
     })
   }
 
-  async function loadScene(scene: PanoramaScene) {
+  async function loadScene(scene: PanoramaScene, options?: { preferredWidth?: number; preserveView?: boolean }) {
     if (destroyed) return
+    const preserved = options?.preserveView && activeSceneId === scene.id && viewer?.isLoaded()
+      ? { yaw: viewer.getYaw(), pitch: viewer.getPitch(), hfov: viewer.getHfov() } : null
     const current = ++generation
     const departure = walk?.target === scene.id && walk.origin === activeSceneId ? walk : null
     walk = null
@@ -197,7 +200,7 @@ export function createPannellumAdapter(
     controller?.abort()
     loading = true
     callbacks.onLoading(scene.id)
-    const source = selectSource(scene.sources, maxTextureSize)
+    const source = selectSource(scene.sources, maxTextureSize, options?.preferredWidth)
     if (!source) {
       loading = false; clearViewer()
       callbacks.onError(t("No hay una imagen compatible con el límite de textura del dispositivo."))
@@ -229,12 +232,15 @@ export function createPannellumAdapter(
       if (destroyed || current !== generation) return
       const previousSceneId = activeSceneId
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const fadeDuration = reducedMotion || !viewer ? 0 : 420
+      const fadeDuration = reducedMotion || !viewer || preserved ? 0 : 420
       const config = {
-        type: 'equirectangular', panorama: image, dynamic: true, dynamicUpdate: true,
-        yaw: scene.initialView.yaw, pitch: scene.initialView.pitch,
+        // Una foto estática se carga una vez en la GPU. dynamic=true volvería a
+        // subir todos sus píxeles en cada frame de arrastre o de los sensores.
+        type: 'equirectangular', panorama: objectUrl, dynamic: false, dynamicUpdate: false,
+        ignoreGPanoXMP: true,
+        yaw: preserved?.yaw ?? scene.initialView.yaw, pitch: preserved?.pitch ?? scene.initialView.pitch,
         // Apertura amplia por defecto; se conserva la dirección inicial guardada.
-        hfov: 110, minHfov: 50, maxHfov: 110,
+        hfov: preserved?.hfov ?? 110, minHfov: 50, maxHfov: 110,
         mouseZoom: false, doubleClickZoom: false, sceneFadeDuration: fadeDuration,
         hotSpots: scene.hotspots.map(hotspotConfig),
       }
@@ -292,6 +298,8 @@ export function createPannellumAdapter(
         }
       })
       viewer.loadScene(scene.id)
+      // Pannellum lee la URL de manera asíncrona: conservarla hasta terminar.
+      await renderPending
     } catch (error) {
       renderDone?.()
       if (!destroyed && current === generation && !abort.signal.aborted) {
@@ -313,7 +321,11 @@ export function createPannellumAdapter(
   return {
     loadScene, coordinatesAt,
     getView: () => viewer?.isLoaded() ? { yaw: normalizeYaw(viewer.getYaw()), pitch: viewer.getPitch(), hfov: viewer.getHfov() } : null,
-    setView: (view) => viewer?.lookAt(view.pitch, normalizeYaw(view.yaw), view.hfov, false),
+    setView: (view) => {
+      // La inercia de un arrastre previo no debe competir con sensores o centrado.
+      viewer?.stopMovement()
+      viewer?.lookAt(view.pitch, normalizeYaw(view.yaw), view.hfov, false)
+    },
     zoom: (delta) => {
       if (viewer?.isLoaded()) viewer.setHfov(Math.max(50, Math.min(110, viewer.getHfov() + delta)), false)
     },

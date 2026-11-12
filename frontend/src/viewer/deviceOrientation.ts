@@ -56,7 +56,8 @@ export function createMotionControl(options: {
     if (!options.canUpdate()) { recenter(); return }
     const view = options.getView()
     if (!view) { recenter(); return }
-    const amount = 1 - Math.exp(-(lastTime ? Math.min(100, time - lastTime) : 16) / 65)
+    // Suavizar el ruido del sensor con menos demora al acompañar el teléfono.
+    const amount = 1 - Math.exp(-(lastTime ? Math.min(100, time - lastTime) : 16) / 30)
     lastTime = time
     const yawDelta = normalize(target.yaw - view.yaw), pitchDelta = target.pitch - view.pitch
     options.setView({ yaw: normalize(view.yaw + yawDelta * amount), pitch: clampPitch(view.pitch + pitchDelta * amount) })

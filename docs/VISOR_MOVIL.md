@@ -65,3 +65,23 @@ TypeScript y compilación de producción aprobados. Los 16 casos de orientación
 También pasaron los 14 casos seleccionados del visor existente en escritorio y móvil (36,6 s): carga entre orígenes, hotspots, navegación rápida, WebGL, CORS, transiciones y movimiento reducido. No hubo cambios de backend, base de datos ni dependencias.
 
 La prueba física en Android/Poco X6 Pro y Safari/iPhone queda pendiente: la emulación comprueba el software, no la precisión y sensibilidad del sensor real ni los diálogos del sistema operativo.
+
+## Optimización del rendimiento
+
+El visor compartido por el editor, el recorrido público y la inserción iframe usa estas reglas:
+
+- En dispositivos táctiles o con puntero grueso, comienza en «Fluida (recomendada)»: elige la mayor variante compatible de hasta 2048 px de ancho. Si sólo hay variantes mayores, utiliza la menor compatible disponible. No descarga variantes de ambientes inactivos.
+- «Alta calidad» permite usar la mayor variante que admita la GPU. La selección se conserva al cambiar de ambiente mientras el visor está abierto; abrir nuevamente el recorrido vuelve al valor recomendado. En escritorio se conserva la selección automática de mayor resolución compatible.
+- Cambiar la calidad conserva dirección y zoom, reutiliza el canvas y pausa/reanuda los sensores durante la carga. No cambia los originales ni las versiones guardadas o publicadas.
+- Las fotos se presentan como imágenes estáticas en Pannellum: se carga la textura al abrir el ambiente, sin volver a subir todos los píxeles a la GPU en cada frame de movimiento. La URL temporal permanece disponible hasta que termina la carga nativa y se libera después.
+- El filtro del sensor mantiene suavizado, con constante de tiempo de 30 ms en lugar de 65 ms. Continúan los permisos explícitos, centrado, límites de inclinación, continuidad entre ambientes y limpieza al ocultar/desmontar el visor.
+
+Una variante 2048×1024 requiere aproximadamente 8 MiB por buffer RGBA frente a 32 MiB para 4096×2048. Esto no equivale al uso total de memoria ni garantiza un número de FPS. La fluidez final depende del teléfono, navegador, resolución de pantalla y temperatura.
+
+### Comparación manual
+
+Después del despliegue, abrir el enlace público en el teléfono, recargar y recorrer varios ambientes usando arrastre y «Mirar con el celular». Comparar «Fluida» con «Alta calidad», incluyendo cambios de ambiente, inclinación y vuelta al visor tras ocultar la pestaña. Comprobar que las flechas y el zoom siguen respondiendo. Las pruebas automatizadas emulan un celular; no reemplazan esta prueba física.
+
+### Verificación de la optimización
+
+Compilación de producción, TypeScript y catálogo español/portugués verificados. Pasaron 51 casos de visor, orientación e iframe entre Chrome de escritorio y emulación móvil; el caso de gesto táctil se omite en escritorio. Se comprobó con instrumentación de WebGL que mover y acercar la vista no vuelve a ejecutar `texImage2D`, además de la descarga de la variante adecuada, cambio de calidad conservando encuadre/canvas, continuidad de sensores y respuesta del filtro con reloj controlado. También pasó el flujo de trabajo completo con API, PostgreSQL y worker reales en un entorno de prueba aislado, en ambas variantes de navegador: fotos, conexiones, publicación y entrega. Los controles se compactaron para conservar el tamaño inmersivo de la panorámica en vertical y horizontal. Continúa pendiente la comparación en un teléfono físico.
