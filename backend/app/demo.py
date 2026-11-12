@@ -33,6 +33,15 @@ def main():
     from app.core.config import get_settings
     get_settings()
     subprocess.run([sys.executable, '-m', 'alembic', 'upgrade', 'head'], check=True, timeout=180)
+    supervise([
+        [sys.executable, '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0',
+         '--port', os.environ.get('PORT', '8000'), '--proxy-headers', '--forwarded-allow-ips', '*'],
+        [sys.executable, '-m', 'app.processing.worker'],
+    ])
+
+
+def supervise(commands: list[list[str]]) -> None:
+    """Inicia procesos en grupos propios y los detiene juntos, incluidos sus hijos."""
     children: list[subprocess.Popen] = []
     stopping = False
 
@@ -49,13 +58,12 @@ def main():
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     try:
-        children.append(subprocess.Popen([sys.executable, '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0',
-            '--port', os.environ.get('PORT', '8000'), '--proxy-headers', '--forwarded-allow-ips', '*'], start_new_session=True))
-        children.append(subprocess.Popen([sys.executable, '-m', 'app.processing.worker'], start_new_session=True))
-        logger.info('Demo: API y worker iniciados; se detienen juntos al suspender el servicio')
+        for command in commands:
+            children.append(subprocess.Popen(command, start_new_session=True))
+        logger.info('API y worker iniciados; Ctrl+C detiene ambos procesos')
         while not stopping:
             if any(process.poll() is not None for process in children):
-                raise RuntimeError('Un proceso del demo terminó; se reiniciará el servicio completo')
+                raise RuntimeError('Un proceso terminó; se detienen los demás procesos')
             time.sleep(0.5)
     finally:
         for process in children:

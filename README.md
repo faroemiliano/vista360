@@ -87,6 +87,15 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 
 En este workspace el entorno virtual ya está instalado; para iniciar sólo necesitás activarlo, aplicar migraciones si corresponde y ejecutar Uvicorn.
 
+Para iniciar **API y worker juntos en una terminal**, con PostgreSQL ya encendido:
+
+```sh
+cd /Users/emilianofaro/Desktop/vista360/backend
+.venv/bin/python -m app.dev
+```
+
+Aplica las migraciones e inicia la API en `127.0.0.1:8001` con recarga y el worker con el mismo `.env`. **Ctrl+C detiene ambos**, incluidos los subprocesos. Si uno termina inesperadamente, se detiene el otro para evitar dejar procesos sueltos. Si el puerto está ocupado, no inicia otra instancia: detener primero la API anterior (y el worker si se inició por separado). El frontend sigue en su propia terminal. Los cambios de código en el worker requieren reiniciar este comando. `--port 8003` permite elegir otro puerto y requiere ajustar la URL del frontend si se usa como backend habitual.
+
 - Healthcheck: <http://localhost:8001/health> → `{"status":"ok"}`.
 - Documentación OpenAPI: <http://localhost:8001/docs>.
 
