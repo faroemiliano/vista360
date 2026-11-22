@@ -2,7 +2,13 @@
 
 ## Estado
 
-Preparación local. No se han creado recursos de Render ni almacenamiento remoto.
+Guía original de preparación. La instalación activa usa Render y Cloudflare R2.
+El bucket público actual es `vision360-public`; `render.yaml` utiliza ese nombre.
+En servicios existentes, comprobar que `S3_PUBLIC_BUCKET` tenga ese mismo valor:
+`vision360-demo-public` corresponde al almacenamiento anterior y provoca fallos
+al publicar en R2. Cambiar esta variable requiere reiniciar API y worker.
+
+En una instalación nueva del demo:
 No se copian las cuentas, fotos ni datos de desarrollo al demo: se registra una
 cuenta nueva y se cargan sólo datos de prueba.
 

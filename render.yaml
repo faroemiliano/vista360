@@ -35,7 +35,7 @@ services:
       - key: S3_BUCKET
         value: vision360-demo-private
       - key: S3_PUBLIC_BUCKET
-        value: vision360-demo-public
+        value: vision360-public
       - key: PUBLIC_MEDIA_BASE_URL
         sync: false
       - key: MAX_IMAGE_WIDTH
