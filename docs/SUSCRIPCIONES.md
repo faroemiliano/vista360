@@ -4,7 +4,7 @@ Esta etapa prepara la venta del uso del sistema a fotógrafos. No incluye el ser
 
 ## Qué se puede usar
 
-- **Mi cuenta → Mi plan**: el titular ve el plan de su estudio propio, estado, vencimiento, publicados, publicaciones en preparación y reserva estimada de almacenamiento. Los colaboradores de un cliente no pueden ver el plan del estudio ajeno.
+- **Mi cuenta → Mi plan**: el titular ve el plan de su estudio propio, estado, vencimiento, publicados, publicaciones en preparación, espacio utilizado y detalle por proyecto; la reserva estimada se muestra por separado. Los colaboradores de un cliente no pueden ver el plan del estudio ajeno.
 - **Administración → Usuarios registrados → Gestionar plan**: el administrador de plataforma puede asignar, renovar y programar una cancelación. Toda operación requiere una nota y queda en un historial de los últimos 50 cambios de ese estudio, con actor, fechas y valores anteriores/nuevos. No implica pago recibido.
 - Una revisión numérica evita sobrescribir cambios de otro administrador. Repetir un envío con la misma revisión devuelve 409 sin sumar días dos veces.
 
@@ -103,6 +103,45 @@ Durante los últimos siete días (incluido el instante exacto de siete días res
 La información se consulta al abrir la sección, recuperar foco/visibilidad y cada minuto mientras la página está visible. Cerrar Mi cuenta también actualiza el recordatorio del estudio. No se usan los datos de planes ajenos para avisar a un colaborador invitado. El recordatorio no depende de que se hayan activado los bloqueos comerciales.
 
 Es un aviso dentro de la aplicación: esta etapa no envía emails, WhatsApp ni notificaciones fuera de la página. No requiere migración, cron ni servicios adicionales.
+
+## Consumo visible y detalle por proyecto
+
+El titular ve **Almacenamiento de tu plan** en el pie del menú lateral en
+escritorio y debajo de la cabecera en celular. Muestra espacio utilizado,
+capacidad del plan, barra y aviso al llegar al 80 % o superar la capacidad.
+**Ver consumo** abre Mi cuenta → Mi plan. Sin capacidad configurada se informa
+«Sin límite definido», sin inventar un porcentaje. El indicador se actualiza al
+navegar, recuperar foco y cada 15 segundos con la página visible; un error de
+consulta permite reintentar y nunca convierte el consumo desconocido en cero.
+
+Mi plan mantiene separada la reserva técnica y agrega **Consumo por proyecto**,
+con totales de originales, imágenes procesadas, copias publicadas y PDF, y
+proyectos en páginas de 25. `GET /workspaces/{workspace_id}/storage` exige sesión
+y titularidad; acepta `offset >= 0` y `limit` entre 1 y 100. Los colaboradores
+no ven el consumo ajeno ni lo descuentan de su plan propio. Las cuentas
+administradoras ven el total del estudio propio de cada usuario en la columna
+**Almacenamiento** de Usuarios registrados, manteniendo el permiso de plataforma.
+
+El espacio utilizado suma tamaños registrados de assets listos, copias de las
+publicaciones activas y PDF guardados. Una imagen pública cuenta además de su
+derivado privado porque ocupa un segundo archivo. Los proyectos de un cliente
+se imputan a su estudio, aunque los haya creado un colaborador. Se conservan
+proyectos con consumo cero y cuentas sin estudio en el directorio.
+
+Es el espacio de archivos de proyectos gestionados por la aplicación: excluye
+avatares, subidas temporales, procesamiento sin finalizar, archivos huérfanos y
+objetos pendientes de borrado. No es la factura ni un inventario físico de R2.
+Se usan MB y GB decimales para el tamaño utilizado y la capacidad mostrada; la
+reserva técnica conserva su presentación en MiB/GiB y sus reglas anteriores.
+No se modifican cuotas, suscripciones ni políticas de bloqueo. No requiere
+migraciones, credenciales del navegador ni consultas a R2 por cada visita.
+
+Verificación: 28 pruebas backend de suscripciones, directorio y consumo; seis
+casos de navegador contra API temporal en escritorio y celular, incluidos
+subida y procesamiento reales, acceso al detalle, error y reintento. TypeScript,
+catálogo español/portugués y build aprobados. La comparación de consumo contra
+archivos locales reales incluye originales, derivados, PDF y publicación, y
+comprueba la disminución al despublicar. No se modificaron servicios remotos.
 
 ## Ampliación de almacenamiento y cuotas heredadas
 

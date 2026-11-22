@@ -4,6 +4,7 @@ export type Subscription = components['schemas']['SubscriptionView']
 export type PlanCode = components['schemas']['Plan']['code']
 export type SubscriptionEvent = components['schemas']['EventView']
 export const subscriptionApi = {
+  storage: (workspace: string, offset = 0) => request<components['schemas']['StorageReport']>(`/workspaces/${workspace}/storage?offset=${offset}&limit=25`),
   catalog: () => request<components['schemas']['Plan'][]>('/public/plans', 'GET', undefined, 'omit'),
   startTrial: (workspace: string) => request<Subscription>(`/workspaces/${workspace}/subscription/trial`, 'POST'),
   own: (workspace: string) => request<Subscription>(`/workspaces/${workspace}/subscription`),

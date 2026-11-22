@@ -7,6 +7,8 @@ import { businessApi } from '../api/business'
 import type { BusinessWorkspace } from '../api/business'
 import { VerificationPending } from '../features/auth/AccountSecurity'
 import { PlanReminder } from '../features/subscriptions/PlanReminder'
+import { StorageMeter } from '../features/subscriptions/StorageMeter'
+import { useOwnSubscription } from '../features/subscriptions/useOwnSubscription'
 import { MyAccount } from '../features/auth/MyAccount'
 import { UserAvatar } from '../features/auth/UserAvatar'
 import { AuthForm } from '../features/auth/AuthForm'
@@ -38,6 +40,8 @@ export function Workspace() {
   const [studioVersion, setStudioVersion] = useState(0)
   const studios = studioState?.userId === session?.user?.id ? studioState?.rows || [] : []
   const activeStudio = studios.find((row) => row.id === (route.studioId || studioState?.selectedId))
+  const storage = useOwnSubscription(activeStudio?.is_owner ? activeStudio.id : undefined, JSON.stringify(route))
+  const storageMeter = session?.user && activeStudio?.is_owner ? <StorageMeter state={storage} /> : null
   function goRoute(changes: Partial<StudioRoute>, options?: { replace?: boolean; force?: boolean; keepScroll?: boolean }) {
     const moved = navigation.navigate({ ...defaultRoute, studioId: activeStudio?.id || route.studioId, ...changes }, options)
     if (moved) setMobileMenuOpen(false)
@@ -114,20 +118,21 @@ export function Workspace() {
   } }
   if (verificationPending && session?.user) return <main className="py-10"><LanguageSwitcher /><VerificationPending user={session.user} onSession={handleSession} /></main>
   return <NavigationGuardContext.Provider value={navigation.register}><StudioNavigationContext.Provider value={linkNavigation}><div className="min-h-screen lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
-    <StudioSidebar route={route} signedIn={Boolean(session?.user)} staff={staff === true} owner={Boolean(activeStudio?.is_owner)} organizationId={activeOrganizationId} open={mobileMenuOpen} onToggle={() => setMobileMenuOpen(value => !value)} />
+    <StudioSidebar route={route} signedIn={Boolean(session?.user)} staff={staff === true} owner={Boolean(activeStudio?.is_owner)} organizationId={activeOrganizationId} open={mobileMenuOpen} onToggle={() => setMobileMenuOpen(value => !value)} storage={storageMeter} />
     <div className="min-w-0">
       <header className="studio-header flex min-h-20 flex-wrap items-center justify-between gap-3 border-b border-line/70 bg-surface-900/70 px-5 py-4 sm:px-8 lg:px-10">
         {activeStudio ? <StudioIdentity key={activeStudio.id} workspace={activeStudio} workspaces={studios} onSelect={selectStudio} onRenamed={updateWorkspace} /> : <div><p className="eyebrow">{t("Tu estudio virtual")}</p><h1 className="mt-1 text-base font-semibold tracking-normal sm:text-base">{t("Tu estudio de digitalización")}</h1></div>}
         <LanguageSwitcher />
         {session?.user && <div className="account-bar flex min-w-0 items-center gap-3"><StudioLink reset to={{ view: 'account', accountTab: 'profile' }} className="nav-action btn-quiet min-w-0 !px-2" aria-label={t("Mi cuenta")}><UserAvatar user={session.user} /><span className="min-w-0 text-left"><span className="block max-w-40 truncate text-sm">{session.user.display_name || session.user.email_normalized}</span><span className="block text-xs text-muted">{t("Mi cuenta")}</span></span></StudioLink><button className="btn-quiet" disabled={busy} onClick={() => void signOut()}><Icon name="exit" className="size-4" /><span>{t("Cerrar sesión")}</span></button></div>}
       </header>
+      {storageMeter && <div className="px-5 pt-4 sm:px-8 lg:hidden">{storageMeter}</div>}
       <main tabIndex={-1} className="studio-main max-w-7xl py-6 outline-none lg:px-10 lg:py-9">
         {session?.user && activeStudio && <nav aria-label={t("Historial de navegación")} className="mb-6 flex flex-wrap items-center gap-2">
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canBack} onClick={navigation.back}><Icon name="arrow" className="size-4 rotate-180" />{t("Atrás")}</button>
           <button className="btn-quiet !min-h-9 !px-3 !py-1.5 !text-xs" disabled={!navigation.canForward} onClick={navigation.forward}>{t("Adelante")}<Icon name="arrow" className="size-4" /></button>
           <span className="ml-auto text-xs text-muted">{view === 'account' ? t("Mi cuenta") : view === 'not-found' ? t("Página no encontrada") : view === 'featured' ? t('Recorridos del sistema') : view === 'contacts' ? t("Consultas del sistema") : view === 'accounts' ? t("Administración / Usuarios registrados") : view === 'requests' ? route.requestScope === 'platform' ? t("Consultas de Vision360") : t("Solicitudes web") : view === 'jobs' ? route.jobId ? t("Trabajos / Detalle") : route.creating ? t("Trabajos / Nuevo trabajo") : t("Trabajos") : view === 'clients' ? t("Clientes") : `${route.group === 'individuals' ? t("Particulares") : t("Organizaciones")}${route.organizationId ? ' / Recorridos' : ''}`}</span>
         </nav>}
-        {session?.user && activeStudio?.is_owner && <PlanReminder key={`recordatorio-${session.user.id}-${activeStudio.id}`} workspaceId={activeStudio.id} refreshKey={securityOpen} onOpen={() => goRoute({ view: 'account', accountTab: 'plan' })} />}
+        {session?.user && activeStudio?.is_owner && <PlanReminder data={storage.data} onOpen={() => goRoute({ view: 'account', accountTab: 'plan' })} />}
         {error && <p role="alert">{t(error)}</p>}
         {!session && !error && <p role="status">{t("Cargando sesión…")}</p>}
         {!session && error && <button onClick={() => { setError(''); refreshSession() }}>{t("Reintentar conexión")}</button>}

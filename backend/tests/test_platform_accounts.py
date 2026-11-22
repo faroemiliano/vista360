@@ -54,7 +54,7 @@ def test_directory_counts_profiles_filters_and_pagination(clients, database, mon
     row = company_row['items'][0]
     assert row == dict(id=company_user['id'], display_name='Ana Fotógrafa', email='empresa@example.com',
         phone='+5491123456789', account_kind='company', company_name='Luz Fotografía',
-        studio_name='Estudio Luz', tour_count=0, created_at=company_user['created_at'], email_verified=True, platform_admin=False, plan=dict(code='trial', name='Prueba', status='active'))
+        studio_name='Estudio Luz', tour_count=0, storage_used_bytes=0, created_at=company_user['created_at'], email_verified=True, platform_admin=False, plan=dict(code='trial', name='Prueba', status='active'))
     for term in ('LUZ', 'Ana', 'empresa@', '23456789', 'Estudio Luz'):
         result = admin.http.get('/api/v1/admin/accounts', params={'q': term}).json()
         assert result['filtered_total'] == 1 and result['items'][0]['id'] == company_user['id']

@@ -7,6 +7,7 @@ import type { Subscription } from '../../api/subscriptions'
 import type { PublicPlanCode } from './selection'
 import { publicPlanNames } from './selection'
 import { PlanSummary } from './PlanSummary'
+import { StorageDetails } from './StorageDetails'
 
 export function MyPlan({ selectedPlan, onStart }: { selectedPlan?: PublicPlanCode | ''; onStart?: () => void }) {
   const [data, setData] = useState<Subscription | null>(null)
@@ -51,6 +52,7 @@ export function MyPlan({ selectedPlan, onStart }: { selectedPlan?: PublicPlanCod
       </div>}
       {message && <p role="status" className="my-4 text-sm">{t(message)}</p>}
       <PlanSummary data={data} />
+      <StorageDetails key={data.workspace_id} workspaceId={data.workspace_id} />
       <details className="mt-5 rounded-xl border border-line p-4"><summary>{t("Planes disponibles")}</summary><div className="mt-4 grid gap-3">{data.catalog.map(plan => <div key={plan.code} className="border-b border-line pb-3 text-sm"><p className="font-semibold">{t(plan.name)}{plan.trial_days ? t(" · {0} días", [plan.trial_days]) : plan.billing_interval === 'month' ? t(" · Mensual") : ''}</p><p className="mt-1 text-muted">{t("Hasta")} {plan.published_limit}{' '}{t("recorridos publicados")}{plan.scene_limit ? t(" y {0} ambientes por recorrido", [plan.scene_limit]) : ''}.</p></div>)}</div></details>
       <p className="mt-5 text-sm text-muted">{t("La prueba gratuita se activa sin tarjeta. Profesional y Estudio son mensuales: el pago se coordina personalmente y administración habilita o renueva el plan al confirmarlo. No hay cobros ni renovación automáticos.")}</p>
       <a className="mt-3 inline-block text-sm text-accent" href="/inicio#contacto">{t("Consultar sobre mi plan")}</a>

@@ -1418,6 +1418,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Storage Report */
+        get: operations["storage_report_api_v1_workspaces__workspace_id__storage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/accounts/{user_id}/subscription": {
         parameters: {
             query?: never;
@@ -2288,6 +2305,26 @@ export interface components {
             /** Company Name */
             company_name?: string | null;
         };
+        /** ProjectStorage */
+        ProjectStorage: {
+            /** Original Bytes */
+            original_bytes: number;
+            /** Derived Bytes */
+            derived_bytes: number;
+            /** Public Bytes */
+            public_bytes: number;
+            /** Pdf Bytes */
+            pdf_bytes: number;
+            /** Used Bytes */
+            used_bytes: number;
+            /**
+             * Tour Id
+             * Format: uuid
+             */
+            tour_id: string;
+            /** Title */
+            title: string;
+        };
         /** PropertyInput */
         PropertyInput: {
             /** Title */
@@ -2504,6 +2541,8 @@ export interface components {
             studio_name: string | null;
             /** Tour Count */
             tour_count: number;
+            /** Storage Used Bytes */
+            storage_used_bytes: number;
             /**
              * Created At
              * Format: date-time
@@ -2729,6 +2768,31 @@ export interface components {
              */
             scene_id: string;
         };
+        /** StorageReport */
+        StorageReport: {
+            totals: components["schemas"]["StorageTotals"];
+            /** Projects */
+            projects: components["schemas"]["ProjectStorage"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+        };
+        /** StorageTotals */
+        StorageTotals: {
+            /** Original Bytes */
+            original_bytes: number;
+            /** Derived Bytes */
+            derived_bytes: number;
+            /** Public Bytes */
+            public_bytes: number;
+            /** Pdf Bytes */
+            pdf_bytes: number;
+            /** Used Bytes */
+            used_bytes: number;
+        };
         /** SubscriptionView */
         SubscriptionView: {
             /**
@@ -2874,6 +2938,8 @@ export interface components {
             preparing: number;
             /** Storage Reserved Bytes */
             storage_reserved_bytes: number;
+            /** Storage Used Bytes */
+            storage_used_bytes: number;
         };
         /** UserResponse */
         UserResponse: {
@@ -6276,6 +6342,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubscriptionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    storage_report_api_v1_workspaces__workspace_id__storage_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageReport"];
                 };
             };
             /** @description Validation Error */

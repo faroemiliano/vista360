@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -9,7 +9,7 @@ from app.modules.studio.router import administrator
 from app.modules.workspaces.service import owned
 from app.modules.subscriptions import service
 from app.modules.subscriptions.models import SubscriptionEvent
-from app.modules.subscriptions.schemas import Assignment, Cancellation, EventView, SubscriptionView, Plan
+from app.modules.subscriptions.schemas import Assignment, Cancellation, EventView, SubscriptionView, Plan, StorageReport
 
 router = APIRouter(tags=['subscriptions'])
 
@@ -28,6 +28,14 @@ def own_plan(workspace_id: UUID, db: Session = Depends(get_db), user: User = Dep
 @router.post('/workspaces/{workspace_id}/subscription/trial', response_model=SubscriptionView, dependencies=[Depends(require_csrf)])
 def activate_trial(workspace_id: UUID, db: Session = Depends(get_db), user: User = Depends(current_user)):
     return service.start_trial(db, user, owned(db, user, workspace_id))
+
+
+@router.get('/workspaces/{workspace_id}/storage', response_model=StorageReport)
+def storage_report(workspace_id: UUID, offset: int = Query(default=0, ge=0),
+                   limit: int = Query(default=25, ge=1, le=100),
+                   db: Session = Depends(get_db), user: User = Depends(current_user)):
+    from app.modules.subscriptions.storage_usage import report
+    return report(db, owned(db, user, workspace_id), offset, limit)
 
 
 @router.get('/admin/accounts/{user_id}/subscription', response_model=SubscriptionView)

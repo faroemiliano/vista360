@@ -19,6 +19,7 @@ from app.modules.organizations.service import is_staff
 from app.modules.studio.router import administrator
 from app.modules.workspaces.models import Workspace
 from app.modules.tours.models import Tour
+from app.modules.subscriptions.storage_usage import workspace_storage, COMPONENTS
 
 router = APIRouter(tags=['platform'])
 
@@ -88,6 +89,7 @@ class RegisteredAccount(BaseModel):
     company_name: str | None
     studio_name: str | None
     tour_count: int
+    storage_used_bytes: int
     created_at: datetime
     email_verified: bool
     platform_admin: bool
@@ -134,8 +136,11 @@ def accounts(
         ))))
     filtered_total = db.scalar(select(func.count()).select_from(query.subquery()))
     tour_counts = select(Tour.owner_id, func.count(Tour.id).label('total')).group_by(Tour.owner_id).subquery()
-    rows = db.execute(query.add_columns(func.coalesce(tour_counts.c.total, 0))
+    storage = workspace_storage()
+    storage_total = sum((func.coalesce(storage.c[name], 0) for name in COMPONENTS))
+    rows = db.execute(query.add_columns(func.coalesce(tour_counts.c.total, 0), storage_total)
                       .outerjoin(tour_counts, tour_counts.c.owner_id == User.id)
+                      .outerjoin(storage, storage.c.workspace_id == Workspace.id)
                       .order_by(User.created_at.desc(), User.id.desc()).offset(offset).limit(limit))
     plans = catalog()
     current = now()
@@ -147,7 +152,8 @@ def accounts(
             phone=user.phone, account_kind=user.account_kind, company_name=user.company_name,
             studio_name=workspace.name if workspace else None, created_at=user.created_at,
             tour_count=tour_count,
+            storage_used_bytes=storage_used_bytes,
             plan=account_plan(workspace, subscription, plans, current),
             email_verified=user.email_verified_at is not None, platform_admin=is_staff(user),
-        ) for user, workspace, subscription, tour_count in rows],
+        ) for user, workspace, subscription, tour_count, storage_used_bytes in rows],
     )

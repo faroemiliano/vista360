@@ -57,7 +57,9 @@ def usage(db, workspace):
         Asset.tour_id.in_(ids), Asset.type == 'panorama_original', Asset.status != 'rejected'))
     pdf_bytes = db.scalar(select(func.coalesce(func.sum(ServiceRequest.delivery_file['size_bytes'].as_integer()), 0)).where(
         ServiceRequest.organization_id.in_(select(Organization.id).where(Organization.workspace_id == workspace.id))))
-    return Usage(published=published, preparing=reserved, storage_reserved_bytes=storage + pdf_bytes)
+    from app.modules.subscriptions.storage_usage import totals
+    return Usage(published=published, preparing=reserved, storage_reserved_bytes=storage + pdf_bytes,
+                 storage_used_bytes=totals(db, workspace)['used_bytes'])
 
 
 def trial_available(db, workspace, row):

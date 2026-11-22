@@ -4,6 +4,7 @@ import { businessApi } from '../../api/business'
 import type { components } from '../../api/schema'
 import { ManageSubscription } from '../subscriptions/ManageSubscription'
 import { ApiError } from '../../api/client'
+import { storageBytes } from '../subscriptions/storage'
 
 type Directory = components['schemas']['AccountDirectory']
 const date = (value: string) => new Date(value).toLocaleDateString(dateLocale(), { day: '2-digit', month: 'short', year: 'numeric' })
@@ -53,13 +54,14 @@ export function RegisteredAccounts({ query, kind, offset, onFilter, onPage, onEx
       <p role="status" className="mb-4 text-sm text-muted">{data.filtered_total} {data.filtered_total === 1 ? t("cuenta encontrada") : t("cuentas encontradas")}</p>
       {!data.items.length ? <p className="rounded-xl border border-line p-6 text-sm text-muted">{t("No hay cuentas para esta búsqueda o página.")}</p> : <div className="max-w-full overflow-x-auto rounded-xl border border-line" role="region" aria-label={t("Tabla de usuarios registrados")} tabIndex={0}>
         <table className="w-full min-w-[48rem] border-collapse text-left text-sm" aria-label={t("Usuarios registrados")}>
-          <thead className="bg-surface-850 text-xs text-muted"><tr>{[t("Cuenta"), t("Contacto"), t("Tipo"), t("Estudio"), t("Recorridos"), t("Registro"), t("Email"), t("Plan")].map(label => <th className="px-4 py-3 font-medium" scope="col" key={label}>{label}</th>)}</tr></thead>
+          <thead className="bg-surface-850 text-xs text-muted"><tr>{[t("Cuenta"), t("Contacto"), t("Tipo"), t("Estudio"), t("Recorridos"), t('Almacenamiento'), t("Registro"), t("Email"), t("Plan")].map(label => <th className="px-4 py-3 font-medium" scope="col" key={label}>{label}</th>)}</tr></thead>
           <tbody>{data.items.map(user => <tr key={user.id} className="border-t border-line bg-surface-900 hover:bg-surface-850">
             <th scope="row" className="px-4 py-3 font-medium"><span className="block">{user.display_name || t("Sin nombre cargado")}</span>{user.platform_admin && <span className="mt-1 block text-xs text-accent">{t("Administrador del sistema")}</span>}</th>
             <td className="px-4 py-3 text-xs text-muted"><span className="block break-all">{user.email}</span><span className="mt-1 block">{user.phone || t("Sin teléfono")}</span></td>
             <td className="px-4 py-3 text-muted"><span className="block">{user.account_kind === 'company' ? t("Empresa") : t("Particular")}</span>{user.company_name && <span className="block text-xs">{user.company_name}</span>}</td>
             <td className="px-4 py-3 text-muted">{user.studio_name || t("Sin estudio")}</td>
             <td className="px-4 py-3 tabular-nums">{user.tour_count}</td>
+            <td className="whitespace-nowrap px-4 py-3 tabular-nums">{storageBytes(user.storage_used_bytes)}</td>
             <td className="whitespace-nowrap px-4 py-3 text-xs text-muted"><time dateTime={user.created_at}>{date(user.created_at)}</time></td>
             <td className="px-4 py-3 text-xs"><span className={user.email_verified ? 'text-accent' : 'text-muted'}>{user.email_verified ? t("Verificado") : t("Sin verificar")}</span></td>
             <td className="px-4 py-3"><p className="whitespace-nowrap font-medium">{user.plan ? t(user.plan.name) : t("Sin estudio")}</p>{user.plan && <p className="mb-2 mt-1 text-xs text-muted">{user.plan.status === 'expired' ? t("Vencido") : user.plan.status === 'cancelled' ? t("Cancelación programada") : t("Activo")}</p>}<button className="whitespace-nowrap !px-3 !py-2 !text-xs" aria-label={t("Gestionar plan de {0}", [user.email])} onClick={() => setSelected(user)}>{t("Gestionar plan")}</button></td>

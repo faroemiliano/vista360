@@ -20,6 +20,28 @@ class Usage(BaseModel):
     published: int
     preparing: int
     storage_reserved_bytes: int
+    storage_used_bytes: int
+
+
+class StorageTotals(BaseModel):
+    original_bytes: int
+    derived_bytes: int
+    public_bytes: int
+    pdf_bytes: int
+    used_bytes: int
+
+
+class ProjectStorage(StorageTotals):
+    tour_id: UUID
+    title: str
+
+
+class StorageReport(BaseModel):
+    totals: StorageTotals
+    projects: list[ProjectStorage]
+    total: int
+    offset: int
+    limit: int
 
 
 class SubscriptionView(BaseModel):

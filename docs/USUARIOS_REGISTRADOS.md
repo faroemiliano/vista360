@@ -13,6 +13,15 @@ el usuario sólo tiene acceso compartido. El recuento se agrega por titular en l
 misma consulta del directorio, sin una consulta adicional por usuario; conserva
 la búsqueda, filtros y paginación. No requiere migraciones.
 
+La columna **Almacenamiento** muestra los bytes utilizados por los proyectos
+del estudio propio de cada cuenta, formateados en B/KB/MB/GB. Incluye originales
+procesados, derivados privados, copias de publicaciones activas y PDF guardados;
+no es la reserva de procesamiento ni un inventario de archivos temporales de R2.
+Los recorridos de clientes compartidos se imputan al estudio del cliente, aunque
+un colaborador los haya creado. Las cuentas sin archivos o sin estudio muestran
+0 B. El directorio suma estos datos mediante una agregación común, sin consultar
+R2 ni ejecutar una consulta de consumo por cada fila.
+
 ## Autorización
 
 Se reutiliza `PLATFORM_ADMIN_USER_IDS`, que también protege las consultas generales de Vision360. En Render → servicio web → Environment, debe contener un JSON con los UUID de las cuentas autorizadas, por ejemplo `["00000000-0000-4000-8000-000000000001"]` (ejemplo ficticio; usar el ID real). Conservar los IDs existentes. No usar emails ni habilitar este permiso desde el registro o el perfil. Si la cuenta ya administraba las consultas de la plataforma, no necesita una configuración adicional.

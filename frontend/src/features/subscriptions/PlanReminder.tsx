@@ -1,35 +1,9 @@
 import { t } from '../../i18n'
-import { useEffect, useState } from 'react'
-import { subscriptionApi } from '../../api/subscriptions'
 import type { Subscription } from '../../api/subscriptions'
 import { planDate } from './PlanSummary'
 
-export function PlanReminder({ workspaceId, refreshKey, onOpen }: { workspaceId: string; refreshKey: boolean; onOpen: () => void }) {
-  const [data, setData] = useState<Subscription | null>(null)
-  useEffect(() => {
-    let active = true
-    let loading = false
-    setData(null)
-    async function load() {
-      if (loading) return
-      loading = true
-      try {
-        const result = await subscriptionApi.own(workspaceId)
-        if (active) setData(result)
-      } catch { /* Se vuelve a consultar al recuperar foco o en el siguiente intervalo. */ }
-      finally { loading = false }
-    }
-    void load()
-    const refresh = () => { if (document.visibilityState === 'visible') void load() }
-    const interval = window.setInterval(refresh, 60_000)
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', refresh)
-    return () => {
-      active = false; window.clearInterval(interval)
-      window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh)
-    }
-  }, [workspaceId, refreshKey])
-  if (!data?.renewal_reminder || data.workspace_id !== workspaceId) return null
+export function PlanReminder({ data, onOpen }: { data: Subscription | null; onOpen: () => void }) {
+  if (!data?.renewal_reminder) return null
   const trial = data.plan.code === 'trial'
   return <aside aria-label={t("Recordatorio de vencimiento")} className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-accent/35 bg-accent/5 p-4">
     <div><p className="font-semibold">{trial ? t("Tu prueba gratuita está por terminar") : t("Recordatorio: tu plan está por vencer")}</p>

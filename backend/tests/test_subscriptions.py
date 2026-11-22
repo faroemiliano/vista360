@@ -121,7 +121,7 @@ def test_new_trial_is_private_and_has_no_automatic_charge(clients, monkeypatch):
     assert plan['plan']['code'] == 'trial' and plan['status'] == 'active'
     from datetime import datetime
     assert datetime.fromisoformat(plan['period_end']) - datetime.fromisoformat(plan['period_start']) == timedelta(days=14)
-    assert plan['usage'] == dict(published=0, preparing=0, storage_reserved_bytes=0)
+    assert plan['usage'] == dict(published=0, preparing=0, storage_reserved_bytes=0, storage_used_bytes=0)
     assert plan['limits_enabled'] is False
     other = clients(); other.register('other@example.com')
     assert other.get(f"/workspaces/{workspace['id']}/subscription").status_code == 404
