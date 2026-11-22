@@ -1,3 +1,4 @@
+from hashlib import sha256
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -45,20 +46,26 @@ def public_tour(slug: str, request: Request, response: Response, db: Session = D
         .where(Tour.slug == slug, Tour.status == "published", Publication.status == "active"))
     if not publication:
         raise HTTPException(404, "Recorrido no disponible")
-    etag = f'"{publication.id}"'
+    media_base_url = ""
+    if publication.storage_backend == "s3":
+        media_base_url = get_settings().public_media_base_url
+        if not media_base_url:
+            raise HTTPException(503, "El dominio de medios no está configurado")
+        media_base_url = media_base_url.rstrip("/")
+    # El dominio puede cambiar sin crear una nueva versión de la publicación.
+    cache_key = f"{publication.id}:{publication.storage_backend}:{media_base_url}"
+    etag = f'"{sha256(cache_key.encode()).hexdigest()}"'
     headers = {"ETag": etag, "Cache-Control": "public, max-age=0, must-revalidate"}
     tags = [value.strip().removeprefix("W/") for value in request.headers.get("if-none-match", "").split(",")]
     if etag in tags or "*" in tags:
         return Response(status_code=304, headers=headers)
     response.headers.update(headers)
-    if publication.storage_backend == "s3" and not get_settings().public_media_base_url:
-        raise HTTPException(503, "El dominio de medios no está configurado")
     document = publication.document
     scenes = []
     for scene in document["scenes"]:
         public_sources = []
         for source in scene["sources"]:
-            url = (f"{get_settings().public_media_base_url.rstrip('/')}/{source['key']}" if publication.storage_backend == "s3"
+            url = (f"{media_base_url}/{source['key']}" if publication.storage_backend == "s3"
                    else f"/api/v1/public/media/{publication.id}/{source['asset_id']}")
             public_sources.append({"url": url, "width": source["width"], "height": source["height"]})
         scenes.append({"id": scene["id"], "name": scene["name"], "initial_view": scene["initial_view"],

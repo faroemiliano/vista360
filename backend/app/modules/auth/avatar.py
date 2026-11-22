@@ -3,6 +3,8 @@ from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
+import logging
+import re
 import warnings
 
 from fastapi import HTTPException
@@ -16,6 +18,32 @@ from app.modules.auth.security import now
 from app.storage.factory import get_storage
 
 MAX_BYTES = 5 * 1024 * 1024
+logger = logging.getLogger(__name__)
+
+
+def log_storage_failure(error):
+    # No registrar mensajes del SDK: pueden contener claves y URLs firmadas.
+    exception_name = type(error).__name__
+    if not re.fullmatch(r'[A-Za-z0-9_]{1,80}', exception_name):
+        exception_name = 'UnknownError'
+    code, status = 'unavailable', 'unavailable'
+    try:
+        from botocore.exceptions import ClientError
+    except ImportError:
+        ClientError = ()
+    if isinstance(error, ClientError):
+        response = error.response
+        if isinstance(response, dict):
+            details = response.get('Error', {})
+            candidate = details.get('Code') if isinstance(details, dict) else None
+            if isinstance(candidate, str) and re.fullmatch(r'[A-Za-z0-9_-]{1,80}', candidate):
+                code = candidate
+            metadata = response.get('ResponseMetadata', {})
+            candidate = metadata.get('HTTPStatusCode') if isinstance(metadata, dict) else None
+            if type(candidate) is int and 100 <= candidate <= 599:
+                status = candidate
+    logger.error('avatar_storage_write_failed exception=%s s3_code=%s http_status=%s',
+                 exception_name, code, status)
 
 
 def optimize(source, target):
@@ -61,7 +89,8 @@ def save(db, user, source):
         db.add(cleanup); db.commit()
         try:
             get_storage(backend).put(key, target)
-        except Exception:
+        except Exception as error:
+            log_storage_failure(error)
             raise HTTPException(503, 'No se pudo guardar la foto. Volvé a intentarlo.') from None
         user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         cleanup = db.scalar(select(ProcessingJob).where(ProcessingJob.id == cleanup.id).with_for_update().execution_options(populate_existing=True))
