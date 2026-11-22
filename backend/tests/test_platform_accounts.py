@@ -54,7 +54,7 @@ def test_directory_counts_profiles_filters_and_pagination(clients, database, mon
     row = company_row['items'][0]
     assert row == dict(id=company_user['id'], display_name='Ana Fotógrafa', email='empresa@example.com',
         phone='+5491123456789', account_kind='company', company_name='Luz Fotografía',
-        studio_name='Estudio Luz', created_at=company_user['created_at'], email_verified=True, platform_admin=False, plan=dict(code='trial', name='Prueba', status='active'))
+        studio_name='Estudio Luz', tour_count=0, created_at=company_user['created_at'], email_verified=True, platform_admin=False, plan=dict(code='trial', name='Prueba', status='active'))
     for term in ('LUZ', 'Ana', 'empresa@', '23456789', 'Estudio Luz'):
         result = admin.http.get('/api/v1/admin/accounts', params={'q': term}).json()
         assert result['filtered_total'] == 1 and result['items'][0]['id'] == company_user['id']
@@ -76,6 +76,36 @@ def test_directory_validates_bounded_search_and_pagination(clients, monkeypatch)
         assert admin.http.get('/api/v1/admin/accounts', params=params).status_code == 422
     empty = admin.get('/admin/accounts?offset=100').json()
     assert empty['items'] == [] and empty['filtered_total'] == 1
+
+
+def test_directory_counts_owned_draft_and_published_tours(clients, database, monkeypatch):
+    from app.modules.tours.models import Tour
+    from app.modules.publications.models import Publication
+    from app.modules.organizations.models import Membership
+
+    admin = clients(); administrator(admin, monkeypatch)
+    owner = clients(); owner_user = owner.register('tours@example.com').json()['user']
+    collaborator = clients(); other_user = collaborator.register('shared@example.com').json()['user']
+    organization = owner.mutate('POST', '/organizations', {'name': 'Cliente', 'kind': 'agency'})
+    assert organization.status_code == 201
+    with Session(database[0]) as db:
+        org_id = UUID(organization.json()['id'])
+        db.add(Membership(organization_id=org_id, user_id=UUID(other_user['id']), role='viewer'))
+        draft = Tour(owner_id=UUID(owner_user['id']), title='Borrador personal', slug='personal-count')
+        published = Tour(owner_id=UUID(owner_user['id']), organization_id=org_id, title='Publicado', slug='published-count')
+        other = Tour(owner_id=UUID(other_user['id']), title='Otro titular', slug='other-count')
+        db.add_all([draft, published, other]); db.flush()
+        publication = Publication(tour_id=published.id, version=1, revision=0, status='active', storage_backend='local', document={})
+        db.add(publication); db.flush()
+        published.status = 'published'; published.published_version_id = publication.id
+        db.commit()
+    body = admin.get('/admin/accounts').json()
+    counts = {row['email']: row['tour_count'] for row in body['items']}
+    assert counts == {'platform@example.com': 0, 'tours@example.com': 2, 'shared@example.com': 1}
+    # Buscar y paginar no cambia el total de recorridos del titular ni duplica filas.
+    filtered = admin.get('/admin/accounts?q=tours@&limit=1').json()
+    assert filtered['filtered_total'] == 1 and filtered['items'][0]['tour_count'] == 2
+    assert body['filtered_total'] == 3
 
 
 def test_directory_shows_actual_plan_and_state_without_filtering_out_accounts(clients, database, monkeypatch):

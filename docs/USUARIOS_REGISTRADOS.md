@@ -6,6 +6,13 @@ El directorio muestra todas las cuentas, incluida la del administrador: nombre, 
 
 Se muestran totales globales de cuentas, particulares, empresas y emails verificados; no son cifras de clientes que pagan. La tabla permite buscar por nombre, email, teléfono, empresa o estudio, filtrar particular/empresa y recorrer páginas de 50 cuentas. Los filtros y la página quedan en la URL y funcionan al recargar y retroceder. No se incorporan dependencias ni migraciones.
 
+La columna **Recorridos** indica cuántos recorridos pertenecen a cada usuario,
+incluyendo borradores y publicados, tanto personales como de sus clientes. Muestra
+0 para cuentas sin recorridos. No suma recorridos de otros titulares a los que
+el usuario sólo tiene acceso compartido. El recuento se agrega por titular en la
+misma consulta del directorio, sin una consulta adicional por usuario; conserva
+la búsqueda, filtros y paginación. No requiere migraciones.
+
 ## Autorización
 
 Se reutiliza `PLATFORM_ADMIN_USER_IDS`, que también protege las consultas generales de Vision360. En Render → servicio web → Environment, debe contener un JSON con los UUID de las cuentas autorizadas, por ejemplo `["00000000-0000-4000-8000-000000000001"]` (ejemplo ficticio; usar el ID real). Conservar los IDs existentes. No usar emails ni habilitar este permiso desde el registro o el perfil. Si la cuenta ya administraba las consultas de la plataforma, no necesita una configuración adicional.

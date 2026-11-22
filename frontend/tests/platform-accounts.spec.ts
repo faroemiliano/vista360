@@ -10,6 +10,13 @@ test('administración consulta usuarios registrados y las otras cuentas no acced
   await page.getByLabel('Contraseña', { exact: true }).fill('Test-password-123!')
   await page.getByRole('button', { name: 'Registrarme', exact: true }).click()
   await expect(page.getByRole('link', { name: 'Mi cuenta', exact: true })).toBeVisible()
+  const session = await (await page.request.get('http://127.0.0.1:8002/api/v1/auth/session')).json()
+  for (const [index, title] of ['Primer recorrido', 'Segundo recorrido'].entries()) {
+    const created = await page.request.post('http://127.0.0.1:8002/api/v1/tours', {
+      headers: { Origin: baseURL!, 'X-CSRF-Token': session.csrf_token }, data: { title, slug: `${email.split('@')[0]}-${index}` },
+    })
+    expect(created.status()).toBe(201)
+  }
   await expect(page.getByRole('link', { name: 'Usuarios registrados', exact: true })).toHaveCount(0)
   await page.goto('/studio/usuarios')
   await expect(page.getByRole('alert')).toContainText('Acceso reservado a administración')
@@ -31,6 +38,11 @@ test('administración consulta usuarios registrados y las otras cuentas no acced
     await expect(admin).toHaveURL(/\/studio\/usuarios/)
     await expect(admin.getByRole('heading', { name: 'Usuarios registrados', exact: true })).toBeVisible()
     await expect(admin.getByRole('table', { name: 'Usuarios registrados', exact: true })).toContainText(email)
+    const table = admin.getByRole('table', { name: 'Usuarios registrados', exact: true })
+    await expect(table.getByRole('columnheader', { name: 'Recorridos', exact: true })).toBeVisible()
+    await expect(table.getByRole('row').filter({ hasText: email }).getByRole('cell', { name: '2', exact: true })).toBeVisible()
+    await expect(table.getByRole('row').filter({ hasText: process.env.TEST_ADMIN_EMAIL! }).getByRole('cell', { name: '0', exact: true })).toBeVisible()
+    expect(await admin.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await admin.getByLabel('Buscar cuenta', { exact: true }).fill(email)
     await admin.getByRole('button', { name: 'Buscar', exact: true }).click()
     await expect(admin.getByRole('status')).toHaveText('1 cuenta encontrada')

@@ -2502,6 +2502,8 @@ export interface components {
             company_name: string | null;
             /** Studio Name */
             studio_name: string | null;
+            /** Tour Count */
+            tour_count: number;
             /**
              * Created At
              * Format: date-time
